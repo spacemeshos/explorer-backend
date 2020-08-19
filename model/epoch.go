@@ -1,6 +1,8 @@
 package model
 
 import (
+    "context"
+
     "go.mongodb.org/mongo-driver/bson"
 )
 
@@ -21,7 +23,7 @@ type Stats struct {
 }
 
 type Epoch struct {
-    Number	uint64
+    Number	int32
     Stats	Stats
 }
 

@@ -1,13 +1,15 @@
 package model
 
 import (
+    "context"
+
     "go.mongodb.org/mongo-driver/bson"
     pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
     "github.com/spacemeshos/explorer-backend/utils"
 )
 
 type Layer struct {
-    Number	uint64
+    Number	uint32
     Status	int
 }
 
@@ -17,21 +19,21 @@ type LayerService interface {
     SaveLayer(ctx context.Context, in *Layer) error
 }
 
-func NewLayer(l *pb.Layer) (*Layer, []*Block, []*Activation, make(map[string]*Transaction) {
+func NewLayer(l *pb.Layer) (*Layer, []*Block, []*Activation, map[string]*Transaction) {
     pbBlocks := l.GetBlocks()
     pbAtxs := l.GetActivations()
     layer := &Layer{
-        Number: LayerID(l.GetNumber().GetNumber()),
-        Status: l.GetStatus(),
+        Number: l.GetNumber().GetNumber(),
+        Status: int(l.GetStatus()),
     }
 
-    blocks := make([]*Block, len(blocks)),
-    atxs := make([]*Activation, len(atxs)),
-    txs := make(map[string]Transaction),
+    blocks := make([]*Block, len(pbBlocks))
+    atxs := make([]*Activation, len(pbAtxs))
+    txs := make(map[string]*Transaction)
 
     for i, b := range pbBlocks {
-        blocks[i] := &Block{
-            Id: utils.ToHex(b.GetId()),
+        blocks[i] = &Block{
+            Id: utils.BytesToHex(b.GetId()),
             Layer: layer.Number,
         }
         for _, t := range b.GetTransactions() {

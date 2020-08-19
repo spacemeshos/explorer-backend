@@ -1,9 +1,9 @@
 package model
 
 import (
+    "context"
+
     "go.mongodb.org/mongo-driver/bson"
-    pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-    "github.com/spacemeshos/explorer-backend/utils"
 )
 
 type Geo struct {

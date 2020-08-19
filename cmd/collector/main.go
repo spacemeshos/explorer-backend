@@ -65,9 +65,9 @@ func main() {
             return err
         }
 
-        collector := collector.NewCollector(nodeAddressStringFlag, storage)
+        c := collector.NewCollector(nodeAddressStringFlag, mongoStorage)
 
-        collector.Run()
+        c.Run()
 
         log.Info("Collector is shutdown")
         return nil

@@ -1,6 +1,8 @@
 package model
 
 import (
+    "context"
+
     "go.mongodb.org/mongo-driver/bson"
     pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
     "github.com/spacemeshos/explorer-backend/utils"
@@ -19,8 +21,8 @@ type AccountService interface {
 
 func NewAccount(in *pb.Account) *Account {
     return &Account{
-        Address: utils.ToAddressString(account.GetAccountId().GetAddress()),
-        Balance: Amount(account.GetStateCurrent().GetBalance().GetValue()),
+        Address: utils.BytesToAddressString(in.GetAccountId().GetAddress()),
+        Balance: in.GetStateCurrent().GetBalance().GetValue(),
     }
 }
 

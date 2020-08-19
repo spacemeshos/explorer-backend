@@ -2,14 +2,14 @@ package storage
 
 import (
     "context"
-    "errors"
     "time"
 
-    "go.mongodb.org/mongo-driver/bson"
+//    "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
-    "github.com/spacemeshos/go-spacemesh/log"
+    pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+//    "github.com/spacemeshos/go-spacemesh/log"
     "github.com/spacemeshos/explorer-backend/model"
 )
 
@@ -56,10 +56,10 @@ func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers
 func (s *Storage) OnLayer(in *pb.Layer) {
     if model.IsConfirmedLayer(in) {
         layer, blocks, atxs, txs := model.NewLayer(in)
-        _ := s.SaveLayer(context.Background(), layer)
-        _ := s.SaveBlocks(context.Background(), blocks)
-        _ := s.SaveActivations(context.Background(), atxs)
-        _ := s.SaveTransactiobs(context.Background(), txs)
+        s.SaveLayer(context.Background(), layer)
+        s.SaveBlocks(context.Background(), blocks)
+        s.SaveActivations(context.Background(), atxs)
+        s.SaveTransactions(context.Background(), txs)
     }
 }
 
@@ -68,7 +68,7 @@ func (s *Storage) OnAccount(in *pb.Account) {
     if account == nil {
         return
     }
-    _ := s.SaveAccount(context.Background(), account)
+    s.SaveAccount(context.Background(), account)
 }
 
 func (s *Storage) OnReward(in *pb.Reward) {
@@ -76,9 +76,9 @@ func (s *Storage) OnReward(in *pb.Reward) {
     if reward == nil {
         return
     }
-    _ := s.SaveReward(context.Background(), reward)
+    s.SaveReward(context.Background(), reward)
 }
 
 func (s *Storage) OnTransactionReceipt(in *pb.TransactionReceipt) {
-    _ := s.UpdateTransaction(context.Background(), model.NewTransactionReceipt(in))
+    s.UpdateTransaction(context.Background(), model.NewTransactionReceipt(in))
 }

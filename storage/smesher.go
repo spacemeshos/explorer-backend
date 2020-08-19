@@ -6,10 +6,6 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
-
-    "github.com/spacemeshos/go-spacemesh/log"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
@@ -40,7 +36,7 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
         Id: doc.Lookup("id").String(),
         Geo: model.Geo{
             doc.Lookup("name").String(),
-            { doc.Lookup("lon").Float64(), doc.Lookup("lat").Float64() },
+            [2]float64 { doc.Lookup("lon").Double(), doc.Lookup("lat").Double() },
         },
         CommitmentSize: uint64(doc.Lookup("cSize").Int64()),
     }
@@ -59,18 +55,18 @@ func (s *Storage) GetSmeshers(parent context.Context, query *bson.D) ([]*model.S
     if err != nil {
         return nil, err
     }
-    if len(docs) == 0 {
+    if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    smeshers := make([]*model.Smesher, len(docs), len(docs))
-    for i, doc := range docs {
+    smeshers := make([]*model.Smesher, len(docs.([]bson.D)), len(docs.([]bson.D)))
+    for i, doc := range docs.([]bson.D) {
         smeshers[i] = &model.Smesher{
-            Id: doc.Lookup("id").String(),
+            Id: doc[0].Value.(string),
             Geo: model.Geo{
-                doc.Lookup("name").String(),
-                { doc.Lookup("lon").Float64(), doc.Lookup("lat").Float64() },
+                doc[1].Value.(string),
+                [2]float64 { doc[2].Value.(float64), doc[3].Value.(float64) },
             },
-            CommitmentSize: uint64(doc.Lookup("cSize").Int64()),
+            CommitmentSize: uint64(doc[4].Value.(int64)),
         }
     }
     return smeshers, nil
@@ -79,7 +75,7 @@ func (s *Storage) GetSmeshers(parent context.Context, query *bson.D) ([]*model.S
 func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    res, err := s.db.Collection("smeshers").InsertOne(ctx, bson.D{
+    _, err := s.db.Collection("smeshers").InsertOne(ctx, bson.D{
         {"id", in.Id},
         {"name", in.Geo.Name},
         {"lon", in.Geo.Coordinates[0]},

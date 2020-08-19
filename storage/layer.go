@@ -6,16 +6,12 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
-
-    "github.com/spacemeshos/go-spacemesh/log"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
 
 type Layer struct {
-    Number	uint64
+    Number	uint32
     Status	int
 }
 
@@ -31,8 +27,8 @@ func (s *Storage) GetLayer(parent context.Context, query *bson.D) (*model.Layer,
     }
     doc := cursor.Current
     account := &model.Layer{
-        Number: uint64(doc.Lookup("number").Int64()),
-        Status: doc.Lookup("status").Int(),
+        Number: uint32(doc.Lookup("number").Int32()),
+        Status: int(doc.Lookup("status").Int32()),
     }
     return account, nil
 }
@@ -49,14 +45,14 @@ func (s *Storage) GetLayers(parent context.Context, query *bson.D) ([]*model.Lay
     if err != nil {
         return nil, err
     }
-    if len(docs) == 0 {
+    if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    layers := make([]*model.Layer, len(docs), len(docs))
-    for i, doc := range docs {
+    layers := make([]*model.Layer, len(docs.([]bson.D)), len(docs.([]bson.D)))
+    for i, doc := range docs.([]bson.D) {
         layers[i] = &model.Layer{
-            Number: uint64(doc.Lookup("number").Int64()),
-            Status: doc.Lookup("status").Int(),
+            Number: uint32(doc[0].Value.(int32)),
+            Status: int(doc[1].Value.(int32)),
         }
     }
     return layers, nil
@@ -65,7 +61,7 @@ func (s *Storage) GetLayers(parent context.Context, query *bson.D) ([]*model.Lay
 func (s *Storage) SaveLayer(parent context.Context, in *model.Layer) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    res, err := s.db.Collection("layers").InsertOne(ctx, bson.D{
+    _, err := s.db.Collection("layers").InsertOne(ctx, bson.D{
         {"number", in.Number},
         {"status", in.Status},
     })

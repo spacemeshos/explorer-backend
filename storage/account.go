@@ -6,15 +6,11 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
-
-    "github.com/spacemeshos/go-spacemesh/log"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
 
-func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*Account, error) {
+func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*model.Account, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("accounts").Find(ctx, query)
@@ -32,7 +28,7 @@ func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*Account, e
     return account, nil
 }
 
-func (s *Storage) GetAccounts(parent context.Context, query *bson.D) ([]*Account, error) {
+func (s *Storage) GetAccounts(parent context.Context, query *bson.D) ([]*model.Account, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("accounts").Find(ctx, query)
@@ -44,23 +40,23 @@ func (s *Storage) GetAccounts(parent context.Context, query *bson.D) ([]*Account
     if err != nil {
         return nil, err
     }
-    if len(docs) == 0 {
+    if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    accounts := make([]*model.Account, len(docs), len(docs))
-    for i, doc := range docs {
+    accounts := make([]*model.Account, len(docs.([]bson.D)), len(docs.([]bson.D)))
+    for i, doc := range docs.([]bson.D) {
         accounts[i] = &model.Account{
-            Address: doc.Lookup("address").String(),
-            Balance: uint64(doc.Lookup("balance").Int64()),
+            Address: doc[0].Value.(string),
+            Balance: uint64(doc[1].Value.(int64)),
         }
     }
     return accounts, nil
 }
 
-func (s *Storage) SaveAccount(parent context.Context, in *Account) error {
+func (s *Storage) SaveAccount(parent context.Context, in *model.Account) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    res, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
+    _, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
         {"address", in.Address},
         {"balance", in.Balance},
     })

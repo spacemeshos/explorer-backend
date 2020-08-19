@@ -6,18 +6,14 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
-
-    "github.com/spacemeshos/go-spacemesh/log"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
 
 type BlockService interface {
-    GetBlock(ctx context.Context, query *bson.D) (*Block, error)
-    GetBlocks(ctx context.Context, query *bson.D) ([]*Block, error)
-    SaveBlock(ctx context.Context, in *Block) error
+    GetBlock(ctx context.Context, query *bson.D) (*model.Block, error)
+    GetBlocks(ctx context.Context, query *bson.D) ([]*model.Block, error)
+    SaveBlock(ctx context.Context, in *model.Block) error
 }
 func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
@@ -32,7 +28,7 @@ func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block,
     doc := cursor.Current
     account := &model.Block{
         Id: doc.Lookup("id").String(),
-        Layer: uint64(doc.Lookup("layer").Int64()),
+        Layer: uint32(doc.Lookup("layer").Int32()),
     }
     return account, nil
 }
@@ -49,14 +45,14 @@ func (s *Storage) GetBlocks(parent context.Context, query *bson.D) ([]*model.Blo
     if err != nil {
         return nil, err
     }
-    if len(docs) == 0 {
+    if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    blocks := make([]*model.Block, len(docs), len(docs))
-    for i, doc := range docs {
+    blocks := make([]*model.Block, len(docs.([]bson.D)), len(docs.([]bson.D)))
+    for i, doc := range docs.([]bson.D) {
         blocks[i] = &model.Block{
-            Id: doc.Lookup("id").String(),
-            Layer: uint64(doc.Lookup("layer").Int64()),
+            Id: doc[0].Value.(string),
+            Layer: uint32(doc[1].Value.(int32)),
         }
     }
     return blocks, nil
@@ -65,7 +61,7 @@ func (s *Storage) GetBlocks(parent context.Context, query *bson.D) ([]*model.Blo
 func (s *Storage) SaveBlock(parent context.Context, in *model.Block) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    res, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
+    _, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
         {"id", in.Id},
         {"layer", in.Layer},
     })
@@ -76,7 +72,7 @@ func (s *Storage) SaveBlocks(parent context.Context, in []*model.Block) error {
     ctx, cancel := context.WithTimeout(parent, 10*time.Second)
     defer cancel()
     for _, block := range in {
-        res, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
+        _, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
             {"id", block.Id},
             {"layer", block.Layer},
         })

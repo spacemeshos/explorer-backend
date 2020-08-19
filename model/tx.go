@@ -1,6 +1,8 @@
 package model
 
 import (
+    "context"
+
     "go.mongodb.org/mongo-driver/bson"
     pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
     "github.com/spacemeshos/explorer-backend/utils"
@@ -9,7 +11,7 @@ import (
 type Transaction struct {
     Id		string
 
-    Layer	uint64
+    Layer	uint32
     Block	string
     Index	uint32	// the index of the tx in the ordered list of txs to be executed by stf in the layer
     Result	int
@@ -34,7 +36,7 @@ type Transaction struct {
 
 type TransactionReceipt struct {
     Id		string
-    Layer	uint64
+    Layer	uint32
     Index	uint32	// the index of the tx in the ordered list of txs to be executed by stf in the layer
     Result	int
     GasUsed	uint64	// gas units used by the transaction (gas price in tx)
@@ -50,40 +52,40 @@ type TransactionService interface {
 
 func NewTransactionReceipt(txReceipt *pb.TransactionReceipt) *TransactionReceipt {
     return &TransactionReceipt{
-        Id: utils.BytesToHex(in.GetId().GetId()),
-        Result: txReceipt.GetResult(),
+        Id: utils.BytesToHex(txReceipt.GetId().GetId()),
+        Result: int(txReceipt.GetResult()),
         GasUsed: txReceipt.GetGasUsed(),
         Fee: txReceipt.GetFee().GetValue(),
-        Layer: txReceipt.GetLayerNumber(),
+        Layer: uint32(txReceipt.GetLayerNumber()),
         Index: txReceipt.GetIndex(),
-        SvmData: txReceipt.GetSvmData(),
+        SvmData: utils.BytesToHex(txReceipt.GetSvmData()),
     }
 }
 
-func NewTransaction(in *pb.Transaction, layer uint64, blockId string) *Transaction {
+func NewTransaction(in *pb.Transaction, layer uint32, blockId string) *Transaction {
     gas := in.GetGasOffered()
     sig := in.GetSignature()
 
     tx := &Transaction{
         Id: utils.BytesToHex(in.GetId().GetId()),
         Sender: utils.BytesToAddressString(in.GetSender().GetAddress()),
-        Amount: uint64(in.GetAmount().GetValue()),
+        Amount: in.GetAmount().GetValue(),
         Counter: in.GetCounter(),
         Layer: layer,
         Block: blockId,
         GasProvided: gas.GetGasProvided(),
         GasPrice: gas.GetGasPrice(),
-        Scheme: sig.GetScheme(),
+        Scheme: int(sig.GetScheme()),
         Signature: utils.BytesToHex(sig.GetSignature()),
         PublicKey: utils.BytesToHex(sig.GetPublicKey()),
     }
 
-    if data := t.GetCoinTransfer(); data != nil {
-        tx.Receiver = utils.BytesToAddressString(data.GetReceiver().GetAddress()),
-    } else if data := t.GetSmartContract(); data != nil {
-        tx.Type = data.GetType(),
-        tx.SvmData = data.GetData(),
-        tx.Receiver = utils.BytesToAddressString(data.GetAccountId().GetAddress()),
+    if data := in.GetCoinTransfer(); data != nil {
+        tx.Receiver = utils.BytesToAddressString(data.GetReceiver().GetAddress())
+    } else if data := in.GetSmartContract(); data != nil {
+        tx.Type = int(data.GetType())
+        tx.SvmData = utils.BytesToHex(data.GetData())
+        tx.Receiver = utils.BytesToAddressString(data.GetAccountId().GetAddress())
     }
 
     return tx

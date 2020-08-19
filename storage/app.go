@@ -6,10 +6,6 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
-
-    "github.com/spacemeshos/go-spacemesh/log"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
@@ -43,13 +39,13 @@ func (s *Storage) GetApps(parent context.Context, query *bson.D) ([]*model.App, 
     if err != nil {
         return nil, err
     }
-    if len(docs) == 0 {
+    if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    accounts := make([]*model.App, len(docs), len(docs))
-    for i, doc := range docs {
+    accounts := make([]*model.App, len(docs.([]bson.D)), len(docs.([]bson.D)))
+    for i, doc := range docs.([]bson.D) {
         accounts[i] = &model.App{
-            Address: doc.Lookup("address").String(),
+            Address: doc[0].Value.(string),
         }
     }
     return accounts, nil
@@ -58,7 +54,7 @@ func (s *Storage) GetApps(parent context.Context, query *bson.D) ([]*model.App, 
 func (s *Storage) SaveApp(parent context.Context, in *model.App) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    res, err := s.db.Collection("apps").InsertOne(ctx, bson.D{
+    _, err := s.db.Collection("apps").InsertOne(ctx, bson.D{
         {"address", in.Address},
     })
     return err
