@@ -1,4 +1,4 @@
-module explorer-backend
+module github.com/spacemeshos/explorer-backend
 
 go 1.14
 
