@@ -1,0 +1,107 @@
+package rest
+
+import (
+    "context"
+    "fmt"
+    "io/ioutil"
+    "net/http"
+    "sync"
+    "sync/atomic"
+
+    "github.com/spacemeshos/go-spacemesh/log"
+    "github.com/spacemeshos/explorer-backend/storage"
+)
+
+type Header map[string]string
+
+type Service struct {
+    ctx      context.Context
+    cancel   context.CancelFunc
+    storage  *storage.Storage
+
+    pool sync.Pool
+}
+
+var requestID uint64
+
+func GetNextRequestID() uint64 {
+    return atomic.AddUint64(&requestID, 1)
+}
+
+func New(ctx context.Context, storage *storage.Storage) (*Service, error) {
+
+    log.Info("Creating new REST service")
+
+    service := &Service{
+        storage: storage,
+        pool: sync.Pool{
+            New: func() interface{} {
+                return make([]byte, 4096)
+            },
+        },
+    }
+
+    if ctx == nil {
+        service.ctx, service.cancel = context.WithCancel(context.Background())
+    } else {
+        service.ctx, service.cancel = context.WithCancel(ctx)
+    }
+
+    log.Info("REST service is created")
+    return service, nil
+}
+
+func (s *Service) Shutdown() error {
+    defer s.cancel()
+
+    return nil
+}
+
+func (s *Service) process(method string, w http.ResponseWriter, r *http.Request, fn func(reqID uint64, requestBuf []byte, buf []byte) ([]byte, Header, int, error)) error {
+
+    reqId := GetNextRequestID()
+
+    log.Info("Check allowed HTTP method: %v, %v", r.Method, method)
+    if r.Method != method {
+        return fmt.Errorf("HTTP method is not allowed: %v, request.Method %v, method %v", reqId, r.Method, method)
+    }
+
+    log.Info("Reading request body: %v", reqId)
+    requestBuf, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        return fmt.Errorf("Failed to read HTTP body: reqID %v, err %v", reqId, err)
+    }
+    log.Info("Read request body: reqID %v, len(body) %v", reqId, len(requestBuf))
+
+    var buf []byte
+
+    responseBuf, header, status, err := fn(reqId, requestBuf, buf)
+    if err != nil {
+        w.WriteHeader(status)
+        log.Info("Process errro %v", err)
+        return err
+    }
+
+    if header != nil {
+        for key, h := range header {
+            w.Header().Set(key, h)
+        }
+    }
+
+    log.Info("Set HTTP response status: reqID %v, Status %v", reqId, http.StatusText(status))
+    w.WriteHeader(status)
+
+    if responseBuf != nil && len(responseBuf) > 0 {
+        log.Info("Writing HTTP response body: reqID %v, len(body) %v", reqId, len(responseBuf))
+        respWrittenLen, err := w.Write(responseBuf)
+        if err != nil {
+            log.Info("Failed to write HTTP repsonse: reqID %v error %v", reqId, err)
+            return err
+        }
+        log.Info("Written HTTP response: reqID %v, len(body) %v", reqId, respWrittenLen)
+    } else {
+        log.Info("HTTP response body is empty")
+    }
+
+    return nil
+}
