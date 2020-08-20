@@ -14,32 +14,36 @@ import (
 )
 
 type Storage struct {
+    NetId                    uint64
+    GenesisTime              uint64
+    EpochNumLayers           uint64
+    MaxTransactionsPerSecond uint64
+    LayerDuration            uint64
+
     client *mongo.Client
     db *mongo.Database
 }
 
-func New() *Storage {
-    return &Storage{}
-}
-
-func (s *Storage) Open(dbUrl string, dbName string) error {
+func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) {
     ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
     client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbUrl))
 
     if err != nil {
-        return err
+        return nil, err
     }
 
     err = client.Ping(ctx, nil)
 
     if err != nil {
-        return err
+        return nil, err
     }
 
-    s.client = client
+    s := &Storage{
+        client: client,
+    }
     s.db = client.Database(dbName)
 
-    return nil
+    return s, nil
 }
 
 func (s *Storage) Close() {
@@ -51,6 +55,11 @@ func (s *Storage) Close() {
 }
 
 func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers uint64, maxTransactionsPerSecond uint64, layerDuration uint64) {
+    s.NetId = netId
+    s.GenesisTime = genesisTime
+    s.EpochNumLayers = epochNumLayers
+    s.MaxTransactionsPerSecond = maxTransactionsPerSecond
+    s.LayerDuration = layerDuration
 }
 
 func (s *Storage) OnLayer(in *pb.Layer) {

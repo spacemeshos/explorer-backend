@@ -4,6 +4,7 @@ import (
     "context"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo/options"
     pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
     "github.com/spacemeshos/explorer-backend/utils"
 )
@@ -46,7 +47,7 @@ type TransactionReceipt struct {
 
 type TransactionService interface {
     GetTransaction(ctx context.Context, query *bson.D) (*Transaction, error)
-    GetTransactions(ctx context.Context, query *bson.D) ([]*Transaction, error)
+    GetTransactions(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Transaction, error)
     SaveTransaction(ctx context.Context, in *Transaction) error
 }
 

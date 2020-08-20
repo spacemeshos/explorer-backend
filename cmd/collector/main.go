@@ -1,6 +1,7 @@
 package main
 
 import (
+    "context"
     "fmt"
     "os"
 
@@ -57,9 +58,7 @@ func main() {
 
         log.InitSpacemeshLoggingSystem("", "spacemesh-explorer-collector.log")
 
-        mongoStorage := storage.New()
-
-        err := mongoStorage.Open(mongoDbUrlStringFlag, mongoDbNameStringFlag)
+        mongoStorage, err := storage.New(context.Background(), mongoDbUrlStringFlag, mongoDbNameStringFlag)
         if err != nil {
             log.Info("MongoDB storage open error %v", err)
             return err

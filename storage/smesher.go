@@ -6,6 +6,7 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
@@ -43,10 +44,10 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
     return account, nil
 }
 
-func (s *Storage) GetSmeshers(parent context.Context, query *bson.D) ([]*model.Smesher, error) {
+func (s *Storage) GetSmeshers(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Smesher, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    cursor, err := s.db.Collection("smeshers").Find(ctx, query)
+    cursor, err := s.db.Collection("smeshers").Find(ctx, query, opts...)
     if err != nil {
         return nil, err
     }

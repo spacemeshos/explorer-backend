@@ -6,6 +6,7 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
@@ -33,10 +34,10 @@ func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block,
     return account, nil
 }
 
-func (s *Storage) GetBlocks(parent context.Context, query *bson.D) ([]*model.Block, error) {
+func (s *Storage) GetBlocks(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Block, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    cursor, err := s.db.Collection("blocks").Find(ctx, query)
+    cursor, err := s.db.Collection("blocks").Find(ctx, query, opts...)
     if err != nil {
         return nil, err
     }

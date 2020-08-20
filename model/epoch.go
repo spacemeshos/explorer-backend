@@ -4,6 +4,7 @@ import (
     "context"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Statistics struct {
@@ -29,6 +30,6 @@ type Epoch struct {
 
 type EpochService interface {
     GetEpoch(ctx context.Context, query *bson.D) (*Epoch, error)
-    GetEpochs(ctx context.Context, query *bson.D) ([]*Epoch, error)
+    GetEpochs(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Epoch, error)
     SaveEpoch(ctx context.Context, in *Epoch) error
 }

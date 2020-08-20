@@ -4,6 +4,7 @@ import (
     "context"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Block struct {
@@ -13,6 +14,6 @@ type Block struct {
 
 type BlockService interface {
     GetBlock(ctx context.Context, query *bson.D) (*Block, error)
-    GetBlocks(ctx context.Context, query *bson.D) ([]*Block, error)
+    GetBlocks(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Block, error)
     SaveBlock(ctx context.Context, in *Block) error
 }

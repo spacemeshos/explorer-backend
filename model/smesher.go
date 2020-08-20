@@ -4,6 +4,7 @@ import (
     "context"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Geo struct {
@@ -19,6 +20,6 @@ type Smesher struct {
 
 type SmesherService interface {
     GetSmesher(ctx context.Context, query *bson.D) (*Smesher, error)
-    GetSmeshers(ctx context.Context, query *bson.D) ([]*Smesher, error)
+    GetSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Smesher, error)
     SaveSmesher(ctx context.Context, in *Smesher) error
 }

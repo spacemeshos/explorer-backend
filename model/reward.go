@@ -4,6 +4,7 @@ import (
     "context"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo/options"
     pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
     "github.com/spacemeshos/explorer-backend/utils"
 )
@@ -20,7 +21,7 @@ type Reward struct {
 
 type RewardService interface {
     GetReward(ctx context.Context, query *bson.D) (*Reward, error)
-    GetRewards(ctx context.Context, query *bson.D) ([]*Reward, error)
+    GetRewards(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Reward, error)
     SaveReward(ctx context.Context, in *Reward) error
 }
 
