@@ -99,9 +99,15 @@ func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers
     s.LayerDuration = layerDuration
 }
 
+func (s *Storage) GetEpochLayers(epoch uint32) (uint32, uint32) {
+    start := epoch * uint32(s.EpochNumLayers)
+    end := start + uint32(s.EpochNumLayers) - 1
+    return start, end
+}
+
 func (s *Storage) OnLayer(in *pb.Layer) {
     if model.IsConfirmedLayer(in) {
-        layer, blocks, atxs, txs := model.NewLayer(in)
+        layer, blocks, atxs, txs := model.NewLayer(in, s.GenesisTime, s.LayerDuration)
         s.SaveLayer(context.Background(), layer)
         s.SaveBlocks(context.Background(), blocks)
         s.SaveActivations(context.Background(), atxs)

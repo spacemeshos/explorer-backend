@@ -58,7 +58,13 @@ func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.
     return account, nil
 }
 
-func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Transaction, error) {
+func (s *Storage) GetTransactionsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("transactions").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("txs").Find(ctx, query, opts...)
@@ -73,30 +79,7 @@ func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ..
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    txs := make([]*model.Transaction, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        txs[i] = &model.Transaction{
-            Id: doc[0].Value.(string),
-            Layer: uint32(doc[1].Value.(int32)),
-            Block: doc[2].Value.(string),
-            Index: uint32(doc[3].Value.(int32)),
-            Result: int(doc[4].Value.(int32)),
-            GasProvided: uint64(doc[5].Value.(int64)),
-            GasPrice: uint64(doc[6].Value.(int64)),
-            GasUsed: uint64(doc[7].Value.(int64)),
-            Fee: uint64(doc[8].Value.(int64)),
-            Amount: uint64(doc[9].Value.(int64)),
-            Counter: uint64(doc[10].Value.(int64)),
-            Type: int(doc[11].Value.(int32)),
-            Scheme: int(doc[12].Value.(int32)),
-            Signature: doc[13].Value.(string),
-            PublicKey: doc[14].Value.(string),
-            Sender: doc[15].Value.(string),
-            Receiver: doc[16].Value.(string),
-            SvmData: doc[17].Value.(string),
-        }
-    }
-    return txs, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction) error {

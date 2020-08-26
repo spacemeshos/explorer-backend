@@ -35,7 +35,13 @@ func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block,
     return account, nil
 }
 
-func (s *Storage) GetBlocks(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Block, error) {
+func (s *Storage) GetBlocksCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("blocks").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetBlocks(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("blocks").Find(ctx, query, opts...)
@@ -50,14 +56,7 @@ func (s *Storage) GetBlocks(parent context.Context, query *bson.D, opts ...*opti
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    blocks := make([]*model.Block, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        blocks[i] = &model.Block{
-            Id: doc[0].Value.(string),
-            Layer: uint32(doc[1].Value.(int32)),
-        }
-    }
-    return blocks, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveBlock(parent context.Context, in *model.Block) error {

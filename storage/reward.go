@@ -44,7 +44,13 @@ func (s *Storage) GetReward(parent context.Context, query *bson.D) (*model.Rewar
     return account, nil
 }
 
-func (s *Storage) GetRewards(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Reward, error) {
+func (s *Storage) GetRewardsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("rewards").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetRewards(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("rewards").Find(ctx, query, opts...)
@@ -59,18 +65,7 @@ func (s *Storage) GetRewards(parent context.Context, query *bson.D, opts ...*opt
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    rewards := make([]*model.Reward, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        rewards[i] = &model.Reward{
-            Layer: uint32(doc[0].Value.(int32)),
-            Total: uint64(doc[1].Value.(int64)),
-            LayerReward: uint64(doc[2].Value.(int64)),
-            LayerComputed: uint32(doc[3].Value.(int32)),
-            Coinbase: doc[4].Value.(string),
-            Smesher: doc[5].Value.(string),
-        }
-    }
-    return rewards, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveReward(parent context.Context, in *model.Reward) error {

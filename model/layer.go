@@ -12,6 +12,11 @@ import (
 type Layer struct {
     Number	uint32
     Status	int
+    Txs		uint32
+    Start	uint32
+    End		uint32
+    TxsAmount	uint64
+    AtxCSize	uint64
 }
 
 type LayerService interface {
@@ -20,13 +25,15 @@ type LayerService interface {
     SaveLayer(ctx context.Context, in *Layer) error
 }
 
-func NewLayer(l *pb.Layer) (*Layer, []*Block, []*Activation, map[string]*Transaction) {
+func NewLayer(l *pb.Layer, genesisTime uint64, layerDuration uint64) (*Layer, []*Block, []*Activation, map[string]*Transaction) {
     pbBlocks := l.GetBlocks()
     pbAtxs := l.GetActivations()
     layer := &Layer{
         Number: l.GetNumber().GetNumber(),
         Status: int(l.GetStatus()),
     }
+    layer.Start = uint32(genesisTime + uint64(layer.Number) * layerDuration)
+    layer.End = layer.Start + uint32(layerDuration) - 1
 
     blocks := make([]*Block, len(pbBlocks))
     atxs := make([]*Activation, len(pbAtxs))
@@ -43,8 +50,14 @@ func NewLayer(l *pb.Layer) (*Layer, []*Block, []*Activation, map[string]*Transac
         }
     }
 
+    layer.Txs = uint32(len(txs))
+    for _, tx := range txs {
+        layer.TxsAmount += tx.Amount
+    }
+
     for i, a := range pbAtxs {
         atxs[i] = NewActivation(a)
+        layer.AtxCSize += atxs[i].CommitmentSize
     }
 
     return layer, blocks, atxs, txs

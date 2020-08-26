@@ -31,11 +31,22 @@ func (s *Storage) GetLayer(parent context.Context, query *bson.D) (*model.Layer,
     account := &model.Layer{
         Number: uint32(doc.Lookup("number").Int32()),
         Status: int(doc.Lookup("status").Int32()),
+        Txs: uint32(doc.Lookup("txs").Int32()),
+        Start: uint32(doc.Lookup("start").Int32()),
+        End: uint32(doc.Lookup("end").Int32()),
+        TxsAmount: uint64(doc.Lookup("txsamount").Int64()),
+        AtxCSize: uint64(doc.Lookup("atxssize").Int64()),
     }
     return account, nil
 }
 
-func (s *Storage) GetLayers(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Layer, error) {
+func (s *Storage) GetLayersCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("layers").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetLayers(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("layers").Find(ctx, query, opts...)
@@ -50,14 +61,7 @@ func (s *Storage) GetLayers(parent context.Context, query *bson.D, opts ...*opti
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    layers := make([]*model.Layer, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        layers[i] = &model.Layer{
-            Number: uint32(doc[0].Value.(int32)),
-            Status: int(doc[1].Value.(int32)),
-        }
-    }
-    return layers, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveLayer(parent context.Context, in *model.Layer) error {
@@ -66,6 +70,11 @@ func (s *Storage) SaveLayer(parent context.Context, in *model.Layer) error {
     _, err := s.db.Collection("layers").InsertOne(ctx, bson.D{
         {"number", in.Number},
         {"status", in.Status},
+        {"txs", in.Txs},
+        {"start", in.Start},
+        {"end", in.End},
+        {"txsamount", in.TxsAmount},
+        {"atxssize", in.AtxCSize},
     })
     return err
 }

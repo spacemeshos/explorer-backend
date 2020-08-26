@@ -45,7 +45,13 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
     return account, nil
 }
 
-func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Activation, error) {
+func (s *Storage) GetActivationsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("activations").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("activations").Find(ctx, query, opts...)
@@ -60,18 +66,7 @@ func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    accounts := make([]*model.Activation, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        accounts[i] = &model.Activation{
-            Id: doc[0].Value.(string),
-            Layer: uint32(doc[1].Value.(int32)),
-            SmesherId: doc[2].Value.(string),
-            Coinbase: doc[3].Value.(string),
-            PrevAtx: doc[4].Value.(string),
-            CommitmentSize: uint64(doc[5].Value.(int64)),
-        }
-    }
-    return accounts, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) error {

@@ -53,7 +53,13 @@ func (s *Storage) GetEpoch(parent context.Context, query *bson.D) (*model.Epoch,
     return epoch, nil
 }
 
-func (s *Storage) GetEpochs(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Epoch, error) {
+func (s *Storage) GetEpochsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("epochs").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetEpochs(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("epochs").Find(ctx, query, opts...)
@@ -68,33 +74,7 @@ func (s *Storage) GetEpochs(parent context.Context, query *bson.D, opts ...*opti
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    epochs := make([]*model.Epoch, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        epoch := &model.Epoch{
-            Number: doc[0].Value.(int32),
-        }
-        stats := doc[1].Value.(bson.D)
-        current := stats[0].Value.(bson.D)
-        epoch.Stats.Current.Capacity = uint64(current[0].Value.(int64))
-        epoch.Stats.Current.Decentral = uint64(current[1].Value.(int64))
-        epoch.Stats.Current.Smeshers = uint64(current[2].Value.(int64))
-        epoch.Stats.Current.Transactions = uint64(current[3].Value.(int64))
-        epoch.Stats.Current.Accounts = uint64(current[4].Value.(int64))
-        epoch.Stats.Current.Circulation = uint64(current[5].Value.(int64))
-        epoch.Stats.Current.Rewards = uint64(current[6].Value.(int64))
-        epoch.Stats.Current.Security = uint64(current[7].Value.(int64))
-        cumulative := stats[1].Value.(bson.D)
-        epoch.Stats.Cumulative.Capacity = uint64(cumulative[0].Value.(int64))
-        epoch.Stats.Cumulative.Decentral = uint64(cumulative[1].Value.(int64))
-        epoch.Stats.Cumulative.Smeshers = uint64(cumulative[2].Value.(int64))
-        epoch.Stats.Cumulative.Transactions = uint64(cumulative[3].Value.(int64))
-        epoch.Stats.Cumulative.Accounts = uint64(cumulative[4].Value.(int64))
-        epoch.Stats.Cumulative.Circulation = uint64(cumulative[5].Value.(int64))
-        epoch.Stats.Cumulative.Rewards = uint64(cumulative[6].Value.(int64))
-        epoch.Stats.Cumulative.Security = uint64(cumulative[7].Value.(int64))
-        epochs[i] = epoch
-    }
-    return epochs, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveEpoch(parent context.Context, epoch *model.Epoch) error {

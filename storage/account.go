@@ -35,7 +35,13 @@ func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*model.Acco
     return account, nil
 }
 
-func (s *Storage) GetAccounts(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Account, error) {
+func (s *Storage) GetAccountsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("accounts").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetAccounts(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("accounts").Find(ctx, query, opts...)
@@ -50,14 +56,7 @@ func (s *Storage) GetAccounts(parent context.Context, query *bson.D, opts ...*op
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    accounts := make([]*model.Account, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        accounts[i] = &model.Account{
-            Address: doc[0].Value.(string),
-            Balance: uint64(doc[1].Value.(int64)),
-        }
-    }
-    return accounts, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveAccount(parent context.Context, in *model.Account) error {

@@ -34,7 +34,13 @@ func (s *Storage) GetApp(parent context.Context, query *bson.D) (*model.App, err
     return account, nil
 }
 
-func (s *Storage) GetApps(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.App, error) {
+func (s *Storage) GetAppsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    return s.db.Collection("apps").CountDocuments(ctx, query, opts...)
+}
+
+func (s *Storage) GetApps(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     cursor, err := s.db.Collection("apps").Find(ctx, query, opts...)
@@ -49,13 +55,7 @@ func (s *Storage) GetApps(parent context.Context, query *bson.D, opts ...*option
     if len(docs.([]bson.D)) == 0 {
         return nil, nil
     }
-    accounts := make([]*model.App, len(docs.([]bson.D)), len(docs.([]bson.D)))
-    for i, doc := range docs.([]bson.D) {
-        accounts[i] = &model.App{
-            Address: doc[0].Value.(string),
-        }
-    }
-    return accounts, nil
+    return docs.([]bson.D), nil
 }
 
 func (s *Storage) SaveApp(parent context.Context, in *model.App) error {
