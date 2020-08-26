@@ -6,15 +6,27 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
 
+func (s *Storage) InitActivationsStorage(ctx context.Context) error {
+    models := []mongo.IndexModel{
+        {Keys: bson.D{{"id", 1}}, Options: options.Index().SetName("idIndex").SetUnique(true)},
+        {Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)},
+        {Keys: bson.D{{"smesher", 1}}, Options: options.Index().SetName("smesherIndex").SetUnique(false)},
+        {Keys: bson.D{{"coinbase", 1}}, Options: options.Index().SetName("coinbaseIndex").SetUnique(false)},
+    }
+    _, err := s.db.Collection("activations").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(2 * time.Second));
+    return err
+}
+
 func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.Activation, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    cursor, err := s.db.Collection("atxs").Find(ctx, query)
+    cursor, err := s.db.Collection("activations").Find(ctx, query)
     if err != nil {
         return nil, err
     }
@@ -36,7 +48,7 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Activation, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    cursor, err := s.db.Collection("atxs").Find(ctx, query, opts...)
+    cursor, err := s.db.Collection("activations").Find(ctx, query, opts...)
     if err != nil {
         return nil, err
     }
@@ -65,7 +77,7 @@ func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...
 func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    _, err := s.db.Collection("atxs").InsertOne(ctx, bson.D{
+    _, err := s.db.Collection("activations").InsertOne(ctx, bson.D{
         {"id", in.Id},
         {"layer", in.Layer},
         {"smesher", in.SmesherId},
@@ -80,7 +92,7 @@ func (s *Storage) SaveActivations(parent context.Context, in []*model.Activation
     ctx, cancel := context.WithTimeout(parent, 10*time.Second)
     defer cancel()
     for _, atx := range in {
-        _, err := s.db.Collection("atxs").InsertOne(ctx, bson.D{
+        _, err := s.db.Collection("activations").InsertOne(ctx, bson.D{
             {"id", atx.Id},
             {"layer", atx.Layer},
             {"smesher", atx.SmesherId},

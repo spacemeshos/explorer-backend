@@ -6,10 +6,21 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
+
+func (s *Storage) InitRewardsStorage(ctx context.Context) error {
+    models := []mongo.IndexModel{
+        {Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)},
+        {Keys: bson.D{{"smesher", 1}}, Options: options.Index().SetName("smesherIndex").SetUnique(false)},
+        {Keys: bson.D{{"coinbase", 1}}, Options: options.Index().SetName("coinbaseIndex").SetUnique(false)},
+    }
+    _, err := s.db.Collection("rewards").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(2 * time.Second));
+    return err
+}
 
 func (s *Storage) GetReward(parent context.Context, query *bson.D) (*model.Reward, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)

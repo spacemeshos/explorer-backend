@@ -6,16 +6,17 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
 
-type BlockService interface {
-    GetBlock(ctx context.Context, query *bson.D) (*model.Block, error)
-    GetBlocks(ctx context.Context, query *bson.D) ([]*model.Block, error)
-    SaveBlock(ctx context.Context, in *model.Block) error
+func (s *Storage) InitBlocksStorage(ctx context.Context) error {
+    _, err := s.db.Collection("blocks").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"id", 1}}, Options: options.Index().SetName("idIndex").SetUnique(true)});
+    return err
 }
+
 func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()

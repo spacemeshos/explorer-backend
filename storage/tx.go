@@ -6,10 +6,23 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
+
+func (s *Storage) InitTransactionsStorage(ctx context.Context) error {
+    models := []mongo.IndexModel{
+        {Keys: bson.D{{"id", 1}}, Options: options.Index().SetName("idIndex").SetUnique(true)},
+        {Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)},
+        {Keys: bson.D{{"block", 1}}, Options: options.Index().SetName("blockIndex").SetUnique(false)},
+        {Keys: bson.D{{"sender", 1}}, Options: options.Index().SetName("senderIndex").SetUnique(false)},
+        {Keys: bson.D{{"receiver", 1}}, Options: options.Index().SetName("receiverIndex").SetUnique(false)},
+    }
+    _, err := s.db.Collection("txs").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(2 * time.Second));
+    return err
+}
 
 func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.Transaction, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)

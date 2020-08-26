@@ -6,10 +6,16 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
+
+func (s *Storage) InitEpochsStorage(ctx context.Context) error {
+    _, err := s.db.Collection("epochs").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"number", 1}}, Options: options.Index().SetName("numberIndex").SetUnique(true)});
+    return err
+}
 
 func (s *Storage) GetEpoch(parent context.Context, query *bson.D) (*model.Epoch, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)

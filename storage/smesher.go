@@ -6,20 +6,15 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
 
-type Geo struct {
-    Name	string `json:"name"`
-    Coordinates	[2]float64 `json:"coordinates"`
-}
-
-type Smesher struct {
-    Id			string
-    Geo			Geo
-    CommitmentSize	uint64	// commitment size in bytes
+func (s *Storage) InitSmeshersStorage(ctx context.Context) error {
+    _, err := s.db.Collection("smeshers").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"id", 1}}, Options: options.Index().SetName("idIndex").SetUnique(true)});
+    return err
 }
 
 func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smesher, error) {

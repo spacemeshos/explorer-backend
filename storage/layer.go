@@ -6,14 +6,15 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
 
-type Layer struct {
-    Number	uint32
-    Status	int
+func (s *Storage) InitLayersStorage(ctx context.Context) error {
+    _, err := s.db.Collection("layers").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"number", 1}}, Options: options.Index().SetName("numberIndex").SetUnique(true)});
+    return err
 }
 
 func (s *Storage) GetLayer(parent context.Context, query *bson.D) (*model.Layer, error) {

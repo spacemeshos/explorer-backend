@@ -6,10 +6,16 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
     "github.com/spacemeshos/explorer-backend/model"
 )
+
+func (s *Storage) InitAccountsStorage(ctx context.Context) error {
+    _, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(true)});
+    return err
+}
 
 func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*model.Account, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)

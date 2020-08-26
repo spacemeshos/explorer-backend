@@ -9,7 +9,7 @@ import (
     "go.mongodb.org/mongo-driver/mongo/options"
 
     pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-//    "github.com/spacemeshos/go-spacemesh/log"
+    "github.com/spacemeshos/go-spacemesh/log"
     "github.com/spacemeshos/explorer-backend/model"
 )
 
@@ -42,6 +42,43 @@ func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) 
         client: client,
     }
     s.db = client.Database(dbName)
+
+    err = s.InitAccountsStorage(ctx)
+    if err != nil {
+        log.Info("Init accounts storage error: %v", err)
+    }
+    err = s.InitAppsStorage(ctx)
+    if err != nil {
+        log.Info("Init apps storage error: %v", err)
+    }
+    err = s.InitActivationsStorage(ctx)
+    if err != nil {
+        log.Info("Init activations storage error: %v", err)
+    }
+    err = s.InitBlocksStorage(ctx)
+    if err != nil {
+        log.Info("Init blocks storage error: %v", err)
+    }
+    err = s.InitEpochsStorage(ctx)
+    if err != nil {
+        log.Info("Init epochs storage error: %v", err)
+    }
+    err = s.InitLayersStorage(ctx)
+    if err != nil {
+        log.Info("Init layers storage error: %v", err)
+    }
+    err = s.InitRewardsStorage(ctx)
+    if err != nil {
+        log.Info("Init rewards storage error: %v", err)
+    }
+    err = s.InitSmeshersStorage(ctx)
+    if err != nil {
+        log.Info("Init smeshers storage error: %v", err)
+    }
+    err = s.InitTransactionsStorage(ctx)
+    if err != nil {
+        log.Info("Init transactions storage error: %v", err)
+    }
 
     return s, nil
 }
