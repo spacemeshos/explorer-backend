@@ -26,9 +26,9 @@ var flags = []cli.Flag{
     cli.StringFlag{
         Name:        "listen",
         Usage:       "Explorer API listen string in format <host>:<port>",
-        Required:    true,
+        Required:    false,
         Destination: &listenStringFlag,
-        Value:       "localhost:5000",
+        Value:       ":5000",
     },
     cli.StringFlag{
         Name:        "mongodb",

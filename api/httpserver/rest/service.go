@@ -1,6 +1,7 @@
 package rest
 
 import (
+    "bytes"
     "context"
     "fmt"
     "io/ioutil"
@@ -57,7 +58,7 @@ func (s *Service) Shutdown() error {
     return nil
 }
 
-func (s *Service) process(method string, w http.ResponseWriter, r *http.Request, fn func(reqID uint64, requestBuf []byte, buf []byte) ([]byte, Header, int, error)) error {
+func (s *Service) process(method string, w http.ResponseWriter, r *http.Request, fn func(reqID uint64, requestBuf []byte, buf *bytes.Buffer) (Header, int, error)) error {
 
     reqId := GetNextRequestID()
 
@@ -73,9 +74,9 @@ func (s *Service) process(method string, w http.ResponseWriter, r *http.Request,
     }
     log.Info("Read request body: reqID %v, len(body) %v", reqId, len(requestBuf))
 
-    var buf []byte
+    var responseBuf bytes.Buffer
 
-    responseBuf, header, status, err := fn(reqId, requestBuf, buf)
+    header, status, err := fn(reqId, requestBuf, &responseBuf)
     if err != nil {
         w.WriteHeader(status)
         log.Info("Process errro %v", err)
@@ -91,9 +92,9 @@ func (s *Service) process(method string, w http.ResponseWriter, r *http.Request,
     log.Info("Set HTTP response status: reqID %v, Status %v", reqId, http.StatusText(status))
     w.WriteHeader(status)
 
-    if responseBuf != nil && len(responseBuf) > 0 {
-        log.Info("Writing HTTP response body: reqID %v, len(body) %v", reqId, len(responseBuf))
-        respWrittenLen, err := w.Write(responseBuf)
+    if responseBuf.Len() > 0 {
+        log.Info("Writing HTTP response body: reqID %v, len(body) %v", reqId, responseBuf.Len())
+        respWrittenLen, err := responseBuf.WriteTo(w)
         if err != nil {
             log.Info("Failed to write HTTP repsonse: reqID %v error %v", reqId, err)
             return err
