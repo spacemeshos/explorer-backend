@@ -35,3 +35,9 @@ func NewActivation(atx *pb.Activation) *Activation {
     }
 }
 
+func (atx *Activation) GetSmesher() *Smesher {
+    return &Smesher{
+        Id: atx.SmesherId,
+        CommitmentSize: atx.CommitmentSize,
+    }
+}

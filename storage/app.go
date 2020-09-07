@@ -9,6 +9,8 @@ import (
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
+    "github.com/spacemeshos/go-spacemesh/log"
+
     "github.com/spacemeshos/explorer-backend/model"
 )
 
@@ -22,9 +24,11 @@ func (s *Storage) GetApp(parent context.Context, query *bson.D) (*model.App, err
     defer cancel()
     cursor, err := s.db.Collection("apps").Find(ctx, query)
     if err != nil {
+        log.Info("GetApp: %v", err)
         return nil, err
     }
     if !cursor.Next(ctx) {
+        log.Info("GetApp: Empty result")
         return nil, errors.New("Empty result")
     }
     doc := cursor.Current
@@ -34,10 +38,15 @@ func (s *Storage) GetApp(parent context.Context, query *bson.D) (*model.App, err
     return account, nil
 }
 
-func (s *Storage) GetAppsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Storage) GetAppsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    return s.db.Collection("apps").CountDocuments(ctx, query, opts...)
+    count, err := s.db.Collection("apps").CountDocuments(ctx, query, opts...)
+    if err != nil {
+        log.Info("GetAppsCount: %v", err)
+        return 0
+    }
+    return count
 }
 
 func (s *Storage) GetApps(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
@@ -45,14 +54,17 @@ func (s *Storage) GetApps(parent context.Context, query *bson.D, opts ...*option
     defer cancel()
     cursor, err := s.db.Collection("apps").Find(ctx, query, opts...)
     if err != nil {
+        log.Info("GetApps: %v", err)
         return nil, err
     }
     var docs interface{} = []bson.D{}
     err = cursor.All(ctx, &docs)
     if err != nil {
+        log.Info("GetApps: %v", err)
         return nil, err
     }
     if len(docs.([]bson.D)) == 0 {
+        log.Info("GetApps: Empty result")
         return nil, nil
     }
     return docs.([]bson.D), nil
@@ -64,5 +76,8 @@ func (s *Storage) SaveApp(parent context.Context, in *model.App) error {
     _, err := s.db.Collection("apps").InsertOne(ctx, bson.D{
         {"address", in.Address},
     })
+    if err != nil {
+        log.Info("SaveApp: %v", err)
+    }
     return err
 }

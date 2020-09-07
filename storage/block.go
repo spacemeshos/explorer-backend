@@ -9,7 +9,10 @@ import (
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
+    "github.com/spacemeshos/go-spacemesh/log"
+
     "github.com/spacemeshos/explorer-backend/model"
+    "github.com/spacemeshos/explorer-backend/utils"
 )
 
 func (s *Storage) InitBlocksStorage(ctx context.Context) error {
@@ -22,23 +25,30 @@ func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block,
     defer cancel()
     cursor, err := s.db.Collection("blocks").Find(ctx, query)
     if err != nil {
+        log.Info("GetBlock: %v", err)
         return nil, err
     }
     if !cursor.Next(ctx) {
+        log.Info("GetBlock: Empty result", err)
         return nil, errors.New("Empty result")
     }
     doc := cursor.Current
     account := &model.Block{
         Id: doc.Lookup("id").String(),
-        Layer: uint32(doc.Lookup("layer").Int32()),
+        Layer: utils.GetAsUInt32(doc.Lookup("layer")),
     }
     return account, nil
 }
 
-func (s *Storage) GetBlocksCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Storage) GetBlocksCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    return s.db.Collection("blocks").CountDocuments(ctx, query, opts...)
+    count, err := s.db.Collection("blocks").CountDocuments(ctx, query, opts...)
+    if err != nil {
+        log.Info("GetBlocksCount: %v", err)
+        return 0
+    }
+    return count
 }
 
 func (s *Storage) GetBlocks(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
@@ -46,14 +56,17 @@ func (s *Storage) GetBlocks(parent context.Context, query *bson.D, opts ...*opti
     defer cancel()
     cursor, err := s.db.Collection("blocks").Find(ctx, query, opts...)
     if err != nil {
+        log.Info("GetBlocks: %v", err)
         return nil, err
     }
     var docs interface{} = []bson.D{}
     err = cursor.All(ctx, &docs)
     if err != nil {
+        log.Info("GetBlocks: %v", err)
         return nil, err
     }
     if len(docs.([]bson.D)) == 0 {
+        log.Info("GetBlocks: Empty result")
         return nil, nil
     }
     return docs.([]bson.D), nil
@@ -66,6 +79,9 @@ func (s *Storage) SaveBlock(parent context.Context, in *model.Block) error {
         {"id", in.Id},
         {"layer", in.Layer},
     })
+    if err != nil {
+        log.Info("SaveBlock: %v", err)
+    }
     return err
 }
 
@@ -78,6 +94,25 @@ func (s *Storage) SaveBlocks(parent context.Context, in []*model.Block) error {
             {"layer", block.Layer},
         })
         if err != nil {
+            log.Info("SaveBlocks: %v", err)
+            return err
+        }
+    }
+    return nil
+}
+
+func (s *Storage) SaveOrUpdateBlocks(parent context.Context, in []*model.Block) error {
+    ctx, cancel := context.WithTimeout(parent, 10*time.Second)
+    defer cancel()
+    for _, block := range in {
+        _, err := s.db.Collection("blocks").UpdateOne(ctx, bson.D{{"id", block.Id}}, bson.D{
+            {"$set", bson.D{
+                {"id", block.Id},
+                {"layer", block.Layer},
+            }},
+        }, options.Update().SetUpsert(true))
+        if err != nil {
+            log.Info("SaveOrUpdateBlocks: %v", err)
             return err
         }
     }

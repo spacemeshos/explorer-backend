@@ -9,7 +9,10 @@ import (
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 
+    "github.com/spacemeshos/go-spacemesh/log"
+
     "github.com/spacemeshos/explorer-backend/model"
+    "github.com/spacemeshos/explorer-backend/utils"
 )
 
 func (s *Storage) InitRewardsStorage(ctx context.Context) error {
@@ -27,27 +30,71 @@ func (s *Storage) GetReward(parent context.Context, query *bson.D) (*model.Rewar
     defer cancel()
     cursor, err := s.db.Collection("rewards").Find(ctx, query)
     if err != nil {
+        log.Info("GetReward: %v", err)
         return nil, err
     }
     if !cursor.Next(ctx) {
+        log.Info("GetReward: Empty result")
         return nil, errors.New("Empty result")
     }
     doc := cursor.Current
     account := &model.Reward{
-        Layer: uint32(doc.Lookup("layer").Int32()),
-        Total: uint64(doc.Lookup("total").Int64()),
-        LayerReward: uint64(doc.Lookup("layerReward").Int64()),
-        LayerComputed: uint32(doc.Lookup("layerComputed").Int32()),
+        Layer: utils.GetAsUInt32(doc.Lookup("layer")),
+        Total: utils.GetAsUInt64(doc.Lookup("total")),
+        LayerReward: utils.GetAsUInt64(doc.Lookup("layerReward")),
+        LayerComputed: utils.GetAsUInt32(doc.Lookup("layerComputed")),
         Coinbase: doc.Lookup("coinbase").String(),
         Smesher: doc.Lookup("smesher").String(),
     }
     return account, nil
 }
 
-func (s *Storage) GetRewardsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Storage) GetRewardsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    return s.db.Collection("rewards").CountDocuments(ctx, query, opts...)
+    count, err := s.db.Collection("rewards").CountDocuments(ctx, query, opts...)
+    if err != nil {
+        log.Info("GetRewardsCount: %v", err)
+        return 0
+    }
+    return count
+}
+
+func (s *Storage) GetLayersRewards(parent context.Context, layerStart uint32, layerEnd uint32) int64 {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    matchStage := bson.D{
+        {"$match", bson.D{
+            {"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}},
+        }},
+    }
+    groupStage := bson.D{
+        {"$group", bson.D{
+            {"_id", ""},
+            {"total", bson.D{
+                {"$sum", "total"},
+            }},
+            {"layerReward", bson.D{
+                {"$sum", "layerReward"},
+            }},
+        }},
+    }
+    cursor, err := s.db.Collection("rewards").Aggregate(ctx, mongo.Pipeline{
+        matchStage,
+        groupStage,
+    })
+    if err != nil {
+        log.Info("GetLayersRewards: %v", err)
+        return 0
+    }
+    if !cursor.Next(ctx) {
+        log.Info("GetLayersRewards: Empty result")
+        return 0
+    }
+    doc := cursor.Current
+    log.Info("LayersRewards(%v, %v): %v + %v", layerStart, layerEnd, utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("layerReward")))
+    reward := utils.GetAsInt64(doc.Lookup("total")) + utils.GetAsInt64(doc.Lookup("layerReward"))
+    return reward
 }
 
 func (s *Storage) GetRewards(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
@@ -55,11 +102,13 @@ func (s *Storage) GetRewards(parent context.Context, query *bson.D, opts ...*opt
     defer cancel()
     cursor, err := s.db.Collection("rewards").Find(ctx, query, opts...)
     if err != nil {
+        log.Info("GetRewards: %v", err)
         return nil, err
     }
     var docs interface{} = []bson.D{}
     err = cursor.All(ctx, &docs)
     if err != nil {
+        log.Info("GetRewards: %v", err)
         return nil, err
     }
     if len(docs.([]bson.D)) == 0 {
@@ -79,5 +128,8 @@ func (s *Storage) SaveReward(parent context.Context, in *model.Reward) error {
         {"coinbase", in.Coinbase},
         {"smesher", in.Smesher},
     })
+    if err != nil {
+        log.Info("SaveReward: %v", err)
+    }
     return err
 }

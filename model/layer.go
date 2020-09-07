@@ -17,6 +17,7 @@ type Layer struct {
     End		uint32
     TxsAmount	uint64
     AtxCSize	uint64
+    Rewards	uint64
 }
 
 type LayerService interface {
