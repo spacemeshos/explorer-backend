@@ -20,17 +20,18 @@ func (s *Service) LayersHandler(w http.ResponseWriter, r *http.Request) {
 
         filter := &bson.D{}
 
-        total, err := s.storage.GetLayersCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetLayersCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -61,17 +62,18 @@ func (s *Service) LayerHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"number", id}}
 
-        total, err := s.storage.GetLayersCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetLayersCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -102,17 +104,18 @@ func (s *Service) LayerTxsHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"layer", id}}
 
-        total, err := s.storage.GetTransactionsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetTransactionsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -143,17 +146,18 @@ func (s *Service) LayerSmeshersHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"layer", id}}
 
-        total, err := s.storage.GetSmeshersCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetSmeshersCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -184,17 +188,18 @@ func (s *Service) LayerBlocksHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"layer", id}}
 
-        total, err := s.storage.GetBlocksCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetBlocks(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetBlocksCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetBlocks(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -225,17 +230,18 @@ func (s *Service) LayerRewardsHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"layer", id}}
 
-        total, err := s.storage.GetRewardsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"smesher", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetRewardsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"smesher", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -266,17 +272,18 @@ func (s *Service) LayerAtxsHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"layer", id}}
 
-        total, err := s.storage.GetActivationsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetActivations(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetActivationsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetActivations(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}

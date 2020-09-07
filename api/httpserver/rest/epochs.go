@@ -20,22 +20,22 @@ func (s *Service) EpochsHandler(w http.ResponseWriter, r *http.Request) {
 
         filter := &bson.D{}
 
-        total, err := s.storage.GetEpochsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        epochs, err := s.storage.GetEpochs(s.ctx, &bson.D{}, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-        if epochs == nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, epochs)
+        total := s.storage.GetEpochsCount(s.ctx, filter)
+        if total > 0 {
+            epochs, err := s.storage.GetEpochs(s.ctx, &bson.D{}, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, epochs)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
+        header["Content-Type"] = "application/json"
 
         err = setPaginationInfo(buf, total, pageNumber, pageSize)
         if err != nil {
@@ -62,17 +62,18 @@ func (s *Service) EpochHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"number", id}}
 
-        total, err := s.storage.GetEpochsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetEpochs(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetEpochsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetEpochs(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -101,20 +102,21 @@ func (s *Service) EpochTxsHandler(w http.ResponseWriter, r *http.Request) {
         if err != nil {
             return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
         }
-        layerStart, layerEnd := s.storage.GetEpochLayers(uint32(id))
+        layerStart, layerEnd := s.storage.GetEpochLayers(int32(id))
         filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
-
-        total, err := s.storage.GetTransactionsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
 
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetTransactionsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -143,20 +145,21 @@ func (s *Service) EpochSmeshersHandler(w http.ResponseWriter, r *http.Request) {
         if err != nil {
             return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
         }
-        layerStart, layerEnd := s.storage.GetEpochLayers(uint32(id))
+        layerStart, layerEnd := s.storage.GetEpochLayers(int32(id))
         filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
-
-        total, err := s.storage.GetSmeshersCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
 
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetSmeshersCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -185,20 +188,21 @@ func (s *Service) EpochLayersHandler(w http.ResponseWriter, r *http.Request) {
         if err != nil {
             return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
         }
-        layerStart, layerEnd := s.storage.GetEpochLayers(uint32(id))
+        layerStart, layerEnd := s.storage.GetEpochLayers(int32(id))
         filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
-
-        total, err := s.storage.GetLayersCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
 
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetLayersCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -227,20 +231,21 @@ func (s *Service) EpochRewardsHandler(w http.ResponseWriter, r *http.Request) {
         if err != nil {
             return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
         }
-        layerStart, layerEnd := s.storage.GetEpochLayers(uint32(id))
+        layerStart, layerEnd := s.storage.GetEpochLayers(int32(id))
         filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
-
-        total, err := s.storage.GetRewardsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"smesher", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
 
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetRewardsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"smesher", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -269,20 +274,21 @@ func (s *Service) EpochAtxsHandler(w http.ResponseWriter, r *http.Request) {
         if err != nil {
             return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
         }
-        layerStart, layerEnd := s.storage.GetEpochLayers(uint32(id))
+        layerStart, layerEnd := s.storage.GetEpochLayers(int32(id))
         filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
-
-        total, err := s.storage.GetActivationsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetActivations(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
 
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetActivationsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetActivations(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}

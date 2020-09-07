@@ -20,17 +20,18 @@ func (s *Service) SmeshersHandler(w http.ResponseWriter, r *http.Request) {
 
         filter := &bson.D{}
 
-        total, err := s.storage.GetSmeshersCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetSmeshersCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -61,17 +62,18 @@ func (s *Service) SmesherHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"id", id}}
 
-        total, err := s.storage.GetSmeshersCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetSmeshersCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -96,23 +98,21 @@ func (s *Service) SmesherRewardsHandler(w http.ResponseWriter, r *http.Request) 
 
         vars := mux.Vars(r)
         idStr := vars["id"]
-        id, err := strconv.Atoi(idStr)
-        if err != nil {
-            return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
-        }
-        filter := &bson.D{{"smesher", id}}
 
-        total, err := s.storage.GetRewardsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"coinbase", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
+        filter := &bson.D{{"smesher", idStr}}
 
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetRewardsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"coinbase", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -143,17 +143,18 @@ func (s *Service) SmesherAtxsHandler(w http.ResponseWriter, r *http.Request) {
         }
         filter := &bson.D{{"smesher", id}}
 
-        total, err := s.storage.GetActivationsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetActivations(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetActivationsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetActivations(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}

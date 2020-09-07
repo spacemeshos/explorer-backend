@@ -2,9 +2,7 @@ package rest
 
 import (
     "bytes"
-    "fmt"
     "net/http"
-    "strconv"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
@@ -20,17 +18,18 @@ func (s *Service) RewardsHandler(w http.ResponseWriter, r *http.Request) {
 
         filter := &bson.D{}
 
-        total, err := s.storage.GetRewardsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
-
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetRewardsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}
@@ -55,23 +54,21 @@ func (s *Service) RewardHandler(w http.ResponseWriter, r *http.Request) {
 
         vars := mux.Vars(r)
         idStr := vars["id"]
-        id, err := strconv.Atoi(idStr)
-        if err != nil {
-            return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
-        }
-        filter := &bson.D{{"id", id}}
 
-        total, err := s.storage.GetRewardsCount(s.ctx, filter)
-        if err != nil {
-        }
-
-        data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-        if err != nil {
-        }
+        filter := &bson.D{{"_id", idStr}}
 
         buf.WriteByte('{')
 
-        setDataInfo(buf, data)
+        total := s.storage.GetRewardsCount(s.ctx, filter)
+        if total > 0 {
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
+            if err != nil {
+            }
+            setDataInfo(buf, data)
+        } else {
+            setDataInfo(buf, nil)
+        }
+
         buf.WriteByte(',')
 
         header := Header{}

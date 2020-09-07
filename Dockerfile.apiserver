@@ -23,19 +23,15 @@ FROM build_base AS server_builder
 COPY . .
 
 # And compile the project
-RUN make build
+RUN make apiserver
 
 #In this last stage, we start from a fresh Alpine image, to reduce the image size and not ship the Go compiler in our production artifacts.
-FROM alpine AS dash-backend
+FROM alpine AS explorer-api
 
 # Finally we copy the statically compiled Go binary.
-COPY --from=server_builder /go/src/github.com/spacemeshos/explorer-backend/build/explorer-backend /bin/explorer-backend
+COPY --from=server_builder /go/src/github.com/spacemeshos/explorer-backend/build/apiserver /bin/explorer-api
 
-ENTRYPOINT ["/bin/explorer-backend"]
-EXPOSE 8080
+ENTRYPOINT ["/bin/explorer-api"]
 
 # profiling port
 EXPOSE 6060
-
-# gRPC port
-EXPOSE 9990

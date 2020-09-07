@@ -8,33 +8,26 @@ import (
     "go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (s *Service) BlocksHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) NetworkInfoHandler(w http.ResponseWriter, r *http.Request) {
     _ = s.process("GET", w, r, func(reqID uint64, requestBuf []byte, buf *bytes.Buffer) (Header, int, error) {
 
         pageNumber, pageSize, err := getPaginationInfo(r)
         if err != nil {
         }
 
-        filter := &bson.D{}
+        data, err := s.storage.GetEpochs(s.ctx, &bson.D{}, options.Find().SetSort(bson.D{{"number", -1}}).SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
+        if err != nil {
+        }
 
         buf.WriteByte('{')
 
-        total := s.storage.GetBlocksCount(s.ctx, filter)
-        if total > 0 {
-            data, err := s.storage.GetBlocks(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
-            if err != nil {
-            }
-            setDataInfo(buf, data)
-        } else {
-            setDataInfo(buf, nil)
-        }
-
+        setDataInfo(buf, data)
         buf.WriteByte(',')
 
         header := Header{}
         header["Content-Type"] = "application/json"
 
-        err = setPaginationInfo(buf, total, pageNumber, pageSize)
+        err = setPaginationInfo(buf, 1, pageNumber, pageSize)
         if err != nil {
         }
 

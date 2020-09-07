@@ -89,6 +89,8 @@ func (s *Service) process(method string, w http.ResponseWriter, r *http.Request,
         }
     }
 
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+
     log.Info("Set HTTP response status: reqID %v, Status %v", reqId, http.StatusText(status))
     w.WriteHeader(status)
 

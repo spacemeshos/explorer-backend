@@ -354,7 +354,7 @@ func writeD(buf *bytes.Buffer, d *bson.D) {
             buf.WriteByte('"')
             buf.WriteString(e.Key)
             buf.WriteString("\":")
-            encodeString(buf, id.String(), true)
+            encodeString(buf, id.Hex(), true)
         } else {
             buf.WriteByte('"')
             buf.WriteString(e.Key)
