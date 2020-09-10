@@ -2,9 +2,7 @@ package rest
 
 import (
     "bytes"
-    "fmt"
     "net/http"
-    "strconv"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
@@ -56,17 +54,13 @@ func (s *Service) SmesherHandler(w http.ResponseWriter, r *http.Request) {
 
         vars := mux.Vars(r)
         idStr := vars["id"]
-        id, err := strconv.Atoi(idStr)
-        if err != nil {
-            return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
-        }
-        filter := &bson.D{{"id", id}}
+        filter := &bson.D{{"id", idStr}}
 
         buf.WriteByte('{')
 
         total := s.storage.GetSmeshersCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
             setDataInfo(buf, data)
@@ -137,11 +131,7 @@ func (s *Service) SmesherAtxsHandler(w http.ResponseWriter, r *http.Request) {
 
         vars := mux.Vars(r)
         idStr := vars["id"]
-        id, err := strconv.Atoi(idStr)
-        if err != nil {
-            return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
-        }
-        filter := &bson.D{{"smesher", id}}
+        filter := &bson.D{{"smesher", idStr}}
 
         buf.WriteByte('{')
 

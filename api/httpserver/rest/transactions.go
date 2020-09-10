@@ -22,7 +22,7 @@ func (s *Service) TransactionsHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetTransactionsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"timestamp", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
             setDataInfo(buf, data)
@@ -61,7 +61,7 @@ func (s *Service) TransactionHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetTransactionsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
             setDataInfo(buf, data)

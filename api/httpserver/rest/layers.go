@@ -24,7 +24,7 @@ func (s *Service) LayersHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetLayersCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
             setDataInfo(buf, data)
@@ -66,7 +66,7 @@ func (s *Service) LayerHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetLayersCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
             setDataInfo(buf, data)
@@ -234,7 +234,7 @@ func (s *Service) LayerRewardsHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetRewardsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"smesher", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"smesher", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
             if err != nil {
             }
             setDataInfo(buf, data)

@@ -6,6 +6,7 @@ import (
     "os"
     "os/signal"
     "syscall"
+    "time"
 
     "github.com/spacemeshos/go-spacemesh/log"
     "github.com/spacemeshos/explorer-backend/api/httpserver"
@@ -52,6 +53,18 @@ func New(ctx context.Context, cfg *Config) (*Server, error) {
 
     if server.storage, err = storage.New(server.ctx, server.cfg.DbUrl, server.cfg.DbName); err != nil {
         return nil, err
+    }
+
+    for server.storage.NetworkInfo.GenesisTime == 0 {
+        info, err :=  server.storage.GetNetworkInfo(server.ctx)
+        if err == nil {
+            log.Info("Readed network info: %+v", info)
+            server.storage.NetworkInfo = *info
+            log.Info("Storage network info: %+v", server.storage.NetworkInfo)
+            break
+        }
+        log.Info("No network info found in database. Wait for collector.")
+        time.Sleep(1 * time.Second)
     }
 
     if server.httpServer, err = httpserver.New(server.ctx, &server.cfg.httpServerCfg, server.storage); err != nil {

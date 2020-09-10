@@ -6,6 +6,7 @@ import (
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
     "go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -54,14 +55,17 @@ func (s *Service) RewardHandler(w http.ResponseWriter, r *http.Request) {
 
         vars := mux.Vars(r)
         idStr := vars["id"]
+        id, err := primitive.ObjectIDFromHex(idStr);
+        if err != nil {
+        }
 
-        filter := &bson.D{{"_id", idStr}}
+        filter := &bson.D{{"_id", id}}
 
         buf.WriteByte('{')
 
         total := s.storage.GetRewardsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"_id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
             if err != nil {
             }
             setDataInfo(buf, data)

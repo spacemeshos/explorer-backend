@@ -2,9 +2,7 @@ package rest
 
 import (
     "bytes"
-    "fmt"
     "net/http"
-    "strconv"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
@@ -24,8 +22,29 @@ func (s *Service) AccountsHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetAccountsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetAccounts(s.ctx, filter, options.Find().SetSort(bson.D{{"address", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            accounts, err := s.storage.GetAccounts(
+                s.ctx,
+                filter,
+                options.Find().SetSort(bson.D{{"address", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{
+                    {"_id", 0},
+                    {"layer", 0},
+                }),
+            )
             if err != nil {
+            }
+            var data []bson.D = []bson.D{}
+            for _, account := range accounts {
+                sent, received, awards, _, timestamp := s.storage.GetAccountSummary(s.ctx, account[0].Value.(string))
+//                if timestamp != 0 {
+                    data = append(data, bson.D{
+                        {"address", account[0].Value.(string)},
+                        {"sent", sent},
+                        {"received", received},
+                        {"awards", awards},
+                        {"timestamp", timestamp},
+                        {"balance", account[1].Value.(int64)},
+                    })
+//                }
             }
             setDataInfo(buf, data)
         } else {
@@ -56,11 +75,7 @@ func (s *Service) AccountHandler(w http.ResponseWriter, r *http.Request) {
 
         vars := mux.Vars(r)
         idStr := vars["id"]
-        id, err := strconv.Atoi(idStr)
-        if err != nil {
-            return nil, http.StatusBadRequest, fmt.Errorf("Failed to process parameter 'id' invalid number: reqID %v, id %v, error %v", reqID, idStr, err)
-        }
-        filter := &bson.D{{"address", id}}
+        filter := &bson.D{{"address", idStr}}
 
         buf.WriteByte('{')
 
@@ -138,7 +153,12 @@ func (s *Service) AccountTransactionsHandler(w http.ResponseWriter, r *http.Requ
         vars := mux.Vars(r)
         idStr := vars["id"]
 
-        filter := &bson.D{{"sender", idStr}}
+        filter := &bson.D{
+            {"$or", bson.A{
+                bson.D{{"sender", idStr}},
+                bson.D{{"receiver", idStr}},
+            }},
+        }
 
         buf.WriteByte('{')
 
