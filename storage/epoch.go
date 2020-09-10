@@ -56,6 +56,7 @@ func (s *Storage) GetEpoch(parent context.Context, query *bson.D) (*model.Epoch,
     epoch.Stats.Current.Circulation = utils.GetAsInt64(current.Lookup("circulation"))
     epoch.Stats.Current.Rewards = utils.GetAsInt64(current.Lookup("rewards"))
     epoch.Stats.Current.Security = utils.GetAsInt64(current.Lookup("security"))
+    epoch.Stats.Current.TxsAmount = utils.GetAsInt64(current.Lookup("txsamount"))
     cumulative := stats.Lookup("cumulative").Document()
     epoch.Stats.Cumulative.Capacity = utils.GetAsInt64(cumulative.Lookup("capacity"))
     epoch.Stats.Cumulative.Decentral = utils.GetAsInt64(cumulative.Lookup("decentral"))
@@ -65,6 +66,7 @@ func (s *Storage) GetEpoch(parent context.Context, query *bson.D) (*model.Epoch,
     epoch.Stats.Cumulative.Circulation = utils.GetAsInt64(cumulative.Lookup("circulation"))
     epoch.Stats.Cumulative.Rewards = utils.GetAsInt64(cumulative.Lookup("rewards"))
     epoch.Stats.Cumulative.Security = utils.GetAsInt64(cumulative.Lookup("security"))
+    epoch.Stats.Cumulative.TxsAmount = utils.GetAsInt64(cumulative.Lookup("txsamount"))
     return epoch, nil
 }
 
@@ -120,6 +122,7 @@ func (s *Storage) SaveEpoch(parent context.Context, epoch *model.Epoch) error {
                 {"circulation", epoch.Stats.Current.Circulation},
                 {"rewards", epoch.Stats.Current.Rewards},
                 {"security", epoch.Stats.Current.Security},
+                {"txsamount", epoch.Stats.Current.TxsAmount},
             }},
             {"cumulative",  bson.D{
                 {"capacity", epoch.Stats.Cumulative.Capacity},
@@ -130,6 +133,7 @@ func (s *Storage) SaveEpoch(parent context.Context, epoch *model.Epoch) error {
                 {"circulation", epoch.Stats.Cumulative.Circulation},
                 {"rewards", epoch.Stats.Cumulative.Rewards},
                 {"security", epoch.Stats.Cumulative.Security},
+                {"txsamount", epoch.Stats.Cumulative.TxsAmount},
             }},
         }},
     })
@@ -160,6 +164,7 @@ func (s *Storage) SaveOrUpdateEpoch(parent context.Context, epoch *model.Epoch) 
                     {"circulation", epoch.Stats.Current.Circulation},
                     {"rewards", epoch.Stats.Current.Rewards},
                     {"security", epoch.Stats.Current.Security},
+                    {"txsamount", epoch.Stats.Current.TxsAmount},
                 }},
                 {"cumulative",  bson.D{
                     {"capacity", epoch.Stats.Cumulative.Capacity},
@@ -170,6 +175,7 @@ func (s *Storage) SaveOrUpdateEpoch(parent context.Context, epoch *model.Epoch) 
                     {"circulation", epoch.Stats.Cumulative.Circulation},
                     {"rewards", epoch.Stats.Cumulative.Rewards},
                     {"security", epoch.Stats.Cumulative.Security},
+                    {"txsamount", epoch.Stats.Cumulative.TxsAmount},
                 }},
             }},
         }},
@@ -184,22 +190,23 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
     layerStart, layerEnd := s.GetEpochLayers(epoch.Number)
     if epoch.Start == 0 {
         epoch.LayerStart = layerStart
-        epoch.Start = uint32(s.GenesisTime + uint64(layerStart) * s.LayerDuration)
+        epoch.Start = s.NetworkInfo.GenesisTime + layerStart * s.NetworkInfo.LayerDuration
     }
     lastLayer := s.GetLastLayer(context.Background())
     if lastLayer < layerEnd {
         layerEnd = lastLayer
     }
     epoch.LayerEnd = layerEnd
-    epoch.End = uint32(s.GenesisTime + uint64(layerEnd) * s.LayerDuration + s.LayerDuration - 1)
+    epoch.End = s.NetworkInfo.GenesisTime + layerEnd * s.NetworkInfo.LayerDuration + s.NetworkInfo.LayerDuration - 1
     epoch.Layers = epoch.LayerEnd - epoch.LayerStart + 1
-    duration := float64(s.LayerDuration) * float64(s.GetLayersCount(context.Background(), s.GetEpochLayersFilter(epoch.Number, "number")))
+    duration := float64(s.NetworkInfo.LayerDuration) * float64(s.GetLayersCount(context.Background(), s.GetEpochLayersFilter(epoch.Number, "number")))
     layerFilter := s.GetEpochLayersFilter(epoch.Number, "layer")
     epoch.Stats.Current.Transactions = s.GetTransactionsCount(context.Background(), layerFilter)
-    if duration > 0 && s.MaxTransactionsPerSecond > 0 {
-        epoch.Stats.Current.Capacity = int64(math.Round(((float64(epoch.Stats.Current.Transactions) / duration) / float64(s.MaxTransactionsPerSecond)) * 100.0))
+    epoch.Stats.Current.TxsAmount = s.GetTransactionsAmount(context.Background(), layerFilter)
+    if duration > 0 && s.NetworkInfo.MaxTransactionsPerSecond > 0 {
+        epoch.Stats.Current.Capacity = int64(math.Round(((float64(epoch.Stats.Current.Transactions) / duration) / float64(s.NetworkInfo.MaxTransactionsPerSecond)) * 100.0))
     }
-    atxs, err := s.GetActivations(context.Background(), layerFilter, options.Find().SetProjection(bson.D{{"_id", 0},{"smesher", 1},{"cSize", 1}}))
+    atxs, err := s.GetActivations(context.Background(), layerFilter, options.Find().SetProjection(bson.D{{"_id", 0},{"id", 0},{"layer", 0},{"coinbase", 0},{"prevAtx", 0}}))
     if err != nil {
         return
     }
@@ -236,13 +243,4 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 //        }
 //    }
     epoch.Stats.Current.Rewards = s.GetLayersRewards(context.Background(), layerStart, layerEnd)
-//    log.Info("Epoch Statistics:")
-//    log.Info("    capacity: %v", stats.capacity)
-//    log.Info("    decentral: %v", stats.decentral)
-//    log.Info("    smeshers: %v", stats.smeshers)
-//    log.Info("    transactions: %v", stats.transactions)
-//    log.Info("    accounts: %v", stats.accounts)
-//    log.Info("    circulation: %v", stats.circulation)
-//    log.Info("    rewards: %v", stats.rewards)
-//    log.Info("    security: %v", stats.security)
 }

@@ -26,15 +26,15 @@ type LayerService interface {
     SaveLayer(ctx context.Context, in *Layer) error
 }
 
-func NewLayer(l *pb.Layer, genesisTime uint64, layerDuration uint64) (*Layer, []*Block, []*Activation, map[string]*Transaction) {
+func NewLayer(l *pb.Layer, genesisTime uint32, layerDuration uint32) (*Layer, []*Block, []*Activation, map[string]*Transaction) {
     pbBlocks := l.GetBlocks()
     pbAtxs := l.GetActivations()
     layer := &Layer{
         Number: l.GetNumber().GetNumber(),
         Status: int(l.GetStatus()),
     }
-    layer.Start = uint32(genesisTime + uint64(layer.Number) * layerDuration)
-    layer.End = layer.Start + uint32(layerDuration) - 1
+    layer.Start = genesisTime + layer.Number * layerDuration
+    layer.End = layer.Start + layerDuration - 1
 
     blocks := make([]*Block, len(pbBlocks))
     atxs := make([]*Activation, len(pbAtxs))
@@ -45,8 +45,8 @@ func NewLayer(l *pb.Layer, genesisTime uint64, layerDuration uint64) (*Layer, []
             Id: utils.BytesToHex(b.GetId()),
             Layer: layer.Number,
         }
-        for _, t := range b.GetTransactions() {
-            tx := NewTransaction(t, layer.Number, blocks[i].Id)
+        for j, t := range b.GetTransactions() {
+            tx := NewTransaction(t, layer.Number, blocks[i].Id, layer.Start, uint32(j))
             txs[tx.Id] = tx
         }
     }

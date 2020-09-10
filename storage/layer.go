@@ -20,6 +20,10 @@ func (s *Storage) InitLayersStorage(ctx context.Context) error {
     return err
 }
 
+func (s *Storage) GetLayerByNumber(parent context.Context, layerNumber uint32) (*model.Layer, error) {
+    return s.GetLayer(parent, &bson.D{{"number", layerNumber}})
+}
+
 func (s *Storage) GetLayer(parent context.Context, query *bson.D) (*model.Layer, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()

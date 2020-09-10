@@ -17,6 +17,7 @@ import (
 
 func (s *Storage) InitSmeshersStorage(ctx context.Context) error {
     _, err := s.db.Collection("smeshers").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"id", 1}}, Options: options.Index().SetName("idIndex").SetUnique(true)});
+    _, err = s.db.Collection("coinbases").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(true)});
     return err
 }
 
@@ -34,9 +35,9 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
     }
     doc := cursor.Current
     account := &model.Smesher{
-        Id: doc.Lookup("id").String(),
+        Id: utils.GetAsString(doc.Lookup("id")),
         Geo: model.Geo{
-            doc.Lookup("name").String(),
+            utils.GetAsString(doc.Lookup("name")),
             [2]float64 { doc.Lookup("lon").Double(), doc.Lookup("lat").Double() },
         },
         CommitmentSize: utils.GetAsUInt64(doc.Lookup("cSize")),
@@ -116,6 +117,35 @@ func (s *Storage) SaveOrUpdateSmesher(parent context.Context, in *model.Smesher)
     }, options.Update().SetUpsert(true))
     if err != nil {
         log.Info("SaveOrUpdateSmesher: %+v, %v", status, err)
+    }
+    return err
+}
+
+func (s *Storage) GetSmesherByCoinbase(parent context.Context, coinbase string) string {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    cursor, err := s.db.Collection("coinbases").Find(ctx, &bson.D{{"address", coinbase}})
+    if err != nil {
+        log.Info("GetSmesherByCoinbase: %v", err)
+        return ""
+    }
+    if !cursor.Next(ctx) {
+        log.Info("GetSmesherByCoinbase: Empty result")
+        return ""
+    }
+    doc := cursor.Current
+    return utils.GetAsString(doc.Lookup("smesher"))
+}
+
+func (s *Storage) SaveSmesherCoinbase(parent context.Context, smesher string, coinbase string) error {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    _, err := s.db.Collection("coinbases").InsertOne(ctx, bson.D{
+        {"address", coinbase},
+        {"smesher", smesher},
+    })
+    if err != nil {
+        log.Info("SaveSmesherCoinbase: %v", err)
     }
     return err
 }

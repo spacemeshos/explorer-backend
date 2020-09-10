@@ -14,8 +14,10 @@ type Transaction struct {
 
     Layer	uint32
     Block	string
+    BlockIndex	uint32
     Index	uint32	// the index of the tx in the ordered list of txs to be executed by stf in the layer
-    Result	int
+    State	int
+    Timestamp	uint32
 
     GasProvided	uint64
     GasPrice	uint64
@@ -63,7 +65,7 @@ func NewTransactionReceipt(txReceipt *pb.TransactionReceipt) *TransactionReceipt
     }
 }
 
-func NewTransaction(in *pb.Transaction, layer uint32, blockId string) *Transaction {
+func NewTransaction(in *pb.Transaction, layer uint32, blockId string, timestamp uint32, blockIndex uint32) *Transaction {
     gas := in.GetGasOffered()
     sig := in.GetSignature()
 
@@ -74,6 +76,9 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockId string) *Transacti
         Counter: in.GetCounter(),
         Layer: layer,
         Block: blockId,
+        BlockIndex: blockIndex,
+        State: int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
+        Timestamp: timestamp,
         GasProvided: gas.GetGasProvided(),
         GasPrice: gas.GetGasPrice(),
         Scheme: int(sig.GetScheme()),
@@ -90,4 +95,20 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockId string) *Transacti
     }
 
     return tx
+}
+
+func GetTransactionStateFromResult(txResult int) int {
+    switch txResult {
+    case int(pb.TransactionReceipt_TRANSACTION_RESULT_EXECUTED):
+        return int(pb.TransactionState_TRANSACTION_STATE_PROCESSED)
+    case int(pb.TransactionReceipt_TRANSACTION_RESULT_BAD_COUNTER):
+        return int(pb.TransactionState_TRANSACTION_STATE_CONFLICTING)
+    case int(pb.TransactionReceipt_TRANSACTION_RESULT_RUNTIME_EXCEPTION):
+        return int(pb.TransactionState_TRANSACTION_STATE_REJECTED)
+    case int(pb.TransactionReceipt_TRANSACTION_RESULT_INSUFFICIENT_GAS):
+        return int(pb.TransactionState_TRANSACTION_STATE_INSUFFICIENT_FUNDS)
+    case int(pb.TransactionReceipt_TRANSACTION_RESULT_INSUFFICIENT_FUNDS):
+        return int(pb.TransactionState_TRANSACTION_STATE_INSUFFICIENT_FUNDS)
+    }
+    return int(pb.TransactionState_TRANSACTION_STATE_UNSPECIFIED)
 }

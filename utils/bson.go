@@ -54,3 +54,12 @@ func GetAsUInt32(rv bson.RawValue) uint32 {
     }
     return 0
 }
+
+func GetAsString(rv bson.RawValue) string {
+    str, ok := rv.StringValueOK()
+    if !ok {
+        return ""
+    }
+    return str
+}
+

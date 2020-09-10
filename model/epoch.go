@@ -16,6 +16,7 @@ type Statistics struct {
     Circulation		int64	// Total number of Smesh coins in circulation. This is the total balances of all on-mesh accounts.
     Rewards		int64	// Total amount of Smesh minted as mining rewards as of the last known reward distribution event.
     Security		int64	// Total amount of storage committed to the network based on the ATXs in the previous epoch.
+    TxsAmount		int64	// Total amount of coin transferred between accounts in the epoch. Incl coin transactions and smart wallet transactions.
 }
 
 type Stats struct {

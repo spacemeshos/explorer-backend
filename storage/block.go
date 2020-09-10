@@ -34,7 +34,7 @@ func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block,
     }
     doc := cursor.Current
     account := &model.Block{
-        Id: doc.Lookup("id").String(),
+        Id: utils.GetAsString(doc.Lookup("id")),
         Layer: utils.GetAsUInt32(doc.Lookup("layer")),
     }
     return account, nil

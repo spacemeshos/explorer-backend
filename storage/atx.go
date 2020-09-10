@@ -40,11 +40,11 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
     }
     doc := cursor.Current
     account := &model.Activation{
-        Id: doc.Lookup("id").String(),
+        Id: utils.GetAsString(doc.Lookup("id")),
         Layer: utils.GetAsUInt32(doc.Lookup("layer")),
-        SmesherId: doc.Lookup("smesher").String(),
-        Coinbase: doc.Lookup("coinbase").String(),
-        PrevAtx: doc.Lookup("prevAtx").String(),
+        SmesherId: utils.GetAsString(doc.Lookup("smesher")),
+        Coinbase: utils.GetAsString(doc.Lookup("coinbase")),
+        PrevAtx: utils.GetAsString(doc.Lookup("prevAtx")),
         CommitmentSize: utils.GetAsUInt64((doc.Lookup("cSize"))),
     }
     return account, nil

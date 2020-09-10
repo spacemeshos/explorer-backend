@@ -17,6 +17,9 @@ import (
 
 func (s *Storage) InitAccountsStorage(ctx context.Context) error {
     _, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(true)});
+    _, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)});
+    _, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(false)});
+    _, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)});
     return err
 }
 
@@ -34,7 +37,7 @@ func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*model.Acco
     }
     doc := cursor.Current
     account := &model.Account{
-        Address: doc.Lookup("address").String(),
+        Address: utils.GetAsString(doc.Lookup("address")),
         Balance: utils.GetAsUInt64(doc.Lookup("balance")),
     }
     return account, nil
@@ -72,30 +75,133 @@ func (s *Storage) GetAccounts(parent context.Context, query *bson.D, opts ...*op
     return docs.([]bson.D), nil
 }
 
-func (s *Storage) SaveAccount(parent context.Context, in *model.Account) error {
+func (s *Storage) AddAccount(parent context.Context, layer uint32, address string, balance uint64) error {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    _, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
+        {"address", address},
+        {"layer", layer},
+        {"balance", balance},
+    })
+    if err != nil {
+        log.Info("AddAccount: %v", err)
+    }
+    return nil
+}
+
+func (s *Storage) SaveAccount(parent context.Context, layer uint32, in *model.Account) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     _, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
         {"address", in.Address},
+        {"layer", layer},
         {"balance", in.Balance},
     })
     if err != nil {
-        log.Info("SaveAccounts: %v", err)
+        log.Info("SaveAccount: %v", err)
     }
-    return err
+    return nil
 }
 
-func (s *Storage) SaveOrUpdateAccount(parent context.Context, in *model.Account) error {
+func (s *Storage) UpdateAccount(parent context.Context, address string, balance uint64) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    _, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", in.Address}}, bson.D{
+    _, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", address}}, bson.D{
         {"$set", bson.D{
-            {"address", in.Address},
-            {"balance", in.Balance},
+            {"balance", balance},
         }},
-    }, options.Update().SetUpsert(true))
+    })
     if err != nil {
-        log.Info("SaveOrUpdateAccounts: %v", err)
+        log.Info("UpdateAccount: %v", err)
     }
-    return err
+    return nil
+}
+
+func (s *Storage) AddAccountSent(parent context.Context, layer uint32, address string, amount uint64) error {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    _, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
+        {"address", address},
+        {"layer", layer},
+        {"sent", amount},
+    })
+    if err != nil {
+        log.Info("AddAccountSent: %v", err)
+    }
+    return nil
+}
+
+func (s *Storage) AddAccountReceived(parent context.Context, layer uint32, address string, amount uint64) error {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    _, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
+        {"address", address},
+        {"layer", layer},
+        {"received", amount},
+    })
+    if err != nil {
+        log.Info("AddAccountReceived: %v", err)
+    }
+    return nil
+}
+
+func (s *Storage) AddAccountReward(parent context.Context, layer uint32, address string, reward uint64, fee uint64) error {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    status, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
+        {"address", address},
+        {"layer", layer},
+        {"reward", reward},
+        {"fee", fee},
+    })
+    if err != nil {
+        log.Info("AddAccountReward: %v", err)
+    } else {
+        log.Info("AddAccountReward: %v", status)
+    }
+    return nil
+}
+
+func (s *Storage) GetAccountSummary(parent context.Context, address string) (uint64, uint64, uint64, uint64, uint32) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    matchStage := bson.D{
+        {"$match", bson.D{
+            {"address", address},
+        }},
+    }
+    groupStage := bson.D{
+        {"$group", bson.D{
+            {"_id", ""},
+            {"sent", bson.D{
+                {"$sum", "$sent"},
+            }},
+            {"reveived", bson.D{
+                {"$sum", "$reveived"},
+            }},
+            {"awards", bson.D{
+                {"$sum", "$reward"},
+            }},
+            {"fees", bson.D{
+                {"$sum", "$fee"},
+            }},
+            {"layer", bson.D{
+                {"$max", "$layer"},
+            }},
+        }},
+    }
+    cursor, err := s.db.Collection("ledger").Aggregate(ctx, mongo.Pipeline{
+        matchStage,
+        groupStage,
+    })
+    if err != nil {
+        log.Info("GetAccountSummary: %v", err)
+        return 0, 0, 0, 0, 0
+    }
+    if !cursor.Next(ctx) {
+        log.Info("GetAccountSummary: Empty result")
+        return 0, 0, 0, 0, 0
+    }
+    doc := cursor.Current
+    return utils.GetAsUInt64(doc.Lookup("sent")), utils.GetAsUInt64(doc.Lookup("received")), utils.GetAsUInt64(doc.Lookup("awards")), utils.GetAsUInt64(doc.Lookup("fees")), s.NetworkInfo.GenesisTime + s.NetworkInfo.LayerDuration * utils.GetAsUInt32(doc.Lookup("layer"))
 }

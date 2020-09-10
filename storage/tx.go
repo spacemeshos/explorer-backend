@@ -22,6 +22,7 @@ func (s *Storage) InitTransactionsStorage(ctx context.Context) error {
         {Keys: bson.D{{"block", 1}}, Options: options.Index().SetName("blockIndex").SetUnique(false)},
         {Keys: bson.D{{"sender", 1}}, Options: options.Index().SetName("senderIndex").SetUnique(false)},
         {Keys: bson.D{{"receiver", 1}}, Options: options.Index().SetName("receiverIndex").SetUnique(false)},
+        {Keys: bson.D{{"timestamp", -1}}, Options: options.Index().SetName("timestampIndex").SetUnique(false)},
     }
     _, err := s.db.Collection("txs").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(2 * time.Second));
     return err
@@ -41,11 +42,13 @@ func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.
     }
     doc := cursor.Current
     account := &model.Transaction{
-        Id: doc.Lookup("id").String(),
+        Id: utils.GetAsString(doc.Lookup("id")),
         Layer: utils.GetAsUInt32(doc.Lookup("layer")),
-        Block: doc.Lookup("block").String(),
+        Block: utils.GetAsString(doc.Lookup("block")),
+        BlockIndex: utils.GetAsUInt32(doc.Lookup("blockIndex")),
         Index: utils.GetAsUInt32(doc.Lookup("index")),
-        Result: utils.GetAsInt(doc.Lookup("result")),
+        State: utils.GetAsInt(doc.Lookup("state")),
+        Timestamp: utils.GetAsUInt32(doc.Lookup("timestamp")),
         GasProvided: utils.GetAsUInt64(doc.Lookup("gasProvided")),
         GasPrice: utils.GetAsUInt64(doc.Lookup("gasPrice")),
         GasUsed: utils.GetAsUInt64(doc.Lookup("gasUsed")),
@@ -54,11 +57,11 @@ func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.
         Counter: utils.GetAsUInt64(doc.Lookup("counter")),
         Type: utils.GetAsInt(doc.Lookup("type")),
         Scheme: utils.GetAsInt(doc.Lookup("scheme")),
-        Signature: doc.Lookup("signature").String(),
-        PublicKey: doc.Lookup("pubKey").String(),
-        Sender: doc.Lookup("sender").String(),
-        Receiver: doc.Lookup("receiver").String(),
-        SvmData: doc.Lookup("svmData").String(),
+        Signature: utils.GetAsString(doc.Lookup("signature")),
+        PublicKey: utils.GetAsString(doc.Lookup("pubKey")),
+        Sender: utils.GetAsString(doc.Lookup("sender")),
+        Receiver: utils.GetAsString(doc.Lookup("receiver")),
+        SvmData: utils.GetAsString(doc.Lookup("svmData")),
     }
     return account, nil
 }
@@ -66,7 +69,7 @@ func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.
 func (s *Storage) GetTransactionsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    count, err := s.db.Collection("transactions").CountDocuments(ctx, query, opts...)
+    count, err := s.db.Collection("txs").CountDocuments(ctx, query, opts...)
     if err != nil {
         log.Info("GetTransactionsCount: %v", err)
         return 0
@@ -74,10 +77,40 @@ func (s *Storage) GetTransactionsCount(parent context.Context, query *bson.D, op
     return count
 }
 
+func (s *Storage) GetTransactionsAmount(parent context.Context, query *bson.D) int64 {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    matchStage := bson.D{
+        {"$match", query},
+    }
+    groupStage := bson.D{
+        {"$group", bson.D{
+            {"_id", ""},
+            {"amount", bson.D{
+                {"$sum", "$amount"},
+            }},
+        }},
+    }
+    cursor, err := s.db.Collection("txs").Aggregate(ctx, mongo.Pipeline{
+        matchStage,
+        groupStage,
+    })
+    if err != nil {
+        log.Info("GetTransactionsAmount: %v", err)
+        return 0
+    }
+    if !cursor.Next(ctx) {
+        log.Info("GetTransactionsAmount: Empty result")
+        return 0
+    }
+    doc := cursor.Current
+    return utils.GetAsInt64(doc.Lookup("amount"))
+}
+
 func (s *Storage) IsTransactionExists(parent context.Context, txId string) bool {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    count, err := s.db.Collection("transactions").CountDocuments(ctx, bson.D{{"id", txId}})
+    count, err := s.db.Collection("txs").CountDocuments(ctx, bson.D{{"id", txId}})
     if err != nil {
         log.Info("IsTransactionExists: %v", err)
         return false
@@ -112,8 +145,10 @@ func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction)
         {"id", in.Id},
         {"layer", in.Layer},
         {"block", in.Block},
+        {"blockIndex", in.BlockIndex},
         {"index", in.Index},
-        {"result", in.Result},
+        {"state", in.State},
+        {"timestamp", in.Timestamp},
         {"gasProvided", in.GasProvided},
         {"gasPrice", in.GasPrice},
         {"gasUsed", in.GasUsed},
@@ -142,8 +177,10 @@ func (s *Storage) SaveTransactions(parent context.Context, in map[string]*model.
             {"id", tx.Id},
             {"layer", tx.Layer},
             {"block", tx.Block},
+            {"blockIndex", tx.BlockIndex},
             {"index", tx.Index},
-            {"result", tx.Result},
+            {"state", tx.State},
+            {"timestamp", tx.Timestamp},
             {"gasProvided", tx.GasProvided},
             {"gasPrice", tx.GasPrice},
             {"gasUsed", tx.GasUsed},
@@ -172,7 +209,7 @@ func (s *Storage) UpdateTransaction(parent context.Context, in *model.Transactio
     _, err := s.db.Collection("txs").UpdateOne(ctx, bson.D{{"id", in.Id}}, bson.D{
         {"$set", bson.D{
             {"index", in.Index},
-            {"result", in.Result},
+            {"state", model.GetTransactionStateFromResult(in.Result)},
             {"gasUsed", in.GasUsed},
             {"fee", in.Fee},
             {"svmData", in.SvmData},

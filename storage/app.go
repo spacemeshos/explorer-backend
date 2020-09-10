@@ -12,6 +12,7 @@ import (
     "github.com/spacemeshos/go-spacemesh/log"
 
     "github.com/spacemeshos/explorer-backend/model"
+    "github.com/spacemeshos/explorer-backend/utils"
 )
 
 func (s *Storage) InitAppsStorage(ctx context.Context) error {
@@ -32,10 +33,10 @@ func (s *Storage) GetApp(parent context.Context, query *bson.D) (*model.App, err
         return nil, errors.New("Empty result")
     }
     doc := cursor.Current
-    account := &model.App{
-        Address: doc.Lookup("address").String(),
+    app := &model.App{
+        Address: utils.GetAsString(doc.Lookup("address")),
     }
-    return account, nil
+    return app, nil
 }
 
 func (s *Storage) GetAppsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {

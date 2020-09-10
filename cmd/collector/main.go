@@ -7,7 +7,7 @@ import (
 
     "github.com/urfave/cli"
     "github.com/spacemeshos/go-spacemesh/log"
-    "github.com/spacemeshos/dash-backend/collector"
+    "github.com/spacemeshos/explorer-backend/collector"
     "github.com/spacemeshos/explorer-backend/storage"
 )
 
@@ -65,6 +65,8 @@ func main() {
         }
 
         c := collector.NewCollector(nodeAddressStringFlag, mongoStorage)
+
+        mongoStorage.AccountUpdater = c
 
         c.Run()
 
