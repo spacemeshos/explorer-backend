@@ -72,10 +72,10 @@ func (s *Storage) GetEpoch(parent context.Context, query *bson.D) (*model.Epoch,
     return epoch, nil
 }
 
-func (s *Storage) GetEpochsData(parent context.Context, query *bson.D) ([]*model.Epoch, error) {
+func (s *Storage) GetEpochsData(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Epoch, error) {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    cursor, err := s.db.Collection("epochs").Find(ctx, query)
+    cursor, err := s.db.Collection("epochs").Find(ctx, query, opts...)
     if err != nil {
         log.Info("GetEpoch: %v", err)
         return nil, err
