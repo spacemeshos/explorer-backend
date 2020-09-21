@@ -72,6 +72,53 @@ func (s *Storage) GetEpoch(parent context.Context, query *bson.D) (*model.Epoch,
     return epoch, nil
 }
 
+func (s *Storage) GetEpochsData(parent context.Context, query *bson.D) ([]*model.Epoch, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    cursor, err := s.db.Collection("epochs").Find(ctx, query)
+    if err != nil {
+        log.Info("GetEpoch: %v", err)
+        return nil, err
+    }
+    epochs := make([]*model.Epoch, 0)
+    for cursor.Next(ctx) {
+        doc := cursor.Current
+        epoch := &model.Epoch{
+            Number: utils.GetAsInt32(doc.Lookup("number")),
+            Start: utils.GetAsUInt32(doc.Lookup("start")),
+            End: utils.GetAsUInt32(doc.Lookup("end")),
+            LayerStart: utils.GetAsUInt32(doc.Lookup("layerstart")),
+            LayerEnd: utils.GetAsUInt32(doc.Lookup("layerend")),
+            Layers: utils.GetAsUInt32(doc.Lookup("layers")),
+        }
+        stats := doc.Lookup("stats").Document()
+        current := stats.Lookup("current").Document()
+        epoch.Stats.Current.Capacity = utils.GetAsInt64(current.Lookup("capacity"))
+        epoch.Stats.Current.Decentral = utils.GetAsInt64(current.Lookup("decentral"))
+        epoch.Stats.Current.Smeshers = utils.GetAsInt64(current.Lookup("smeshers"))
+        epoch.Stats.Current.Transactions = utils.GetAsInt64(current.Lookup("transactions"))
+        epoch.Stats.Current.Accounts = utils.GetAsInt64(current.Lookup("accounts"))
+        epoch.Stats.Current.Circulation = utils.GetAsInt64(current.Lookup("circulation"))
+        epoch.Stats.Current.Rewards = utils.GetAsInt64(current.Lookup("rewards"))
+        epoch.Stats.Current.RewardsNumber = utils.GetAsInt64(current.Lookup("rewardsnumber"))
+        epoch.Stats.Current.Security = utils.GetAsInt64(current.Lookup("security"))
+        epoch.Stats.Current.TxsAmount = utils.GetAsInt64(current.Lookup("txsamount"))
+        cumulative := stats.Lookup("cumulative").Document()
+        epoch.Stats.Cumulative.Capacity = utils.GetAsInt64(cumulative.Lookup("capacity"))
+        epoch.Stats.Cumulative.Decentral = utils.GetAsInt64(cumulative.Lookup("decentral"))
+        epoch.Stats.Cumulative.Smeshers = utils.GetAsInt64(cumulative.Lookup("smeshers"))
+        epoch.Stats.Cumulative.Transactions = utils.GetAsInt64(cumulative.Lookup("transactions"))
+        epoch.Stats.Cumulative.Accounts = utils.GetAsInt64(cumulative.Lookup("accounts"))
+        epoch.Stats.Cumulative.Circulation = utils.GetAsInt64(cumulative.Lookup("circulation"))
+        epoch.Stats.Cumulative.Rewards = utils.GetAsInt64(cumulative.Lookup("rewards"))
+        epoch.Stats.Cumulative.RewardsNumber = utils.GetAsInt64(cumulative.Lookup("rewardsnumber"))
+        epoch.Stats.Cumulative.Security = utils.GetAsInt64(cumulative.Lookup("security"))
+        epoch.Stats.Cumulative.TxsAmount = utils.GetAsInt64(cumulative.Lookup("txsamount"))
+        epochs = append(epochs, epoch)
+    }
+    return epochs, nil
+}
+
 func (s *Storage) GetEpochsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
