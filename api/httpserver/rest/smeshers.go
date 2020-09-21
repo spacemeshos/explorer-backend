@@ -2,6 +2,7 @@ package rest
 
 import (
     "bytes"
+    "errors"
     "net/http"
 
     "github.com/gorilla/mux"
@@ -65,7 +66,7 @@ func (s *Service) SmesherHandler(w http.ResponseWriter, r *http.Request) {
             }
             setDataInfo(buf, data)
         } else {
-            setDataInfo(buf, nil)
+            return nil, http.StatusNotFound, errors.New("Not found")
         }
 
         buf.WriteByte(',')

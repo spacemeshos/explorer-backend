@@ -122,7 +122,7 @@ func New(ctx context.Context, cfg *Config, storage *storage.Storage) (*Server, e
     server.router.HandleFunc("/address/{id}/txs",            server.restService.AccountTransactionsHandler).Methods("GET")
     server.router.HandleFunc("/address/{id}/rewards",        server.restService.AccountRewardsHandler).Methods("GET")
 
-    server.router.HandleFunc("/blocks/{id}",                 server.restService.BlocksHandler).Methods("GET")
+    server.router.HandleFunc("/blocks/{id}",                 server.restService.BlockHandler).Methods("GET")
 
     log.Info("HTTP server is created")
     return server, nil

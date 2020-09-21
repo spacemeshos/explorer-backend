@@ -2,6 +2,7 @@ package rest
 
 import (
     "bytes"
+    "errors"
     "fmt"
     "net/http"
     "strconv"
@@ -73,7 +74,7 @@ func (s *Service) EpochHandler(w http.ResponseWriter, r *http.Request) {
             }
             setDataInfo(buf, data)
         } else {
-            setDataInfo(buf, nil)
+            return nil, http.StatusNotFound, errors.New("Not found")
         }
 
         buf.WriteByte(',')
@@ -236,7 +237,7 @@ func (s *Service) EpochLayersHandler(w http.ResponseWriter, r *http.Request) {
         total := s.storage.GetLayersCount(s.ctx, filter)
         log.Info("EpochLayersHandler: %v-%v, filter: %+v, total: %v", layerStart, layerEnd, filter, total)
         if total > 0 {
-            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", -11}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetLayers(s.ctx, filter, options.Find().SetSort(bson.D{{"number", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
             setDataInfo(buf, data)

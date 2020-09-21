@@ -2,6 +2,7 @@ package rest
 
 import (
     "bytes"
+    "errors"
     "net/http"
 
     "github.com/gorilla/mux"
@@ -34,17 +35,27 @@ func (s *Service) AccountsHandler(w http.ResponseWriter, r *http.Request) {
             }
             var data []bson.D = []bson.D{}
             for _, account := range accounts {
-                sent, received, awards, _, timestamp := s.storage.GetAccountSummary(s.ctx, account[0].Value.(string))
-//                if timestamp != 0 {
+                address := account[0].Value.(string)
+                sent, received, awards, fees, timestamp := s.storage.GetAccountSummary(s.ctx, address)
+                if timestamp != 0 {
+                    txs := s.storage.GetTransactionsCount(s.ctx, &bson.D{
+                        {"$or", bson.A{
+                            bson.D{{"sender", address}},
+                            bson.D{{"receiver", address}},
+                        }},
+                    })
                     data = append(data, bson.D{
-                        {"address", account[0].Value.(string)},
+                        account[0],
+                        account[1],
+                        account[2],
                         {"sent", sent},
                         {"received", received},
                         {"awards", awards},
+                        {"fees", fees},
+                        {"txs", txs},
                         {"timestamp", timestamp},
-                        {"balance", account[1].Value.(int64)},
                     })
-//                }
+                }
             }
             setDataInfo(buf, data)
         } else {
@@ -81,12 +92,43 @@ func (s *Service) AccountHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetAccountsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetAccounts(s.ctx, filter, options.Find().SetSort(bson.D{{"address", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            accounts, err := s.storage.GetAccounts(
+                s.ctx,
+                filter,
+                options.Find().SetSort(bson.D{{"address", 1}}).SetLimit(1).SetProjection(bson.D{
+                    {"_id", 0},
+                    {"layer", 0},
+                }),
+            )
             if err != nil {
+            }
+            var data []bson.D = []bson.D{}
+            for _, account := range accounts {
+                address := account[0].Value.(string)
+                sent, received, awards, fees, timestamp := s.storage.GetAccountSummary(s.ctx, address)
+                if timestamp != 0 {
+                    txs := s.storage.GetTransactionsCount(s.ctx, &bson.D{
+                        {"$or", bson.A{
+                            bson.D{{"sender", address}},
+                            bson.D{{"receiver", address}},
+                        }},
+                    })
+                    data = append(data, bson.D{
+                        account[0],
+                        account[1],
+                        account[2],
+                        {"sent", sent},
+                        {"received", received},
+                        {"awards", awards},
+                        {"fees", fees},
+                        {"txs", txs},
+                        {"timestamp", timestamp},
+                    })
+                }
             }
             setDataInfo(buf, data)
         } else {
-            setDataInfo(buf, nil)
+            return nil, http.StatusNotFound, errors.New("Not found")
         }
 
         buf.WriteByte(',')
@@ -120,7 +162,7 @@ func (s *Service) AccountRewardsHandler(w http.ResponseWriter, r *http.Request) 
 
         total := s.storage.GetRewardsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"coinbase", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"coinbase", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
             if err != nil {
             }
             setDataInfo(buf, data)

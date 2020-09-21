@@ -2,6 +2,7 @@ package rest
 
 import (
     "bytes"
+    "errors"
     "fmt"
     "net/http"
     "strconv"
@@ -71,7 +72,7 @@ func (s *Service) LayerHandler(w http.ResponseWriter, r *http.Request) {
             }
             setDataInfo(buf, data)
         } else {
-            setDataInfo(buf, nil)
+            return nil, http.StatusNotFound, errors.New("Not found")
         }
 
         buf.WriteByte(',')
