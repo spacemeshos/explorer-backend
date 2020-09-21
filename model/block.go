@@ -10,6 +10,11 @@ import (
 type Block struct {
     Id		string
     Layer	uint32
+    Epoch	uint32
+    Start	uint32
+    End		uint32
+    TxsNumber	uint32
+    TxsValue	uint64
 }
 
 type BlockService interface {

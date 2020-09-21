@@ -16,7 +16,7 @@ import (
 )
 
 type AccountUpdaterService interface {
-    GetAccountBalance(address string) (uint64, error)
+    GetAccountState(address string) (uint64, uint64, error)
 }
 
 type Storage struct {
@@ -145,13 +145,6 @@ func (s *Storage) GetEpochForLayer(layer uint32) uint32 {
 }
 
 func (s *Storage) OnLayer(in *pb.Layer) {
-    if model.IsConfirmedLayer(in) {
-        layer, blocks, atxs, txs := model.NewLayer(in, s.NetworkInfo.GenesisTime, s.NetworkInfo.LayerDuration)
-        s.SaveLayer(context.Background(), layer)
-        s.SaveBlocks(context.Background(), blocks)
-        s.SaveActivations(context.Background(), atxs)
-        s.SaveTransactions(context.Background(), txs)
-    }
     s.pushLayer(in)
 }
 
@@ -161,7 +154,7 @@ func (s *Storage) OnAccount(in *pb.Account) {
     if account == nil {
         return
     }
-    s.UpdateAccount(context.Background(), account.Address, account.Balance)
+    s.UpdateAccount(context.Background(), account.Address, account.Balance, account.Counter)
 }
 
 func (s *Storage) OnReward(in *pb.Reward) {
@@ -170,7 +163,11 @@ func (s *Storage) OnReward(in *pb.Reward) {
     if reward == nil {
         return
     }
-    reward.Smesher = s.GetSmesherByCoinbase(context.Background(), reward.Coinbase)
+    smesher, err := s.GetSmesherByCoinbase(context.Background(), reward.Coinbase)
+    if err == nil {
+        reward.Smesher = smesher.Id
+        reward.Space = smesher.CommitmentSize
+    }
     s.SaveReward(context.Background(), reward)
     s.AddAccount(context.Background(), reward.Layer, reward.Coinbase, 0)
 //    s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.LayerReward, reward.Total - reward.LayerReward)
@@ -218,29 +215,31 @@ func (s *Storage) popAccount() *string {
 }
 
 func (s *Storage) updateLayer(in *pb.Layer) {
-    log.Info("updateLayer(%v)", in.Number.Number)
-    layer, blocks, atxs, txs := model.NewLayer(in, s.NetworkInfo.GenesisTime, s.NetworkInfo.LayerDuration)
+    layer, blocks, atxs, txs := model.NewLayer(in, &s.NetworkInfo)
+    log.Info("updateLayer(%v) -> %v", in.Number.Number, layer.Number)
     s.SaveOrUpdateBlocks(context.Background(), blocks)
     s.updateActivations(layer, atxs)
     s.updateTransactions(layer, txs)
     s.updateLayerRewards(layer)
     s.SaveOrUpdateLayer(context.Background(), layer)
-    s.updateEpochsFrom(int32(layer.Number / s.NetworkInfo.EpochNumLayers))
+    s.updateEpochsFrom(int32(layer.Epoch))
     if s.lastLayer < layer.Number {
         s.lastLayer = layer.Number
     }
 }
 
 func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation) {
+    log.Info("updateActivations")
     s.SaveOrUpdateActivations(context.Background(), atxs)
     for _, atx := range atxs {
-        s.SaveSmesherCoinbase(context.Background(), atx.SmesherId, atx.Coinbase)
-        s.SaveOrUpdateSmesher(context.Background(), atx.GetSmesher())
+        s.SaveSmesher(context.Background(), atx.GetSmesher())
+        s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, atx.CommitmentSize, s.getLayerTimestamp(atx.Layer))
         s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
     }
 }
 
 func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.Transaction) {
+    log.Info("updateTransactions")
     s.SaveTransactions(context.Background(), txs)
     for _, tx := range txs {
         if  tx.Sender != "" {
@@ -257,23 +256,29 @@ func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.T
 }
 
 func (s *Storage) updateLayerRewards(layer *model.Layer) {
-    layer.Rewards = uint64(s.GetLayersRewards(context.Background(), layer.Number, layer.Number))
+    log.Info("updateLayerRewards")
+    rewards, _ := s.GetLayersRewards(context.Background(), layer.Number, layer.Number)
+    layer.Rewards = uint64(rewards)
 }
 
 func (s *Storage) updateEpoch(epochNumber int32, prev *model.Epoch) *model.Epoch {
+    log.Info("updateEpoch(%v)", epochNumber)
     epoch := &model.Epoch{Number: epochNumber}
     s.computeStatistics(epoch)
     if prev != nil {
-        epoch.Stats.Cumulative.Capacity     = epoch.Stats.Current.Capacity
-        epoch.Stats.Cumulative.Decentral    = epoch.Stats.Current.Decentral
-        epoch.Stats.Cumulative.Smeshers     = epoch.Stats.Current.Smeshers
-        epoch.Stats.Cumulative.Transactions = prev.Stats.Cumulative.Transactions + epoch.Stats.Current.Transactions
-        epoch.Stats.Cumulative.Accounts     = epoch.Stats.Current.Accounts
-        epoch.Stats.Cumulative.Circulation  = epoch.Stats.Current.Circulation
-        epoch.Stats.Cumulative.Rewards      = prev.Stats.Cumulative.Rewards + epoch.Stats.Current.Rewards
-        epoch.Stats.Cumulative.Security     = prev.Stats.Current.Security
-        epoch.Stats.Cumulative.TxsAmount    = prev.Stats.Cumulative.TxsAmount + epoch.Stats.Current.TxsAmount
+        epoch.Stats.Cumulative.Capacity      = epoch.Stats.Current.Capacity
+        epoch.Stats.Cumulative.Decentral     = epoch.Stats.Current.Decentral
+        epoch.Stats.Cumulative.Smeshers      = epoch.Stats.Current.Smeshers
+        epoch.Stats.Cumulative.Transactions  = prev.Stats.Cumulative.Transactions + epoch.Stats.Current.Transactions
+        epoch.Stats.Cumulative.Accounts      = epoch.Stats.Current.Accounts
+        epoch.Stats.Cumulative.Rewards       = prev.Stats.Cumulative.Rewards + epoch.Stats.Current.Rewards
+        epoch.Stats.Cumulative.RewardsNumber = prev.Stats.Cumulative.RewardsNumber + epoch.Stats.Current.RewardsNumber
+        epoch.Stats.Cumulative.Security      = prev.Stats.Current.Security
+        epoch.Stats.Cumulative.TxsAmount     = prev.Stats.Cumulative.TxsAmount + epoch.Stats.Current.TxsAmount
+        epoch.Stats.Current.Circulation      = epoch.Stats.Cumulative.Rewards
+        epoch.Stats.Cumulative.Circulation   = epoch.Stats.Current.Circulation
     } else {
+        epoch.Stats.Current.Circulation = epoch.Stats.Current.Rewards
         epoch.Stats.Cumulative = epoch.Stats.Current
     }
     s.SaveOrUpdateEpoch(context.Background(), epoch)
@@ -294,11 +299,11 @@ func (s *Storage) updateEpochsFrom(epochNumber int32) {
 }
 
 func (s *Storage) updateAccount(address string) {
-    balance, err := s.AccountUpdater.GetAccountBalance(address)
+    balance, counter, err := s.AccountUpdater.GetAccountState(address)
     if err != nil {
         return
     }
-    s.UpdateAccount(context.Background(), address, balance)
+    s.UpdateAccount(context.Background(), address, balance, counter)
 }
 
 func (s *Storage) updateLayers() {
@@ -307,8 +312,7 @@ func (s *Storage) updateLayers() {
         s.layersReady.Wait()
         s.layersReady.L.Unlock()
 
-        layer := s.popLayer()
-        if layer != nil {
+        for layer := s.popLayer(); layer != nil; layer = s.popLayer() {
             s.updateLayer(layer)
         }
     }
@@ -320,8 +324,7 @@ func (s *Storage) updateAccounts() {
         s.accountsReady.Wait()
         s.accountsReady.L.Unlock()
 
-        address := s.popAccount()
-        if address != nil {
+        for address := s.popAccount(); address != nil; address = s.popAccount() {
             s.updateAccount(*address)
         }
     }
@@ -330,4 +333,8 @@ func (s *Storage) updateAccounts() {
 func (s *Storage) GetEpochLayersFilter(epochNumber int32, key string) *bson.D {
     layerStart, layerEnd := s.GetEpochLayers(epochNumber)
     return &bson.D{{key, bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
+}
+
+func (s *Storage) getLayerTimestamp(layer uint32) uint32 {
+    return s.NetworkInfo.GenesisTime + layer * s.NetworkInfo.LayerDuration
 }

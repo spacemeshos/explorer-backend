@@ -17,6 +17,7 @@ type Account struct {
     Awards	uint64
     Fees	uint64
     Timestamp	uint32
+    Counter	uint64
 }
 
 type AccountService interface {
@@ -29,6 +30,7 @@ func NewAccount(in *pb.Account) *Account {
     return &Account{
         Address: utils.BytesToAddressString(in.GetAccountId().GetAddress()),
         Balance: in.GetStateCurrent().GetBalance().GetValue(),
+        Counter: in.GetStateCurrent().GetCounter(),
     }
 }
 

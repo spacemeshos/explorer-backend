@@ -16,6 +16,9 @@ type Smesher struct {
     Id			string
     Geo			Geo
     CommitmentSize	uint64	// commitment size in bytes
+    Coinbase		string
+    AtxCount		uint32
+    Timestamp		uint32
 }
 
 type SmesherService interface {

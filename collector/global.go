@@ -11,10 +11,10 @@ import (
     "github.com/spacemeshos/explorer-backend/utils"
 )
 
-func (c *Collector) GetAccountBalance(address string) (uint64, error) {
+func (c *Collector) GetAccountState(address string) (uint64, uint64, error) {
     bytes, err := utils.StringToBytes(address)
     if err != nil {
-        return 0, err
+        return 0, 0, err
     }
     req := &pb.AccountRequest{AccountId: &pb.AccountId{Address: bytes}}
 
@@ -25,14 +25,14 @@ func (c *Collector) GetAccountBalance(address string) (uint64, error) {
     res, err := c.globalClient.Account(ctx, req)
     if err != nil {
         log.Error("cannot get account info: %v", err)
-        return 0, err
+        return 0, 0, err
     }
 
     if res.AccountWrapper == nil || res.AccountWrapper.StateCurrent == nil || res.AccountWrapper.StateCurrent.Balance == nil {
-        return 0, errors.New("Bad result")
+        return 0, 0, errors.New("Bad result")
     }
 
-    return res.AccountWrapper.StateCurrent.Balance.Value, nil
+    return res.AccountWrapper.StateCurrent.Balance.Value, res.AccountWrapper.StateCurrent.Counter, nil
 }
 
 func (c *Collector) globalStatePump() error {

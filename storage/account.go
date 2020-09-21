@@ -39,6 +39,7 @@ func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*model.Acco
     account := &model.Account{
         Address: utils.GetAsString(doc.Lookup("address")),
         Balance: utils.GetAsUInt64(doc.Lookup("balance")),
+        Counter: utils.GetAsUInt64(doc.Lookup("counter")),
     }
     return account, nil
 }
@@ -82,6 +83,7 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
         {"address", address},
         {"layer", layer},
         {"balance", balance},
+        {"counter", uint64(0)},
     })
     if err != nil {
         log.Info("AddAccount: %v", err)
@@ -96,6 +98,7 @@ func (s *Storage) SaveAccount(parent context.Context, layer uint32, in *model.Ac
         {"address", in.Address},
         {"layer", layer},
         {"balance", in.Balance},
+        {"counter", in.Counter},
     })
     if err != nil {
         log.Info("SaveAccount: %v", err)
@@ -103,12 +106,13 @@ func (s *Storage) SaveAccount(parent context.Context, layer uint32, in *model.Ac
     return nil
 }
 
-func (s *Storage) UpdateAccount(parent context.Context, address string, balance uint64) error {
+func (s *Storage) UpdateAccount(parent context.Context, address string, balance uint64, counter uint64) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     _, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", address}}, bson.D{
         {"$set", bson.D{
             {"balance", balance},
+            {"counter", counter},
         }},
     })
     if err != nil {

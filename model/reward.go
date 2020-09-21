@@ -17,6 +17,8 @@ type Reward struct {
     // tx_fee = total - layer_reward
     Coinbase		string	// account awarded this reward
     Smesher		string	// it will be nice to always have this in reward events
+    Space		uint64
+    Timestamp		uint32
 }
 
 type RewardService interface {

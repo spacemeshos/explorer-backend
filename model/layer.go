@@ -10,14 +10,18 @@ import (
 )
 
 type Layer struct {
-    Number	uint32
-    Status	int
-    Txs		uint32
-    Start	uint32
-    End		uint32
-    TxsAmount	uint64
-    AtxCSize	uint64
-    Rewards	uint64
+    Number		uint32
+    Status		int
+    Txs			uint32
+    Start		uint32
+    End			uint32
+    TxsAmount		uint64
+    AtxCSize		uint64
+    Rewards		uint64
+    Epoch		uint32
+    Smeshers		uint32
+    Hash		string
+    BlocksNumber	uint32
 }
 
 type LayerService interface {
@@ -26,15 +30,18 @@ type LayerService interface {
     SaveLayer(ctx context.Context, in *Layer) error
 }
 
-func NewLayer(l *pb.Layer, genesisTime uint32, layerDuration uint32) (*Layer, []*Block, []*Activation, map[string]*Transaction) {
-    pbBlocks := l.GetBlocks()
-    pbAtxs := l.GetActivations()
+func NewLayer(in *pb.Layer, networkInfo *NetworkInfo) (*Layer, []*Block, []*Activation, map[string]*Transaction) {
+    pbBlocks := in.GetBlocks()
+    pbAtxs := in.GetActivations()
     layer := &Layer{
-        Number: l.GetNumber().GetNumber(),
-        Status: int(l.GetStatus()),
+        Number: in.Number.Number,
+        Status: int(in.GetStatus()),
+        Epoch: in.Number.Number / networkInfo.EpochNumLayers,
+        BlocksNumber: uint32(len(pbBlocks)),
+        Hash: utils.BytesToHex(in.Hash),
     }
-    layer.Start = genesisTime + layer.Number * layerDuration
-    layer.End = layer.Start + layerDuration - 1
+    layer.Start = networkInfo.GenesisTime + layer.Number * networkInfo.LayerDuration
+    layer.End = layer.Start + networkInfo.LayerDuration - 1
 
     blocks := make([]*Block, len(pbBlocks))
     atxs := make([]*Activation, len(pbAtxs))
@@ -44,10 +51,15 @@ func NewLayer(l *pb.Layer, genesisTime uint32, layerDuration uint32) (*Layer, []
         blocks[i] = &Block{
             Id: utils.BytesToHex(b.GetId()),
             Layer: layer.Number,
+            Epoch: layer.Epoch,
+            Start: layer.Start,
+            End: layer.End,
+            TxsNumber: uint32(len(b.Transactions)),
         }
-        for j, t := range b.GetTransactions() {
+        for j, t := range b.Transactions {
             tx := NewTransaction(t, layer.Number, blocks[i].Id, layer.Start, uint32(j))
             txs[tx.Id] = tx
+            blocks[i].TxsValue += tx.Amount
         }
     }
 
@@ -56,10 +68,14 @@ func NewLayer(l *pb.Layer, genesisTime uint32, layerDuration uint32) (*Layer, []
         layer.TxsAmount += tx.Amount
     }
 
+    smeshers := make(map[string]bool)
     for i, a := range pbAtxs {
         atxs[i] = NewActivation(a)
         layer.AtxCSize += atxs[i].CommitmentSize
+        smeshers[atxs[i].SmesherId] = true
     }
+
+    layer.Smeshers = uint32(len(smeshers))
 
     return layer, blocks, atxs, txs
 }

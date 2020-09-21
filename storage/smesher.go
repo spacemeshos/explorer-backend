@@ -34,15 +34,39 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
         return nil, errors.New("Empty result")
     }
     doc := cursor.Current
-    account := &model.Smesher{
+    smesher := &model.Smesher{
         Id: utils.GetAsString(doc.Lookup("id")),
         Geo: model.Geo{
             utils.GetAsString(doc.Lookup("name")),
             [2]float64 { doc.Lookup("lon").Double(), doc.Lookup("lat").Double() },
         },
         CommitmentSize: utils.GetAsUInt64(doc.Lookup("cSize")),
+        Coinbase: utils.GetAsString(doc.Lookup("coinbase")),
+        AtxCount: utils.GetAsUInt32(doc.Lookup("atxcount")),
+        Timestamp: utils.GetAsUInt32(doc.Lookup("timestamp")),
     }
-    return account, nil
+    return smesher, nil
+}
+
+func (s *Storage) GetSmesherByCoinbase(parent context.Context, coinbase string) (*model.Smesher, error) {
+    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+    defer cancel()
+    cursor, err := s.db.Collection("coinbases").Find(ctx, &bson.D{{"address", coinbase}})
+    if err != nil {
+        log.Info("GetSmesherByCoinbase: %v", err)
+        return nil, err
+    }
+    if !cursor.Next(ctx) {
+        log.Info("GetSmesherByCoinbase: Empty result")
+        return nil, errors.New("Empty result")
+    }
+    doc := cursor.Current
+    smesher := utils.GetAsString(doc.Lookup("smesher"))
+    if smesher == "" {
+        log.Info("GetSmesherByCoinbase: Empty result")
+        return nil, errors.New("Empty result")
+    }
+    return s.GetSmesher(ctx, &bson.D{{"id", smesher}})
 }
 
 func (s *Storage) GetSmeshersCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
@@ -96,6 +120,9 @@ func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
         {"lon", in.Geo.Coordinates[0]},
         {"lat", in.Geo.Coordinates[1]},
         {"cSize", in.CommitmentSize},
+        {"coinbase", in.Coinbase},
+        {"atxcount", in.AtxCount},
+        {"timestamp", in.Timestamp},
     })
     if err != nil {
         log.Info("SaveSmesher: %v", err)
@@ -103,41 +130,7 @@ func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
     return err
 }
 
-func (s *Storage) SaveOrUpdateSmesher(parent context.Context, in *model.Smesher) error {
-    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
-    defer cancel()
-    status, err := s.db.Collection("smeshers").UpdateOne(ctx, bson.D{{"id", in.Id}}, bson.D{
-        {"$set", bson.D{
-            {"id", in.Id},
-            {"name", in.Geo.Name},
-            {"lon", in.Geo.Coordinates[0]},
-            {"lat", in.Geo.Coordinates[1]},
-            {"cSize", in.CommitmentSize},
-        }},
-    }, options.Update().SetUpsert(true))
-    if err != nil {
-        log.Info("SaveOrUpdateSmesher: %+v, %v", status, err)
-    }
-    return err
-}
-
-func (s *Storage) GetSmesherByCoinbase(parent context.Context, coinbase string) string {
-    ctx, cancel := context.WithTimeout(parent, 5*time.Second)
-    defer cancel()
-    cursor, err := s.db.Collection("coinbases").Find(ctx, &bson.D{{"address", coinbase}})
-    if err != nil {
-        log.Info("GetSmesherByCoinbase: %v", err)
-        return ""
-    }
-    if !cursor.Next(ctx) {
-        log.Info("GetSmesherByCoinbase: Empty result")
-        return ""
-    }
-    doc := cursor.Current
-    return utils.GetAsString(doc.Lookup("smesher"))
-}
-
-func (s *Storage) SaveSmesherCoinbase(parent context.Context, smesher string, coinbase string) error {
+func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase string, space uint64, timestamp uint32) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
     _, err := s.db.Collection("coinbases").InsertOne(ctx, bson.D{
@@ -145,7 +138,22 @@ func (s *Storage) SaveSmesherCoinbase(parent context.Context, smesher string, co
         {"smesher", smesher},
     })
     if err != nil {
-        log.Info("SaveSmesherCoinbase: %v", err)
+        log.Info("UpdateSmesher: coinbase: %v", err)
+    }
+    atxCount, err := s.db.Collection("activations").CountDocuments(ctx, &bson.D{{"smesher", smesher}})
+    if err != nil {
+        log.Info("UpdateSmesher: GetActivationsCount: %v", err)
+    }
+    _, err = s.db.Collection("smeshers").UpdateOne(ctx, bson.D{{"id", smesher}}, bson.D{
+        {"$set", bson.D{
+            {"cSize", space},
+            {"coinbase", coinbase},
+            {"atxcount", atxCount},
+            {"timestamp", timestamp},
+        }},
+    })
+    if err != nil {
+        log.Info("SaveOrUpdateSmesher: %v", err)
     }
     return err
 }

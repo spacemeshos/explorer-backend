@@ -46,6 +46,10 @@ func (s *Storage) GetLayer(parent context.Context, query *bson.D) (*model.Layer,
         TxsAmount: utils.GetAsUInt64(doc.Lookup("txsamount")),
         AtxCSize: utils.GetAsUInt64(doc.Lookup("atxssize")),
         Rewards: utils.GetAsUInt64(doc.Lookup("rewards")),
+        Epoch: utils.GetAsUInt32(doc.Lookup("epoch")),
+        Smeshers: utils.GetAsUInt32(doc.Lookup("smeshers")),
+        Hash: utils.GetAsString(doc.Lookup("hash")),
+        BlocksNumber: utils.GetAsUInt32(doc.Lookup("blocksnumber")),
     }
     return account, nil
 }
@@ -110,6 +114,10 @@ func (s *Storage) SaveLayer(parent context.Context, in *model.Layer) error {
         {"txsamount", in.TxsAmount},
         {"atxssize", in.AtxCSize},
         {"rewards", in.Rewards},
+        {"epoch", in.Epoch},
+        {"smeshers", in.Smeshers},
+        {"hash", in.Hash},
+        {"blocksnumber", in.BlocksNumber},
     })
     if err != nil {
         log.Info("SaveLayer: %v", err)
@@ -130,6 +138,10 @@ func (s *Storage) SaveOrUpdateLayer(parent context.Context, in *model.Layer) err
             {"txsamount", in.TxsAmount},
             {"atxssize", in.AtxCSize},
             {"rewards", in.Rewards},
+            {"epoch", in.Epoch},
+            {"smeshers", in.Smeshers},
+            {"hash", in.Hash},
+            {"blocksnumber", in.BlocksNumber},
         }},
     }, options.Update().SetUpsert(true))
     if err != nil {

@@ -76,7 +76,7 @@ func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...
         return nil, err
     }
     if len(docs.([]bson.D)) == 0 {
-        log.Info("GetActivations: Empty result")
+        log.Info("GetActivations(%+v): Empty result (%v)", query, docs)
         return nil, nil
     }
     return docs.([]bson.D), nil

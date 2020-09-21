@@ -36,6 +36,11 @@ func (s *Storage) GetBlock(parent context.Context, query *bson.D) (*model.Block,
     account := &model.Block{
         Id: utils.GetAsString(doc.Lookup("id")),
         Layer: utils.GetAsUInt32(doc.Lookup("layer")),
+        Epoch: utils.GetAsUInt32(doc.Lookup("epoch")),
+        Start: utils.GetAsUInt32(doc.Lookup("start")),
+        End: utils.GetAsUInt32(doc.Lookup("end")),
+        TxsNumber: utils.GetAsUInt32(doc.Lookup("txsnumber")),
+        TxsValue: utils.GetAsUInt64(doc.Lookup("txsvalue")),
     }
     return account, nil
 }
@@ -78,6 +83,11 @@ func (s *Storage) SaveBlock(parent context.Context, in *model.Block) error {
     _, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
         {"id", in.Id},
         {"layer", in.Layer},
+        {"epoch", in.Epoch},
+        {"start", in.Start},
+        {"end", in.End},
+        {"txsnumber", in.TxsNumber},
+        {"txsvalue", in.TxsValue},
     })
     if err != nil {
         log.Info("SaveBlock: %v", err)
@@ -92,6 +102,11 @@ func (s *Storage) SaveBlocks(parent context.Context, in []*model.Block) error {
         _, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
             {"id", block.Id},
             {"layer", block.Layer},
+            {"epoch", block.Epoch},
+            {"start", block.Start},
+            {"end", block.End},
+            {"txsnumber", block.TxsNumber},
+            {"txsvalue", block.TxsValue},
         })
         if err != nil {
             log.Info("SaveBlocks: %v", err)
@@ -109,6 +124,11 @@ func (s *Storage) SaveOrUpdateBlocks(parent context.Context, in []*model.Block) 
             {"$set", bson.D{
                 {"id", block.Id},
                 {"layer", block.Layer},
+                {"epoch", block.Epoch},
+                {"start", block.Start},
+                {"end", block.End},
+                {"txsnumber", block.TxsNumber},
+                {"txsvalue", block.TxsValue},
             }},
         }, options.Update().SetUpsert(true))
         if err != nil {
