@@ -86,7 +86,7 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
         {"counter", uint64(0)},
     })
     if err != nil {
-        log.Info("AddAccount: %v", err)
+//        log.Info("AddAccount: %v", err)
     }
     return nil
 }
@@ -152,7 +152,7 @@ func (s *Storage) AddAccountReceived(parent context.Context, layer uint32, addre
 func (s *Storage) AddAccountReward(parent context.Context, layer uint32, address string, reward uint64, fee uint64) error {
     ctx, cancel := context.WithTimeout(parent, 5*time.Second)
     defer cancel()
-    status, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
+    _, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
         {"address", address},
         {"layer", layer},
         {"reward", reward},
@@ -160,8 +160,6 @@ func (s *Storage) AddAccountReward(parent context.Context, layer uint32, address
     })
     if err != nil {
         log.Info("AddAccountReward: %v", err)
-    } else {
-        log.Info("AddAccountReward: %v", status)
     }
     return nil
 }

@@ -259,21 +259,21 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
     if duration > 0 && s.NetworkInfo.MaxTransactionsPerSecond > 0 {
         epoch.Stats.Current.Capacity = int64(math.Round(((float64(epoch.Stats.Current.Transactions) / duration) / float64(s.NetworkInfo.MaxTransactionsPerSecond)) * 100.0))
     }
-    atxs, _ := s.GetActivations(context.Background(), layerFilter, options.Find().SetProjection(bson.D{{"_id", 0},{"id", 0},{"layer", 0},{"coinbase", 0},{"prevAtx", 0}}))
-    smeshers := make(map[string]int64)
+    atxs, _ := s.GetActivations(context.Background(), layerFilter)
     if atxs != nil {
+        smeshers := make(map[string]int64)
         for _, atx  := range atxs {
             var cSize int64
             var smesher string
             for _, e := range atx {
                 if e.Key == "smesher" {
-                    smesher = e.Value.(string)
+                    smesher, _ = e.Value.(string)
                     continue
                 }
                 if e.Key == "cSize" {
-                    if value, ok := atx[1].Value.(int64); ok {
+                    if value, ok := e.Value.(int64); ok {
                         cSize = value
-                    } else if value, ok := atx[1].Value.(int32); ok {
+                    } else if value, ok := e.Value.(int32); ok {
                         cSize = int64(value)
                     }
                 }

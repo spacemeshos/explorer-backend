@@ -125,7 +125,7 @@ func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
         {"timestamp", in.Timestamp},
     })
     if err != nil {
-        log.Info("SaveSmesher: %v", err)
+//        log.Info("SaveSmesher: %v", err)
     }
     return err
 }
@@ -138,7 +138,7 @@ func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase
         {"smesher", smesher},
     })
     if err != nil {
-        log.Info("UpdateSmesher: coinbase: %v", err)
+//        log.Info("UpdateSmesher: coinbase: %v", err)
     }
     atxCount, err := s.db.Collection("activations").CountDocuments(ctx, &bson.D{{"smesher", smesher}})
     if err != nil {
@@ -153,7 +153,7 @@ func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase
         }},
     })
     if err != nil {
-        log.Info("SaveOrUpdateSmesher: %v", err)
+        log.Info("UpdateSmesher: %v", err)
     }
     return err
 }

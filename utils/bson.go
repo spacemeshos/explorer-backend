@@ -63,3 +63,15 @@ func GetAsString(rv bson.RawValue) string {
     return str
 }
 
+func FindStringValue(obj *bson.D, key string) string {
+    for _, e := range *obj {
+        if e.Key == key {
+            str, ok := e.Value.(string)
+            if ok {
+                return str
+            }
+            return ""
+        }
+    }
+    return ""
+}

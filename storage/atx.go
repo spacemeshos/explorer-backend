@@ -22,7 +22,7 @@ func (s *Storage) InitActivationsStorage(ctx context.Context) error {
         {Keys: bson.D{{"smesher", 1}}, Options: options.Index().SetName("smesherIndex").SetUnique(false)},
         {Keys: bson.D{{"coinbase", 1}}, Options: options.Index().SetName("coinbaseIndex").SetUnique(false)},
     }
-    _, err := s.db.Collection("activations").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(2 * time.Second));
+    _, err := s.db.Collection("activations").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(20 * time.Second));
     return err
 }
 
@@ -76,7 +76,7 @@ func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...
         return nil, err
     }
     if len(docs.([]bson.D)) == 0 {
-        log.Info("GetActivations(%+v): Empty result (%v)", query, docs)
+        log.Info("GetActivations: Empty result")
         return nil, nil
     }
     return docs.([]bson.D), nil

@@ -22,13 +22,14 @@ type AccountUpdaterService interface {
 type Storage struct {
     NetworkInfo		model.NetworkInfo
 
-    lastLayer		uint32
-    lastEpoch		int32
-
     client		*mongo.Client
     db			*mongo.Database
 
     AccountUpdater	AccountUpdaterService
+
+    sync.Mutex
+    changedEpoch	int32
+    lastEpoch		int32
 
     layersLock		sync.Mutex
     layersQueue		*list.List
@@ -59,6 +60,7 @@ func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) 
         layersReady: sync.NewCond(&sync.Mutex{}),
         accountsQueue: list.New(),
         accountsReady: sync.NewCond(&sync.Mutex{}),
+        changedEpoch: -1,
     }
     s.db = client.Database(dbName)
 
@@ -168,11 +170,13 @@ func (s *Storage) OnReward(in *pb.Reward) {
         reward.Smesher = smesher.Id
         reward.Space = smesher.CommitmentSize
     }
+    reward.Timestamp = s.getLayerTimestamp(reward.Layer)
     s.SaveReward(context.Background(), reward)
     s.AddAccount(context.Background(), reward.Layer, reward.Coinbase, 0)
 //    s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.LayerReward, reward.Total - reward.LayerReward)
     s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.Total, reward.LayerReward)
     s.requestBalanceUpdate(reward.Coinbase)
+    s.setChangedEpoch(reward.Layer)
 }
 
 func (s *Storage) OnTransactionReceipt(in *pb.TransactionReceipt) {
@@ -214,22 +218,44 @@ func (s *Storage) popAccount() *string {
     return nil
 }
 
+func (s *Storage) getChangedEpoch() int32 {
+    s.Lock()
+    defer s.Unlock()
+    epoch := s.changedEpoch
+    if s.changedEpoch >= 0 {
+        s.changedEpoch = -1
+    }
+    return epoch
+}
+
+func (s *Storage) setChangedEpoch(layer uint32) {
+    s.Lock()
+    defer s.Unlock()
+    if s.NetworkInfo.EpochNumLayers > 0 {
+        epoch := int32(layer / s.NetworkInfo.EpochNumLayers)
+        if s.changedEpoch < 0 || s.changedEpoch > epoch {
+            s.changedEpoch = epoch
+        }
+        if epoch > s.lastEpoch {
+            s.lastEpoch = epoch
+        }
+    }
+}
+
 func (s *Storage) updateLayer(in *pb.Layer) {
     layer, blocks, atxs, txs := model.NewLayer(in, &s.NetworkInfo)
-    log.Info("updateLayer(%v) -> %v", in.Number.Number, layer.Number)
+    log.Info("updateLayer(%v) -> %v, %v, %v, %v", in.Number.Number, layer.Number, len(blocks), len(atxs), len(txs))
     s.SaveOrUpdateBlocks(context.Background(), blocks)
     s.updateActivations(layer, atxs)
     s.updateTransactions(layer, txs)
     s.updateLayerRewards(layer)
     s.SaveOrUpdateLayer(context.Background(), layer)
-    s.updateEpochsFrom(int32(layer.Epoch))
-    if s.lastLayer < layer.Number {
-        s.lastLayer = layer.Number
-    }
+    s.setChangedEpoch(layer.Number)
+    s.updateEpochs()
 }
 
 func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation) {
-    log.Info("updateActivations")
+    log.Info("updateActivations(%v)", len(atxs))
     s.SaveOrUpdateActivations(context.Background(), atxs)
     for _, atx := range atxs {
         s.SaveSmesher(context.Background(), atx.GetSmesher())
@@ -267,8 +293,8 @@ func (s *Storage) updateEpoch(epochNumber int32, prev *model.Epoch) *model.Epoch
     s.computeStatistics(epoch)
     if prev != nil {
         epoch.Stats.Cumulative.Capacity      = epoch.Stats.Current.Capacity
-        epoch.Stats.Cumulative.Decentral     = epoch.Stats.Current.Decentral
-        epoch.Stats.Cumulative.Smeshers      = epoch.Stats.Current.Smeshers
+        epoch.Stats.Cumulative.Decentral     = prev.Stats.Current.Decentral
+        epoch.Stats.Cumulative.Smeshers      = prev.Stats.Current.Smeshers
         epoch.Stats.Cumulative.Transactions  = prev.Stats.Cumulative.Transactions + epoch.Stats.Current.Transactions
         epoch.Stats.Cumulative.Accounts      = epoch.Stats.Current.Accounts
         epoch.Stats.Cumulative.Rewards       = prev.Stats.Cumulative.Rewards + epoch.Stats.Current.Rewards
@@ -285,16 +311,16 @@ func (s *Storage) updateEpoch(epochNumber int32, prev *model.Epoch) *model.Epoch
     return epoch
 }
 
-func (s *Storage) updateEpochsFrom(epochNumber int32) {
-    if epochNumber > s.lastEpoch {
-        s.lastEpoch = epochNumber
-    }
-    var prev *model.Epoch
-    if epochNumber > 0 {
-        prev, _ = s.GetEpochByNumber(context.Background(), epochNumber - 1)
-    }
-    for i := epochNumber; i <= s.lastEpoch; i++ {
-        prev = s.updateEpoch(i, prev)
+func (s *Storage) updateEpochs() {
+    epochNumber := s.getChangedEpoch()
+    if epochNumber >= 0 {
+        var prev *model.Epoch
+        if epochNumber > 0 {
+            prev, _ = s.GetEpochByNumber(context.Background(), epochNumber - 1)
+        }
+        for i := epochNumber; i <= s.lastEpoch; i++ {
+            prev = s.updateEpoch(i, prev)
+        }
     }
 }
 

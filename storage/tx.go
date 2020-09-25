@@ -24,7 +24,7 @@ func (s *Storage) InitTransactionsStorage(ctx context.Context) error {
         {Keys: bson.D{{"receiver", 1}}, Options: options.Index().SetName("receiverIndex").SetUnique(false)},
         {Keys: bson.D{{"timestamp", -1}}, Options: options.Index().SetName("timestampIndex").SetUnique(false)},
     }
-    _, err := s.db.Collection("txs").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(2 * time.Second));
+    _, err := s.db.Collection("txs").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(20 * time.Second));
     return err
 }
 
