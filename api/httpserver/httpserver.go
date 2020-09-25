@@ -108,8 +108,11 @@ func New(ctx context.Context, cfg *Config, storage *storage.Storage) (*Server, e
     server.router.HandleFunc("/smeshers/{id}/atxs",          server.restService.SmesherAtxsHandler).Methods("GET")
     server.router.HandleFunc("/smeshers/{id}/rewards",       server.restService.SmesherRewardsHandler).Methods("GET")
 
-    server.router.HandleFunc("/apps",                        server.restService.NotImplemented).Methods("GET")
-    server.router.HandleFunc("/apps/{id}",                   server.restService.NotImplemented).Methods("GET")
+    server.router.HandleFunc("/apps",                        server.restService.AppsHandler).Methods("GET")
+    server.router.HandleFunc("/apps/{id}",                   server.restService.AppHandler).Methods("GET")
+
+    server.router.HandleFunc("/atxs",                        server.restService.ActivationsHandler).Methods("GET")
+    server.router.HandleFunc("/atxs/{id}",                   server.restService.ActivationHandler).Methods("GET")
 
     server.router.HandleFunc("/txs",                         server.restService.TransactionsHandler).Methods("GET")
     server.router.HandleFunc("/txs/{id}",                    server.restService.TransactionHandler).Methods("GET")
@@ -123,6 +126,8 @@ func New(ctx context.Context, cfg *Config, storage *storage.Storage) (*Server, e
     server.router.HandleFunc("/address/{id}/rewards",        server.restService.AccountRewardsHandler).Methods("GET")
 
     server.router.HandleFunc("/blocks/{id}",                 server.restService.BlockHandler).Methods("GET")
+
+    server.router.HandleFunc("/search/{id}",                 server.restService.SearchHandler).Methods("GET")
 
     log.Info("HTTP server is created")
     return server, nil

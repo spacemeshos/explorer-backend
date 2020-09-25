@@ -149,10 +149,29 @@ func (s *Service) LayerSmeshersHandler(w http.ResponseWriter, r *http.Request) {
 
         buf.WriteByte('{')
 
-        total := s.storage.GetSmeshersCount(s.ctx, filter)
+        total := s.storage.GetActivationsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data := make([]bson.D, 0)
+            atxs, err := s.storage.GetActivations(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{
+                {"_id", 0},
+                {"id", 0},
+                {"layer", 0},
+                {"coinbase", 0},
+                {"prevAtx", 0},
+                {"cSize", 0},
+            }))
             if err != nil {
+            }
+            if atxs != nil && len(atxs) > 0 {
+                for _, atx := range atxs {
+                    smesher, ok := atx[0].Value.(string)
+                    if ok {
+                        smeshers, _ := s.storage.GetSmeshers(s.ctx, &bson.D{{"id", smesher}})
+                        if smeshers != nil && len(smeshers) == 1 {
+                            data = append(data, smeshers[0])
+                        }
+                    }
+                }
             }
             setDataInfo(buf, data)
         } else {

@@ -8,6 +8,8 @@ import (
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/mongo/options"
+
+    "github.com/spacemeshos/explorer-backend/utils"
 )
 
 func (s *Service) SmeshersHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +27,15 @@ func (s *Service) SmeshersHandler(w http.ResponseWriter, r *http.Request) {
         if total > 0 {
             data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
+            }
+            if data != nil && len(data) > 0 {
+                for i, _ := range data {
+                    smesher := utils.FindStringValue(&data[i], "id")
+                    if smesher != "" {
+                        rewards, _ := s.storage.GetSmesherRewards(s.ctx, smesher)
+                        data[i] = append(data[i], bson.E{"rewards", rewards})
+                    }
+                }
             }
             setDataInfo(buf, data)
         } else {
@@ -63,6 +74,15 @@ func (s *Service) SmesherHandler(w http.ResponseWriter, r *http.Request) {
         if total > 0 {
             data, err := s.storage.GetSmeshers(s.ctx, filter, options.Find().SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
+            }
+            if data != nil && len(data) > 0 {
+                for i, _ := range data {
+                    smesher := utils.FindStringValue(&data[i], "id")
+                    if smesher != "" {
+                        rewards, _ := s.storage.GetSmesherRewards(s.ctx, smesher)
+                        data[i] = append(data[i], bson.E{"rewards", rewards})
+                    }
+                }
             }
             setDataInfo(buf, data)
         } else {
