@@ -182,16 +182,10 @@ func (s *Service) EpochSmeshersHandler(w http.ResponseWriter, r *http.Request) {
                 }
                 var data []bson.D = []bson.D{}
                 for _, smesherId := range smeshers {
-                    smesher, err := s.storage.GetSmesher(s.ctx, &bson.D{{"id", smesherId}})
-                    if err != nil {
+                    smesher, err := s.storage.GetSmeshers(s.ctx, &bson.D{{"id", smesherId}})
+                    if err == nil && len(smesher) == 1 {
+                        data = append(data, smesher[0])
                     }
-                    data = append(data, bson.D{
-                        {"id", smesher.Id},
-                        {"name", smesher.Geo.Name},
-                        {"lon", smesher.Geo.Coordinates[0]},
-                        {"lat", smesher.Geo.Coordinates[1]},
-                        {"cSize", smesher.CommitmentSize},
-                    })
                 }
                 setDataInfo(buf, data)
                 dataSet = true

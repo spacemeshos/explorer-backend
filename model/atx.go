@@ -16,6 +16,7 @@ type Activation struct {
     Coinbase		string	// coinbase account id
     PrevAtx		string	// previous ATX pointed to
     CommitmentSize	uint64	// commitment size in bytes
+    Timestamp		uint32
 }
 
 type ActivationService interface {
@@ -24,7 +25,7 @@ type ActivationService interface {
     SaveActivation(ctx context.Context, in *Activation) error
 }
 
-func NewActivation(atx *pb.Activation) *Activation {
+func NewActivation(atx *pb.Activation, timestamp uint32) *Activation {
     return &Activation{
         Id: utils.BytesToHex(atx.GetId().GetId()),
         Layer: atx.GetLayer().GetNumber(),
@@ -32,6 +33,7 @@ func NewActivation(atx *pb.Activation) *Activation {
         Coinbase: utils.BytesToAddressString(atx.GetCoinbase().GetAddress()),
         PrevAtx: utils.BytesToHex(atx.GetPrevAtx().GetId()),
         CommitmentSize: atx.GetCommitmentSize(),
+        Timestamp: timestamp,
     }
 }
 

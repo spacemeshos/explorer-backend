@@ -33,6 +33,10 @@ func (s *Storage) GetNetworkInfo(parent context.Context) (*model.NetworkInfo, er
         EpochNumLayers: utils.GetAsUInt32(doc.Lookup("layers")),
         MaxTransactionsPerSecond: utils.GetAsUInt32(doc.Lookup("maxtx")),
         LayerDuration: utils.GetAsUInt32(doc.Lookup("duration")),
+        LastLayer: utils.GetAsUInt32(doc.Lookup("lastlayer")),
+        LastLayerTimestamp: utils.GetAsUInt32(doc.Lookup("lastlayerts")),
+        LastApprovedLayer: utils.GetAsUInt32(doc.Lookup("lastapprovedlayer")),
+        LastConfirmedLayer: utils.GetAsUInt32(doc.Lookup("lastconfirmedlayer")),
     }
     return info, nil
 }
@@ -48,6 +52,10 @@ func (s *Storage) SaveOrUpdateNetworkInfo(parent context.Context, in *model.Netw
             {"layers", in.EpochNumLayers},
             {"maxtx", in.MaxTransactionsPerSecond},
             {"duration", in.LayerDuration},
+            {"lastlayer", in.LastLayer},
+            {"lastlayerts", in.LastLayerTimestamp},
+            {"lastapprovedlayer", in.LastApprovedLayer},
+            {"lastconfirmedlayer", in.LastConfirmedLayer},
         }},
     }, options.Update().SetUpsert(true))
     if err != nil {

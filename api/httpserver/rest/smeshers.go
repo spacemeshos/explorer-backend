@@ -120,7 +120,7 @@ func (s *Service) SmesherRewardsHandler(w http.ResponseWriter, r *http.Request) 
 
         total := s.storage.GetRewardsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"coinbase", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"coinbase", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
             if err != nil {
             }
             setDataInfo(buf, data)

@@ -78,6 +78,7 @@ func (s *Service) process(method string, w http.ResponseWriter, r *http.Request,
 
     header, status, err := fn(reqId, requestBuf, &responseBuf)
     if err != nil {
+        w.Header().Set("Access-Control-Allow-Origin", "*")
         w.WriteHeader(status)
         log.Info("Process errro %v", err)
         return err

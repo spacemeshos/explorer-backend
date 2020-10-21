@@ -120,10 +120,10 @@ func New(ctx context.Context, cfg *Config, storage *storage.Storage) (*Server, e
     server.router.HandleFunc("/rewards",                     server.restService.RewardsHandler).Methods("GET")
     server.router.HandleFunc("/rewards/{id}",                server.restService.RewardHandler).Methods("GET")
 
-    server.router.HandleFunc("/address",                     server.restService.AccountsHandler).Methods("GET")
-    server.router.HandleFunc("/address/{id}",                server.restService.AccountHandler).Methods("GET")
-    server.router.HandleFunc("/address/{id}/txs",            server.restService.AccountTransactionsHandler).Methods("GET")
-    server.router.HandleFunc("/address/{id}/rewards",        server.restService.AccountRewardsHandler).Methods("GET")
+    server.router.HandleFunc("/accounts",                     server.restService.AccountsHandler).Methods("GET")
+    server.router.HandleFunc("/accounts/{id}",                server.restService.AccountHandler).Methods("GET")
+    server.router.HandleFunc("/accounts/{id}/txs",            server.restService.AccountTransactionsHandler).Methods("GET")
+    server.router.HandleFunc("/accounts/{id}/rewards",        server.restService.AccountRewardsHandler).Methods("GET")
 
     server.router.HandleFunc("/blocks/{id}",                 server.restService.BlockHandler).Methods("GET")
 

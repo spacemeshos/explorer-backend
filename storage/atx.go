@@ -46,6 +46,7 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
         Coinbase: utils.GetAsString(doc.Lookup("coinbase")),
         PrevAtx: utils.GetAsString(doc.Lookup("prevAtx")),
         CommitmentSize: utils.GetAsUInt64((doc.Lookup("cSize"))),
+        Timestamp: utils.GetAsUInt32((doc.Lookup("timestamp"))),
     }
     return account, nil
 }
@@ -92,6 +93,7 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
         {"coinbase", in.Coinbase},
         {"prevAtx", in.PrevAtx},
         {"cSize", in.CommitmentSize},
+        {"timestamp", in.Timestamp},
     })
     if err != nil {
         log.Info("SaveActivation: %v", err)
@@ -110,6 +112,7 @@ func (s *Storage) SaveActivations(parent context.Context, in []*model.Activation
             {"coinbase", atx.Coinbase},
             {"prevAtx", atx.PrevAtx},
             {"cSize", atx.CommitmentSize},
+            {"timestamp", atx.Timestamp},
         })
         if err != nil {
             log.Info("SaveActivations: %v", err)
@@ -131,6 +134,7 @@ func (s *Storage) SaveOrUpdateActivations(parent context.Context, in []*model.Ac
                 {"coinbase", atx.Coinbase},
                 {"prevAtx", atx.PrevAtx},
                 {"cSize", atx.CommitmentSize},
+                {"timestamp", atx.Timestamp},
             }},
         }, options.Update().SetUpsert(true))
         if err != nil {

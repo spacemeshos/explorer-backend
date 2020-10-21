@@ -245,6 +245,7 @@ func (s *Storage) setChangedEpoch(layer uint32) {
 func (s *Storage) updateLayer(in *pb.Layer) {
     layer, blocks, atxs, txs := model.NewLayer(in, &s.NetworkInfo)
     log.Info("updateLayer(%v) -> %v, %v, %v, %v", in.Number.Number, layer.Number, len(blocks), len(atxs), len(txs))
+    s.updateNetworkStatus(layer)
     s.SaveOrUpdateBlocks(context.Background(), blocks)
     s.updateActivations(layer, atxs)
     s.updateTransactions(layer, txs)
@@ -252,6 +253,17 @@ func (s *Storage) updateLayer(in *pb.Layer) {
     s.SaveOrUpdateLayer(context.Background(), layer)
     s.setChangedEpoch(layer.Number)
     s.updateEpochs()
+}
+
+func (s *Storage) updateNetworkStatus(layer *model.Layer) {
+    s.NetworkInfo.LastLayer = layer.Number
+    s.NetworkInfo.LastLayerTimestamp = uint32(time.Now().Unix())
+    if layer.Status == int(pb.Layer_LAYER_STATUS_APPROVED) {
+        s.NetworkInfo.LastApprovedLayer = layer.Number
+    } else if layer.Status == int(pb.Layer_LAYER_STATUS_CONFIRMED) {
+        s.NetworkInfo.LastConfirmedLayer = layer.Number
+    }
+    s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
 }
 
 func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation) {
