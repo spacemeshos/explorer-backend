@@ -20,6 +20,10 @@ func (s *Service) NetworkInfoHandler(w http.ResponseWriter, r *http.Request) {
             {"layers", s.storage.NetworkInfo.EpochNumLayers},
             {"maxtx", s.storage.NetworkInfo.MaxTransactionsPerSecond},
             {"duration", s.storage.NetworkInfo.LayerDuration},
+            {"lastlayer", s.storage.NetworkInfo.LastLayer},
+            {"lastlayerts", s.storage.NetworkInfo.LastLayerTimestamp},
+            {"lastapprovedlayer", s.storage.NetworkInfo.LastApprovedLayer},
+            {"lastconfirmedlayer", s.storage.NetworkInfo.LastConfirmedLayer},
         })
 
         epoch, err := s.storage.GetEpochs(s.ctx, &bson.D{}, options.Find().SetSort(bson.D{{"number", -1}}).SetLimit(1).SetProjection(bson.D{{"_id", 0}}))

@@ -24,7 +24,7 @@ func (s *Service) RewardsHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetRewardsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"layer", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
             if err != nil {
             }
             setDataInfo(buf, data)
@@ -66,7 +66,7 @@ func (s *Service) RewardHandler(w http.ResponseWriter, r *http.Request) {
 
         total := s.storage.GetRewardsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"_id", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
+            data, err := s.storage.GetRewards(s.ctx, filter, options.Find().SetSort(bson.D{{"layer", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize))
             if err != nil {
             }
             setDataInfo(buf, data)
