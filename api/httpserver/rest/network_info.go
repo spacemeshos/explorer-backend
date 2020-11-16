@@ -13,6 +13,14 @@ func (s *Service) NetworkInfoHandler(w http.ResponseWriter, r *http.Request) {
 
         buf.WriteByte('{')
 
+        networkInfo, err := s.storage.GetNetworkInfo(s.ctx)
+        if err == nil {
+            s.storage.NetworkInfo.LastLayer = networkInfo.LastLayer
+            s.storage.NetworkInfo.LastLayerTimestamp = networkInfo.LastLayerTimestamp
+            s.storage.NetworkInfo.LastApprovedLayer = networkInfo.LastApprovedLayer
+            s.storage.NetworkInfo.LastConfirmedLayer = networkInfo.LastConfirmedLayer
+        }
+
         buf.WriteString("\"network\":")
         writeD(buf, &bson.D{
             {"netid", s.storage.NetworkInfo.NetId},
