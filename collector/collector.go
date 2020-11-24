@@ -33,6 +33,7 @@ type Collector struct {
     nodeClient		pb.NodeServiceClient
     meshClient		pb.MeshServiceClient
     globalClient	pb.GlobalStateServiceClient
+    debugClient		pb.DebugServiceClient
 
     streams [streamType_count]bool
     activeStreams int
@@ -60,18 +61,19 @@ func (c *Collector) Run() {
         conn, err := grpc.Dial(c.apiUrl, grpc.WithInsecure())
         if err != nil {
             log.Error("cannot dial node: %v", err)
-            time.Sleep(5 * time.Second)
+            time.Sleep(1 * time.Second)
             continue
         }
 
         c.nodeClient = pb.NewNodeServiceClient(conn)
         c.meshClient = pb.NewMeshServiceClient(conn)
         c.globalClient = pb.NewGlobalStateServiceClient(conn)
+        c.debugClient = pb.NewDebugServiceClient(conn)
 
         err = c.getNetworkInfo()
         if err != nil {
             log.Error("cannot get network info: %v", err)
-            time.Sleep(5 * time.Second)
+            time.Sleep(1 * time.Second)
             continue
         }
 
@@ -109,7 +111,7 @@ func (c *Collector) Run() {
             }
         }
 
-        log.Info("Wait 5 seconds...")
-        time.Sleep(5 * time.Second)
+        log.Info("Wait 1 second...")
+        time.Sleep(1 * time.Second)
     }
 }

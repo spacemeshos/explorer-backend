@@ -114,7 +114,7 @@ func (s *Storage) UpdateAccount(parent context.Context, address string, balance 
             {"balance", balance},
             {"counter", counter},
         }},
-    })
+    }, options.Update().SetUpsert(true))
     if err != nil {
         log.Info("UpdateAccount: %v", err)
     }

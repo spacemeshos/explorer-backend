@@ -5,9 +5,9 @@ import (
     "io"
     "time"
 
+    empty "github.com/golang/protobuf/ptypes/empty"
     pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
     "github.com/spacemeshos/go-spacemesh/log"
-//    "github.com/spacemeshos/explorer-backend/utils"
 )
 
 func (c *Collector) getNetworkInfo() error {
@@ -44,6 +44,12 @@ func (c *Collector) getNetworkInfo() error {
         return err
     }
 
+    accounts, err := c.debugClient.Accounts(ctx, &empty.Empty{})
+    if err != nil {
+        log.Error("cannot get accounts: %v", err)
+        return err
+    }
+
     c.listener.OnNetworkInfo(
         netId.GetNetid().GetValue(),
         genesisTime.GetUnixtime().GetValue(),
@@ -51,6 +57,10 @@ func (c *Collector) getNetworkInfo() error {
         maxTransactionsPerSecond.GetMaxtxpersecond().GetValue(),
         layerDuration.GetDuration().GetValue(),
     )
+
+    for _, account := range accounts.GetAccountWrapper() {
+        c.listener.OnAccount(account)
+    }
 
     return nil
 }

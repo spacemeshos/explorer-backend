@@ -55,6 +55,18 @@ func (s *Service) AccountsHandler(w http.ResponseWriter, r *http.Request) {
                         {"txs", txs},
                         {"timestamp", timestamp},
                     })
+                } else {
+                    data = append(data, bson.D{
+                        account[0],
+                        account[1],
+                        account[2],
+                        {"sent", uint64(0)},
+                        {"received", uint64(0)},
+                        {"awards", uint64(0)},
+                        {"fees", uint64(0)},
+                        {"txs", uint64(0)},
+                        {"timestamp", s.storage.NetworkInfo.GenesisTime},
+                    })
                 }
             }
             setDataInfo(buf, data)

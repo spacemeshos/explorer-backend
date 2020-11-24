@@ -59,7 +59,7 @@ func NewTransactionReceipt(txReceipt *pb.TransactionReceipt) *TransactionReceipt
         Result: int(txReceipt.GetResult()),
         GasUsed: txReceipt.GetGasUsed(),
         Fee: txReceipt.GetFee().GetValue(),
-        Layer: uint32(txReceipt.GetLayerNumber()),
+        Layer: uint32(txReceipt.GetLayer().GetNumber()),
         Index: txReceipt.GetIndex(),
         SvmData: utils.BytesToHex(txReceipt.GetSvmData()),
     }

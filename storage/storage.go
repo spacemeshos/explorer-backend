@@ -36,7 +36,7 @@ type Storage struct {
     layersReady		*sync.Cond
 
     accountsLock	sync.Mutex
-    accountsQueue	*list.List
+    accountsQueue	map[uint32]map[string]bool
     accountsReady	*sync.Cond
 }
 
@@ -58,7 +58,7 @@ func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) 
         client: client,
         layersQueue: list.New(),
         layersReady: sync.NewCond(&sync.Mutex{}),
-        accountsQueue: list.New(),
+        accountsQueue: make(map[uint32]map[string]bool),
         accountsReady: sync.NewCond(&sync.Mutex{}),
         changedEpoch: -1,
     }
@@ -175,7 +175,7 @@ func (s *Storage) OnReward(in *pb.Reward) {
     s.AddAccount(context.Background(), reward.Layer, reward.Coinbase, 0)
 //    s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.LayerReward, reward.Total - reward.LayerReward)
     s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.Total, reward.LayerReward)
-    s.requestBalanceUpdate(reward.Coinbase)
+    s.requestBalanceUpdate(reward.Layer, reward.Coinbase)
     s.setChangedEpoch(reward.Layer)
 }
 
@@ -201,21 +201,30 @@ func (s *Storage) popLayer() *pb.Layer {
     return nil
 }
 
-func (s *Storage) requestBalanceUpdate(address string) {
+func (s *Storage) requestBalanceUpdate(layer uint32, address string) {
     s.accountsLock.Lock()
-    s.accountsQueue.PushBack(&address)
+    accounts, ok := s.accountsQueue[layer]
+    if !ok {
+        accounts = make(map[string]bool)
+        s.accountsQueue[layer] = accounts
+    }
+    accounts[address] = true
     s.accountsLock.Unlock()
     s.accountsReady.Signal()
 }
 
-func (s *Storage) popAccount() *string {
+func (s *Storage) getAccountsQueue(accounts map[string]bool) int {
     s.accountsLock.Lock()
     defer s.accountsLock.Unlock()
-    address := s.accountsQueue.Front()
-    if address != nil {
-        return s.accountsQueue.Remove(address).(*string)
+    for layer, accs := range s.accountsQueue {
+        if layer <= s.NetworkInfo.LastConfirmedLayer {
+            for acc, _ := range accs {
+                accounts[acc] = true
+            }
+        }
+        delete(s.accountsQueue, layer)
     }
-    return nil
+    return len(accounts)
 }
 
 func (s *Storage) getChangedEpoch() int32 {
@@ -252,6 +261,7 @@ func (s *Storage) updateLayer(in *pb.Layer) {
     s.updateLayerRewards(layer)
     s.SaveOrUpdateLayer(context.Background(), layer)
     s.setChangedEpoch(layer.Number)
+    s.accountsReady.Signal()
     s.updateEpochs()
 }
 
@@ -283,12 +293,12 @@ func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.T
         if  tx.Sender != "" {
             s.AddAccount(context.Background(), layer.Number, tx.Sender, 0)
             s.AddAccountSent(context.Background(), layer.Number, tx.Sender, tx.Amount)
-            s.requestBalanceUpdate(tx.Sender)
+            s.requestBalanceUpdate(layer.Number, tx.Sender)
         }
         if tx.Receiver != "" {
             s.AddAccount(context.Background(), layer.Number, tx.Receiver, 0)
             s.AddAccountReceived(context.Background(), layer.Number, tx.Receiver, tx.Amount)
-            s.requestBalanceUpdate(tx.Receiver)
+            s.requestBalanceUpdate(layer.Number, tx.Receiver)
         }
     }
 }
@@ -341,6 +351,7 @@ func (s *Storage) updateAccount(address string) {
     if err != nil {
         return
     }
+    log.Info("Update account %v: balance %v, counter %v", address, balance, counter)
     s.UpdateAccount(context.Background(), address, balance, counter)
 }
 
@@ -362,8 +373,11 @@ func (s *Storage) updateAccounts() {
         s.accountsReady.Wait()
         s.accountsReady.L.Unlock()
 
-        for address := s.popAccount(); address != nil; address = s.popAccount() {
-            s.updateAccount(*address)
+        accounts := make(map[string]bool)
+        if s.getAccountsQueue(accounts) > 0 {
+            for address, _ := range accounts {
+                s.updateAccount(address)
+            }
         }
     }
 }
