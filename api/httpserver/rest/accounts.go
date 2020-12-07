@@ -26,7 +26,7 @@ func (s *Service) AccountsHandler(w http.ResponseWriter, r *http.Request) {
             accounts, err := s.storage.GetAccounts(
                 s.ctx,
                 filter,
-                options.Find().SetSort(bson.D{{"address", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{
+                options.Find().SetSort(bson.D{{"layer", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{
                     {"_id", 0},
                     {"layer", 0},
                 }),
@@ -136,6 +136,18 @@ func (s *Service) AccountHandler(w http.ResponseWriter, r *http.Request) {
                         {"txs", txs},
                         {"timestamp", timestamp},
                     })
+                } else {
+                    data = append(data, bson.D{
+                        account[0],
+                        account[1],
+                        account[2],
+                        {"sent", uint64(0)},
+                        {"received", uint64(0)},
+                        {"awards", uint64(0)},
+                        {"fees", uint64(0)},
+                        {"txs", uint64(0)},
+                        {"timestamp", s.storage.NetworkInfo.GenesisTime},
+                    })
                 }
             }
             setDataInfo(buf, data)
@@ -218,7 +230,7 @@ func (s *Service) AccountTransactionsHandler(w http.ResponseWriter, r *http.Requ
 
         total := s.storage.GetTransactionsCount(s.ctx, filter)
         if total > 0 {
-            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"counter", 1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
+            data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"counter", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
             setDataInfo(buf, data)

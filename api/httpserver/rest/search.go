@@ -23,7 +23,7 @@ func (s *Service) SearchHandler(w http.ResponseWriter, r *http.Request) {
         switch len(idStr) {
         case 42:
             if s.storage.GetAccountsCount(s.ctx, &bson.D{{"address", idStr}}) > 0 {
-                buf.WriteString(fmt.Sprintf("\"redirect\":\"/address/%v\"", idStr))
+                buf.WriteString(fmt.Sprintf("\"redirect\":\"/accounts/%v\"", idStr))
                 break
             }
             if s.storage.GetBlocksCount(s.ctx, &bson.D{{"id", idStr}}) > 0 {

@@ -17,7 +17,7 @@ import (
 
 func (s *Storage) InitAccountsStorage(ctx context.Context) error {
     _, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(true)});
-    _, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)});
+    _, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", -1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)});
     _, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(false)});
     _, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)});
     return err
@@ -205,5 +205,5 @@ func (s *Storage) GetAccountSummary(parent context.Context, address string) (uin
         return 0, 0, 0, 0, 0
     }
     doc := cursor.Current
-    return utils.GetAsUInt64(doc.Lookup("sent")), utils.GetAsUInt64(doc.Lookup("received")), utils.GetAsUInt64(doc.Lookup("awards")), utils.GetAsUInt64(doc.Lookup("fees")), s.NetworkInfo.GenesisTime + s.NetworkInfo.LayerDuration * utils.GetAsUInt32(doc.Lookup("layer"))
+    return utils.GetAsUInt64(doc.Lookup("sent")), utils.GetAsUInt64(doc.Lookup("received")), utils.GetAsUInt64(doc.Lookup("awards")), utils.GetAsUInt64(doc.Lookup("fees")), s.getLayerTimestamp(utils.GetAsUInt32(doc.Lookup("layer")))
 }

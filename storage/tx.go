@@ -23,6 +23,7 @@ func (s *Storage) InitTransactionsStorage(ctx context.Context) error {
         {Keys: bson.D{{"sender", 1}}, Options: options.Index().SetName("senderIndex").SetUnique(false)},
         {Keys: bson.D{{"receiver", 1}}, Options: options.Index().SetName("receiverIndex").SetUnique(false)},
         {Keys: bson.D{{"timestamp", -1}}, Options: options.Index().SetName("timestampIndex").SetUnique(false)},
+        {Keys: bson.D{{"counter", -1}}, Options: options.Index().SetName("counterIndex").SetUnique(false)},
     }
     _, err := s.db.Collection("txs").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(20 * time.Second));
     return err

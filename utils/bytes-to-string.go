@@ -29,3 +29,5 @@ func BytesToAddressString(a []byte) string {
 }
 
 func BytesToHex(a []byte) string { return util.Encode(a[:]) }
+
+func NBytesToHex(a []byte, n int) string { return util.Encode(a[:n]) }

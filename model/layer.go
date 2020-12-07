@@ -40,7 +40,11 @@ func NewLayer(in *pb.Layer, networkInfo *NetworkInfo) (*Layer, []*Block, []*Acti
         BlocksNumber: uint32(len(pbBlocks)),
         Hash: utils.BytesToHex(in.Hash),
     }
-    layer.Start = networkInfo.GenesisTime + layer.Number * networkInfo.LayerDuration
+    if layer.Number == 0 {
+        layer.Start = networkInfo.GenesisTime
+    } else {
+        layer.Start = networkInfo.GenesisTime + (layer.Number - 1) * networkInfo.LayerDuration
+    }
     layer.End = layer.Start + networkInfo.LayerDuration - 1
 
     blocks := make([]*Block, len(pbBlocks))
@@ -49,7 +53,7 @@ func NewLayer(in *pb.Layer, networkInfo *NetworkInfo) (*Layer, []*Block, []*Acti
 
     for i, b := range pbBlocks {
         blocks[i] = &Block{
-            Id: utils.BytesToHex(b.GetId()),
+            Id: utils.NBytesToHex(b.GetId(), 20),
             Layer: layer.Number,
             Epoch: layer.Epoch,
             Start: layer.Start,

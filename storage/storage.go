@@ -388,5 +388,8 @@ func (s *Storage) GetEpochLayersFilter(epochNumber int32, key string) *bson.D {
 }
 
 func (s *Storage) getLayerTimestamp(layer uint32) uint32 {
-    return s.NetworkInfo.GenesisTime + layer * s.NetworkInfo.LayerDuration
+    if layer == 0 {
+        return s.NetworkInfo.GenesisTime
+    }
+    return s.NetworkInfo.GenesisTime + (layer - 1) * s.NetworkInfo.LayerDuration
 }
