@@ -5,6 +5,19 @@ import (
     "go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
+func GetAsBool(rv bson.RawValue) bool {
+    if rv.Type == bsontype.Int64 {
+        return 0 != rv.Int64()
+    }
+    if rv.Type == bsontype.Int32 {
+        return 0 != rv.Int32()
+    }
+    if rv.Type == bsontype.Boolean {
+        return rv.Boolean()
+    }
+    return false
+}
+
 func GetAsInt64(rv bson.RawValue) int64 {
     if rv.Type == bsontype.Int64 {
         return rv.Int64()

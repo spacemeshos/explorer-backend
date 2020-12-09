@@ -55,6 +55,19 @@ func main() {
 
     app.Action = func(ctx *cli.Context) (error) {
 
+        env, ok := os.LookupEnv("SPACEMESH_API_LISTEN")
+        if ok {
+            listenStringFlag = env
+        }
+        env, ok = os.LookupEnv("SPACEMESH_MONGO_URI")
+        if ok {
+            mongoDbUrlStringFlag = env
+        }
+        env, ok = os.LookupEnv("SPACEMESH_MONGO_DB")
+        if ok {
+            mongoDbNameStringFlag = env
+        }
+
         serverCfg := &api.Config{
             ListenOn:     listenStringFlag,
             DbUrl:        mongoDbUrlStringFlag,

@@ -37,6 +37,11 @@ func (s *Storage) GetNetworkInfo(parent context.Context) (*model.NetworkInfo, er
         LastLayerTimestamp: utils.GetAsUInt32(doc.Lookup("lastlayerts")),
         LastApprovedLayer: utils.GetAsUInt32(doc.Lookup("lastapprovedlayer")),
         LastConfirmedLayer: utils.GetAsUInt32(doc.Lookup("lastconfirmedlayer")),
+        ConnectedPeers: utils.GetAsUInt64(doc.Lookup("connectedpeers")),
+        IsSynced: utils.GetAsBool(doc.Lookup("issynced")),
+        SyncedLayer: utils.GetAsUInt32(doc.Lookup("syncedlayer")),
+        TopLayer: utils.GetAsUInt32(doc.Lookup("toplayer")),
+        VerifiedLayer: utils.GetAsUInt32(doc.Lookup("verifiedlayer")),
     }
     return info, nil
 }
@@ -56,6 +61,11 @@ func (s *Storage) SaveOrUpdateNetworkInfo(parent context.Context, in *model.Netw
             {"lastlayerts", in.LastLayerTimestamp},
             {"lastapprovedlayer", in.LastApprovedLayer},
             {"lastconfirmedlayer", in.LastConfirmedLayer},
+            {"connectedpeers", in.ConnectedPeers},
+            {"issynced", in.IsSynced},
+            {"syncedlayer", in.SyncedLayer},
+            {"toplayer", in.TopLayer},
+            {"verifiedlayer", in.VerifiedLayer},
         }},
     }, options.Update().SetUpsert(true))
     if err != nil {

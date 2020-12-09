@@ -133,6 +133,16 @@ func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers
     )
 }
 
+func (s *Storage) OnNodeStatus(connectedPeers uint64, isSynced bool, syncedLayer uint32, topLayer uint32, verifiedLayer uint32) {
+    s.NetworkInfo.ConnectedPeers = connectedPeers
+    s.NetworkInfo.IsSynced = isSynced
+    s.NetworkInfo.SyncedLayer = syncedLayer
+    s.NetworkInfo.TopLayer = topLayer
+    s.NetworkInfo.VerifiedLayer = verifiedLayer
+
+    s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
+}
+
 func (s *Storage) GetEpochLayers(epoch int32) (uint32, uint32) {
     start := uint32(epoch) * uint32(s.NetworkInfo.EpochNumLayers)
     end := start + uint32(s.NetworkInfo.EpochNumLayers) - 1

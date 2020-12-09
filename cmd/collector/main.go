@@ -4,6 +4,8 @@ import (
     "context"
     "fmt"
     "os"
+    "os/signal"
+    "syscall"
 
     "github.com/urfave/cli"
     "github.com/spacemeshos/go-spacemesh/log"
@@ -55,8 +57,22 @@ func main() {
     app.Writer = os.Stderr
 
     app.Action = func(ctx *cli.Context) (error) {
+        var pidFile *os.File
 
         log.InitSpacemeshLoggingSystem("", "spacemesh-explorer-collector.log")
+
+        env, ok := os.LookupEnv("SPACEMESH_NODE")
+        if ok {
+            nodeAddressStringFlag = env
+        }
+        env, ok = os.LookupEnv("SPACEMESH_MONGO_URI")
+        if ok {
+            mongoDbUrlStringFlag = env
+        }
+        env, ok = os.LookupEnv("SPACEMESH_MONGO_DB")
+        if ok {
+            mongoDbNameStringFlag = env
+        }
 
         mongoStorage, err := storage.New(context.Background(), mongoDbUrlStringFlag, mongoDbNameStringFlag)
         if err != nil {
@@ -68,8 +84,24 @@ func main() {
 
         mongoStorage.AccountUpdater = c
 
+        sigs := make(chan os.Signal, 1)
+        signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+        pidFile, err = os.OpenFile("/var/run/explorer-collector", os.O_RDWR|os.O_CREATE, 0644)
+        if err == nil {
+            pidFile.Write([]byte("started"));
+            pidFile.Close()
+        }
+
+        go func() {
+            _ = <-sigs
+            os.Remove("/var/run/explorer-collector")
+            os.Exit(0)
+        }()
+
         c.Run()
 
+        os.Remove("/var/run/explorer-collector")
         log.Info("Collector is shutdown")
         return nil
     }

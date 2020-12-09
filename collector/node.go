@@ -47,7 +47,7 @@ func (c *Collector) syncStatusPump() error {
     c.syncStart()
 
     for {
-        _, err := stream.Recv()
+        res, err := stream.Recv()
         if err == io.EOF {
             log.Info("syncStatusPump: EOF")
             return err
@@ -57,7 +57,16 @@ func (c *Collector) syncStatusPump() error {
             return err
         }
 
-//        log.Info("Node sync status: %v", res.GetStatus())
+        status := res.GetStatus()
+//        log.Info("Node sync status: %v", status)
+
+        c.listener.OnNodeStatus(
+            status.GetConnectedPeers(),
+            status.GetIsSynced(),
+            status.GetSyncedLayer().GetNumber(),
+            status.GetTopLayer().GetNumber(),
+            status.GetVerifiedLayer().GetNumber(),
+        )
 
 //        switch res.GetStatus() {
 //        case pb.NodeSyncStatus_NOT_SYNCED:

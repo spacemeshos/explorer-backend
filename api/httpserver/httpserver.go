@@ -85,6 +85,9 @@ func New(ctx context.Context, cfg *Config, storage *storage.Storage) (*Server, e
 
     http.Handle("/", server.router)
 
+    server.router.HandleFunc("/healthz",                     server.restService.HealthzHandler).Methods("GET")
+    server.router.HandleFunc("/synced",                      server.restService.SyncedHandler).Methods("GET")
+
     server.router.HandleFunc("/network-info",                server.restService.NetworkInfoHandler).Methods("GET")
 
     server.router.HandleFunc("/epochs",                      server.restService.EpochsHandler).Methods("GET")
