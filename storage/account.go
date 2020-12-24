@@ -132,6 +132,14 @@ func (s *Storage) AddAccountSent(parent context.Context, layer uint32, address s
     if err != nil {
         log.Info("AddAccountSent: %v", err)
     }
+    _, err = s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", address}}, bson.D{
+        {"$set", bson.D{
+            {"layer", layer},
+        }},
+    })
+    if err != nil {
+        log.Info("AddAccountSent: update account touch error %v", err)
+    }
     return nil
 }
 
@@ -145,6 +153,14 @@ func (s *Storage) AddAccountReceived(parent context.Context, layer uint32, addre
     })
     if err != nil {
         log.Info("AddAccountReceived: %v", err)
+    }
+    _, err = s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", address}}, bson.D{
+        {"$set", bson.D{
+            {"layer", layer},
+        }},
+    })
+    if err != nil {
+        log.Info("AddAccountReceived: update account touch error %v", err)
     }
     return nil
 }
@@ -160,6 +176,14 @@ func (s *Storage) AddAccountReward(parent context.Context, layer uint32, address
     })
     if err != nil {
         log.Info("AddAccountReward: %v", err)
+    }
+    _, err = s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", address}}, bson.D{
+        {"$set", bson.D{
+            {"layer", layer},
+        }},
+    })
+    if err != nil {
+        log.Info("AddAccountReward: update account touch error %v", err)
     }
     return nil
 }
