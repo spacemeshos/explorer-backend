@@ -17,6 +17,7 @@ import (
 
 func (s *Storage) InitLayersStorage(ctx context.Context) error {
     _, err := s.db.Collection("layers").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"number", 1}}, Options: options.Index().SetName("numberIndex").SetUnique(true)});
+    _, err = s.db.Collection("layers").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"hash", 1}}, Options: options.Index().SetName("hashIndex").SetUnique(true)});
     return err
 }
 

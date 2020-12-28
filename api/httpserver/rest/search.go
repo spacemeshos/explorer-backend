@@ -44,6 +44,13 @@ func (s *Service) SearchHandler(w http.ResponseWriter, r *http.Request) {
                 buf.WriteString(fmt.Sprintf("\"redirect\":\"/smeshers/%v\"", idStr))
                 break
             }
+            if s.storage.GetLayersCount(s.ctx, &bson.D{{"hash", idStr}}) > 0 {
+                layer, err := s.storage.GetLayer(s.ctx, &bson.D{{"hash", idStr}})
+                if (err == nil) {
+                    buf.WriteString(fmt.Sprintf("\"redirect\":\"/layers/%v\"", layer.Number))
+                    break
+                }
+            }
             return nil, http.StatusNotFound, errors.New("Not found")
         default:
             objId, err := primitive.ObjectIDFromHex(idStr);
