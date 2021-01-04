@@ -95,7 +95,7 @@ func (s *Service) SyncedHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         header := Header{}
-        header["Content-Type"] = "plain/text"
+        header["Content-Type"] = "text/plain"
 
         return header, status, nil
     })
