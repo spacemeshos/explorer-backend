@@ -59,7 +59,7 @@ func main() {
     app.Action = func(ctx *cli.Context) (error) {
         var pidFile *os.File
 
-        log.InitSpacemeshLoggingSystem("", "spacemesh-explorer-collector.log")
+//        log.InitSpacemeshLoggingSystem("", "spacemesh-explorer-collector.log")
 
         env, ok := os.LookupEnv("SPACEMESH_NODE")
         if ok {

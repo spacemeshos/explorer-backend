@@ -54,7 +54,7 @@ func (c *Collector) getNetworkInfo() error {
         netId.GetNetid().GetValue(),
         genesisTime.GetUnixtime().GetValue(),
         epochNumLayers.GetNumlayers().GetValue(),
-        maxTransactionsPerSecond.GetMaxtxpersecond().GetValue(),
+        maxTransactionsPerSecond.GetMaxTxsPerSecond().GetValue(),
         layerDuration.GetDuration().GetValue(),
     )
 
