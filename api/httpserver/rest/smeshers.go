@@ -4,6 +4,7 @@ import (
     "bytes"
     "errors"
     "net/http"
+    "strings"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
@@ -65,7 +66,7 @@ func (s *Service) SmesherHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
         filter := &bson.D{{"id", idStr}}
 
         buf.WriteByte('{')
@@ -112,7 +113,7 @@ func (s *Service) SmesherRewardsHandler(w http.ResponseWriter, r *http.Request) 
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
 
         filter := &bson.D{{"smesher", idStr}}
 
@@ -151,7 +152,7 @@ func (s *Service) SmesherAtxsHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
         filter := &bson.D{{"smesher", idStr}}
 
         buf.WriteByte('{')

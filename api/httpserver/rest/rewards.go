@@ -4,6 +4,7 @@ import (
     "bytes"
     "errors"
     "net/http"
+    "strings"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
@@ -55,7 +56,7 @@ func (s *Service) RewardHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
         id, err := primitive.ObjectIDFromHex(idStr);
         if err != nil {
         }

@@ -6,6 +6,7 @@ import (
     "fmt"
     "net/http"
     "strconv"
+    "strings"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
@@ -18,7 +19,7 @@ func (s *Service) SearchHandler(w http.ResponseWriter, r *http.Request) {
         buf.WriteByte('{')
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
 
         switch len(idStr) {
         case 42:
