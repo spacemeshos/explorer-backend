@@ -6,11 +6,12 @@ Spacemesh explorer backend designed to provide data for explorer-frontends
 
 ## Using the Explorer Backend API
 The explorer backend provides a public REST API that can be used to get data about a Spacemesh network.
-follow these steps to use the API for a public Spacemesh network:
+Follow these steps to use the API for a public Spacemesh network:
 
-1. Obtain a currently available explorer API endpoint from the [permanent Spacemesh public web services](https://discover.spacemesh.io/networks.json).
-2. Build a REST API request url using the endpoint for a specific network. For example, if the explorer api url is `https://explorer-api-28.spacemesh.io/` then the network-info data is available at `https://explorer-api-28.spacemesh.io/network-info`.
-3. Issue an http 'GET' request to get the REST data. e.g. `curl https://explorer-api-28.spacemesh.io/network-info`. 
+1. Obtain a currently available explorer API endpoint from the [Spacemesh public web services](https://discover.spacemesh.io/networks.json) endpoint. This endpoint lists all available Spacemesh networks such as testnets.
+1. Build a REST request using the endpoint. For example, if the explorer api url for net-id 28 is `https://explorer-api-28.spacemesh.io/` then the network-info data is available at `https://explorer-api-28.spacemesh.io/network-info`.
+1. Issue an http 'GET' request to get the data. e.g. `curl https://explorer-api-28.spacemesh.io/network-info`. 
+1. Live long and prosper.
 
 ### Paging and pagination
 - Use the `pagesize` and `page` params to get paginated results. The first page number is 1, so for example, to get the first 20 accounts on TN 128 call: `https://explorer-api-28.spacemesh.io/accounts?pagesize=20&page=1` and to get the next 20 accounts use: `https://explorer-api-28.spacemesh.io/accounts?pagesize=20&page=2`
