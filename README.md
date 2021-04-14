@@ -25,3 +25,10 @@ Use this pagination data to figure out how many calls you need to make and which
 
 ### API Capabilities
 The API is not properly documented yet. The best way to identity the supported API methods is via the api server [source code](https://github.com/spacemeshos/explorer-backend/blob/master/api/httpserver/httpserver.go).
+
+### API Usage Examples
+
+- Get an account state: https://explorer-api-28.spacemesh.io/accounts/0xaFEd9A1c17Ca7eaA7A6795dBc7BEe1B1d992c7ba
+
+
+
