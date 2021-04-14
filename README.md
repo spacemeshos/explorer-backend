@@ -30,6 +30,6 @@ The API is not properly documented yet. The best way to identity the supported A
 ### API Usage Examples
 
 - Get an account state: https://explorer-api-28.spacemesh.io/accounts/0xaFEd9A1c17Ca7eaA7A6795dBc7BEe1B1d992c7ba
-
+- Get testnet netid=28 current summary data: https://explorer-api-28.spacemesh.io/network-info
 
 
