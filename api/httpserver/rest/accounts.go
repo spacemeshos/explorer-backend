@@ -220,7 +220,7 @@ func (s *Service) AccountTransactionsHandler(w http.ResponseWriter, r *http.Requ
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
 
         filter := &bson.D{
             {"$or", bson.A{
