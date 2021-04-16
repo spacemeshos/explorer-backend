@@ -4,10 +4,13 @@ import (
     "bytes"
     "errors"
     "net/http"
+    "strings"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/mongo/options"
+
+    "github.com/spacemeshos/explorer-backend/model"
 )
 
 func (s *Service) AccountsHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +48,7 @@ func (s *Service) AccountsHandler(w http.ResponseWriter, r *http.Request) {
                         }},
                     })
                     data = append(data, bson.D{
-                        account[0],
+                        {"address", model.ToCheckedAddress(address)},
                         account[1],
                         account[2],
                         {"sent", sent},
@@ -57,7 +60,7 @@ func (s *Service) AccountsHandler(w http.ResponseWriter, r *http.Request) {
                     })
                 } else {
                     data = append(data, bson.D{
-                        account[0],
+                        {"address", model.ToCheckedAddress(address)},
                         account[1],
                         account[2],
                         {"sent", uint64(0)},
@@ -97,7 +100,7 @@ func (s *Service) AccountHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
         filter := &bson.D{{"address", idStr}}
 
         buf.WriteByte('{')
@@ -126,7 +129,7 @@ func (s *Service) AccountHandler(w http.ResponseWriter, r *http.Request) {
                         }},
                     })
                     data = append(data, bson.D{
-                        account[0],
+                        {"address", model.ToCheckedAddress(address)},
                         account[1],
                         account[2],
                         {"sent", sent},
@@ -138,7 +141,7 @@ func (s *Service) AccountHandler(w http.ResponseWriter, r *http.Request) {
                     })
                 } else {
                     data = append(data, bson.D{
-                        account[0],
+                        {"address", model.ToCheckedAddress(address)},
                         account[1],
                         account[2],
                         {"sent", uint64(0)},
@@ -178,7 +181,7 @@ func (s *Service) AccountRewardsHandler(w http.ResponseWriter, r *http.Request) 
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
 
         filter := &bson.D{{"coinbase", idStr}}
 
@@ -217,7 +220,7 @@ func (s *Service) AccountTransactionsHandler(w http.ResponseWriter, r *http.Requ
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
 
         filter := &bson.D{
             {"$or", bson.A{
@@ -233,6 +236,7 @@ func (s *Service) AccountTransactionsHandler(w http.ResponseWriter, r *http.Requ
             data, err := s.storage.GetTransactions(s.ctx, filter, options.Find().SetSort(bson.D{{"counter", -1}}).SetLimit(pageSize).SetSkip((pageNumber - 1) * pageSize).SetProjection(bson.D{{"_id", 0}}))
             if err != nil {
             }
+            fixCheckedAddress(data, []int{17, 18})
             setDataInfo(buf, data)
         } else {
             setDataInfo(buf, nil)

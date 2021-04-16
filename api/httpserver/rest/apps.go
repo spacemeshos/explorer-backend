@@ -4,6 +4,7 @@ import (
     "bytes"
 //    "errors"
     "net/http"
+    "strings"
 
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
@@ -54,7 +55,7 @@ func (s *Service) AppHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         vars := mux.Vars(r)
-        idStr := vars["id"]
+        idStr := strings.ToLower(vars["id"])
         filter := &bson.D{{"address", idStr}}
 
         buf.WriteByte('{')
