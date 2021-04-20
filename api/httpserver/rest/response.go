@@ -7,8 +7,6 @@ import (
 
     "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/bson/primitive"
-
-    "github.com/spacemeshos/explorer-backend/model"
 )
 /*
 200:
@@ -405,18 +403,5 @@ func setDataInfo(buf *bytes.Buffer, data []bson.D) error {
         }
     }
     buf.WriteByte(']')
-    return nil
-}
-
-func fixCheckedAddress(data []bson.D, positions []int) error {
-    if data != nil {
-        for i, _ := range data {
-            for _, j := range positions {
-                if address, ok := data[i][j].Value.(string); ok {
-                    data[i][j].Value = model.ToCheckedAddress(address)
-                }
-            }
-        }
-    }
     return nil
 }
