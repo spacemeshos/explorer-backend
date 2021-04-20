@@ -407,16 +407,3 @@ func setDataInfo(buf *bytes.Buffer, data []bson.D) error {
     buf.WriteByte(']')
     return nil
 }
-
-func fixCheckedAddress(data []bson.D, positions []int) error {
-    if data != nil {
-        for i, _ := range data {
-            for _, j := range positions {
-                if address, ok := data[i][j].Value.(string); ok {
-                    data[i][j].Value = model.ToCheckedAddress(address)
-                }
-            }
-        }
-    }
-    return nil
-}
