@@ -11,6 +11,8 @@ import (
     "github.com/gorilla/mux"
     "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/bson/primitive"
+
+    "github.com/spacemeshos/explorer-backend/model"
 )
 
 func (s *Service) SearchHandler(w http.ResponseWriter, r *http.Request) {

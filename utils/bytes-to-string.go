@@ -2,6 +2,8 @@ package utils
 
 import (
     "encoding/hex"
+
+    "github.com/spacemeshos/go-spacemesh/crypto/sha3"
 )
 
 func BytesToAddressString(a []byte) string {
