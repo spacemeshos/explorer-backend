@@ -4,6 +4,7 @@ import (
     "bytes"
     "context"
     "fmt"
+    "errors"
     "io/ioutil"
     "net/http"
     "sync"
@@ -108,4 +109,11 @@ func (s *Service) process(method string, w http.ResponseWriter, r *http.Request,
     }
 
     return nil
+}
+
+func (s *Service) Ping() error {
+    if s.storage == nil {
+        return errors.New("Serice not initialized")
+    }
+    return s.storage.Ping()
 }

@@ -3,6 +3,7 @@ package storage
 import (
     "container/list"
     "context"
+    "errors"
     "time"
     "sync"
 
@@ -402,4 +403,15 @@ func (s *Storage) getLayerTimestamp(layer uint32) uint32 {
         return s.NetworkInfo.GenesisTime
     }
     return s.NetworkInfo.GenesisTime + (layer - 1) * s.NetworkInfo.LayerDuration
+}
+
+func (s *Storage) Ping() error {
+    if s.client == nil {
+        return errors.New("Storage not initialized")
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+    defer cancel()
+
+    return s.client.Ping(ctx, nil)
 }

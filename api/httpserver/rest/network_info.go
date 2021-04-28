@@ -72,12 +72,16 @@ func (s *Service) NetworkInfoHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Service) HealthzHandler(w http.ResponseWriter, r *http.Request) {
     _ = s.process("GET", w, r, func(reqID uint64, requestBuf []byte, buf *bytes.Buffer) (Header, int, error) {
 
-        buf.WriteString("OK")
-
         header := Header{}
         header["Content-Type"] = "plain/text"
 
-        return header, http.StatusOK, nil
+        err := s.Ping()
+        if err == nil {
+            buf.WriteString("OK")
+            return header, http.StatusOK, nil
+        }
+
+        return header, http.StatusServiceUnavailable, nil
     })
 }
 
