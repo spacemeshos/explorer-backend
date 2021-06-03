@@ -17,7 +17,8 @@ import (
 
 func (s *Storage) InitAccountsStorage(ctx context.Context) error {
     _, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(true)});
-    _, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", -1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)});
+    _, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"created", 1}}, Options: options.Index().SetName("createIndex").SetUnique(false)});
+    _, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", -1}}, Options: options.Index().SetName("modifiedIndex").SetUnique(false)});
     _, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"address", 1}}, Options: options.Index().SetName("addressIndex").SetUnique(false)});
     _, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)});
     return err
@@ -81,6 +82,7 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
     defer cancel()
     _, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
         {"address", address},
+        {"created", layer},
         {"layer", layer},
         {"balance", balance},
         {"counter", uint64(0)},
@@ -96,6 +98,7 @@ func (s *Storage) SaveAccount(parent context.Context, layer uint32, in *model.Ac
     defer cancel()
     _, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
         {"address", in.Address},
+        {"created", layer},
         {"layer", layer},
         {"balance", in.Balance},
         {"counter", in.Counter},

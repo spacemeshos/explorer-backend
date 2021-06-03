@@ -14,11 +14,6 @@ import (
 type Account struct {
     Address	string	// account public address
     Balance	uint64	// known account balance
-    Sent	uint64
-    Received	uint64
-    Awards	uint64
-    Fees	uint64
-    Timestamp	uint32
     Counter	uint64
 }
 

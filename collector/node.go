@@ -58,7 +58,7 @@ func (c *Collector) syncStatusPump() error {
         }
 
         status := res.GetStatus()
-//        log.Info("Node sync status: %v", status)
+        log.Info("Node sync status: %v", status)
 
         c.listener.OnNodeStatus(
             status.GetConnectedPeers(),

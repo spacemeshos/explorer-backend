@@ -327,7 +327,8 @@ func (s *Storage) updateEpoch(epochNumber int32, prev *model.Epoch) *model.Epoch
     if prev != nil {
         epoch.Stats.Cumulative.Capacity      = epoch.Stats.Current.Capacity
         epoch.Stats.Cumulative.Decentral     = prev.Stats.Current.Decentral
-        epoch.Stats.Cumulative.Smeshers      = prev.Stats.Current.Smeshers
+//        epoch.Stats.Cumulative.Smeshers      = prev.Stats.Current.Smeshers
+        epoch.Stats.Cumulative.Smeshers      = epoch.Stats.Current.Smeshers
         epoch.Stats.Cumulative.Transactions  = prev.Stats.Cumulative.Transactions + epoch.Stats.Current.Transactions
         epoch.Stats.Cumulative.Accounts      = epoch.Stats.Current.Accounts
         epoch.Stats.Cumulative.Rewards       = prev.Stats.Cumulative.Rewards + epoch.Stats.Current.Rewards
