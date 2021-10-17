@@ -51,7 +51,7 @@ func PrintActivation(atx *pb.Activation) {
         atx.SmesherId,
         atx.Coinbase,
         atx.PrevAtx,
-        atx.CommitmentSize,
+        atx.NumUnits,
     )
 }
 

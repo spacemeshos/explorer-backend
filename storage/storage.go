@@ -22,6 +22,7 @@ type AccountUpdaterService interface {
 
 type Storage struct {
     NetworkInfo		model.NetworkInfo
+    postUnitSize	uint64
 
     client		*mongo.Client
     db			*mongo.Database
@@ -116,12 +117,13 @@ func (s *Storage) Close() {
     }
 }
 
-func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers uint64, maxTransactionsPerSecond uint64, layerDuration uint64) {
+func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers uint64, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64) {
     s.NetworkInfo.NetId = uint32(netId)
     s.NetworkInfo.GenesisTime = uint32(genesisTime)
     s.NetworkInfo.EpochNumLayers = uint32(epochNumLayers)
     s.NetworkInfo.MaxTransactionsPerSecond = uint32(maxTransactionsPerSecond)
     s.NetworkInfo.LayerDuration = uint32(layerDuration)
+    s.postUnitSize = postUnitSize
 
     s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
 
@@ -291,8 +293,8 @@ func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation
     log.Info("updateActivations(%v)", len(atxs))
     s.SaveOrUpdateActivations(context.Background(), atxs)
     for _, atx := range atxs {
-        s.SaveSmesher(context.Background(), atx.GetSmesher())
-        s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, atx.CommitmentSize, s.getLayerTimestamp(atx.Layer))
+        s.SaveSmesher(context.Background(), atx.GetSmesher(s.postUnitSize))
+        s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits) * s.postUnitSize, s.getLayerTimestamp(atx.Layer))
         s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
     }
 }

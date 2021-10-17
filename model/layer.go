@@ -16,7 +16,7 @@ type Layer struct {
     Start		uint32
     End			uint32
     TxsAmount		uint64
-    AtxCSize		uint64
+    AtxNumUnits		uint64
     Rewards		uint64
     Epoch		uint32
     Smeshers		uint32
@@ -77,7 +77,7 @@ func NewLayer(in *pb.Layer, networkInfo *NetworkInfo) (*Layer, []*Block, []*Acti
         atx := NewActivation(a, layer.Start)
         atx.Layer = layer.Number
         atxs[i] = atx
-        layer.AtxCSize += atx.CommitmentSize
+        layer.AtxNumUnits += uint64(atx.NumUnits)
         smeshers[atx.SmesherId] = true
     }
 

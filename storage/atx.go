@@ -45,7 +45,7 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
         SmesherId: utils.GetAsString(doc.Lookup("smesher")),
         Coinbase: utils.GetAsString(doc.Lookup("coinbase")),
         PrevAtx: utils.GetAsString(doc.Lookup("prevAtx")),
-        CommitmentSize: utils.GetAsUInt64((doc.Lookup("cSize"))),
+        NumUnits: utils.GetAsUInt32((doc.Lookup("numunits"))),
         Timestamp: utils.GetAsUInt32((doc.Lookup("timestamp"))),
     }
     return account, nil
@@ -92,7 +92,7 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
         {"smesher", in.SmesherId},
         {"coinbase", in.Coinbase},
         {"prevAtx", in.PrevAtx},
-        {"cSize", in.CommitmentSize},
+        {"numunits", in.NumUnits},
         {"timestamp", in.Timestamp},
     })
     if err != nil {
@@ -111,7 +111,7 @@ func (s *Storage) SaveActivations(parent context.Context, in []*model.Activation
             {"smesher", atx.SmesherId},
             {"coinbase", atx.Coinbase},
             {"prevAtx", atx.PrevAtx},
-            {"cSize", atx.CommitmentSize},
+            {"numunits", atx.NumUnits},
             {"timestamp", atx.Timestamp},
         })
         if err != nil {
@@ -133,7 +133,7 @@ func (s *Storage) SaveOrUpdateActivations(parent context.Context, in []*model.Ac
                 {"smesher", atx.SmesherId},
                 {"coinbase", atx.Coinbase},
                 {"prevAtx", atx.PrevAtx},
-                {"cSize", atx.CommitmentSize},
+                {"numunits", atx.NumUnits},
                 {"timestamp", atx.Timestamp},
             }},
         }, options.Update().SetUpsert(true))

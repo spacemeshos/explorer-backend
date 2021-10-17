@@ -15,7 +15,7 @@ type Activation struct {
     SmesherId		string	// id of smesher who created the ATX
     Coinbase		string	// coinbase account id
     PrevAtx		string	// previous ATX pointed to
-    CommitmentSize	uint64	// commitment size in bytes
+    NumUnits		uint32	// number of PoST data commitment units
     Timestamp		uint32
 }
 
@@ -32,14 +32,14 @@ func NewActivation(atx *pb.Activation, timestamp uint32) *Activation {
         SmesherId: utils.BytesToHex(atx.GetSmesherId().GetId()),
         Coinbase: utils.BytesToAddressString(atx.GetCoinbase().GetAddress()),
         PrevAtx: utils.BytesToHex(atx.GetPrevAtx().GetId()),
-        CommitmentSize: atx.GetCommitmentSize(),
+        NumUnits: atx.GetNumUnits(),
         Timestamp: timestamp,
     }
 }
 
-func (atx *Activation) GetSmesher() *Smesher {
+func (atx *Activation) GetSmesher(unitSize uint64) *Smesher {
     return &Smesher{
         Id: atx.SmesherId,
-        CommitmentSize: atx.CommitmentSize,
+        CommitmentSize: uint64(atx.NumUnits) * unitSize,
     }
 }

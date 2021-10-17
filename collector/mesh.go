@@ -50,12 +50,19 @@ func (c *Collector) getNetworkInfo() error {
         return err
     }
 
+    res, err := c.smesherClient.PostConfig(ctx, &empty.Empty{})
+    if err != nil {
+        log.Error("cannot get POST config: %v", err)
+        return err
+    }
+
     c.listener.OnNetworkInfo(
         netId.GetNetid().GetValue(),
         genesisTime.GetUnixtime().GetValue(),
         epochNumLayers.GetNumlayers().GetValue(),
         maxTransactionsPerSecond.GetMaxTxsPerSecond().GetValue(),
         layerDuration.GetDuration().GetValue(),
+        (uint64(res.BitsPerLabel) * uint64(res.LabelsPerUnit)) / 8,
     )
 
     for _, account := range accounts.GetAccountWrapper() {
