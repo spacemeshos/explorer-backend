@@ -40,3 +40,30 @@ else
 	cd cmd/collector ; go build -o $(BIN_DIR)/collector; cd ..
 endif
 .PHONY: collector
+
+lint-ci:
+	golangci-lint run --new-from-rev=origin/master --config .golangci.yml
+
+lint:
+	golangci-lint run --new-from-rev=master --config .golangci.yml
+
+lint-fix:
+	golangci-lint run --new-from-rev=master --config .golangci.yml --fix
+
+test:
+	go test -race  ./...
+
+stop:
+	@echo "-- stop containers";
+	docker container ls -f "name=sm_*" ; true
+	@echo "-- drop containers"
+	docker rm -f -v $(shell docker container ls -f "name=sm_*" -q) ; true
+
+dev_up: stop ## start local environment
+	@echo "RUN dev docker-compose.yml "
+	docker compose pull
+	docker compose up --build
+
+ci_up: stop ## start ci environment
+	@echo "RUN ci docker-compose.yml "
+	docker compose up --build -d
