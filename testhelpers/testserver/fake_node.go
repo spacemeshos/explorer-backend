@@ -1,0 +1,345 @@
+package testserver
+
+import (
+	"context"
+	"fmt"
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/phayes/freeport"
+	"google.golang.org/genproto/googleapis/rpc/code"
+	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"math/rand"
+	"net"
+	"strings"
+	"time"
+
+	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
+	"github.com/spacemeshos/explorer-backend/utils"
+)
+
+type meshServiceWrapper struct {
+	startTime time.Time
+	seed      *testseed.TestServerSeed
+	seedGen   *testseed.SeedGenerator
+	pb.UnimplementedMeshServiceServer
+}
+
+type debugServiceWrapper struct {
+	seedGen *testseed.SeedGenerator
+	pb.UnimplementedDebugServiceServer
+}
+
+type smesherServiceWrapper struct {
+	seedGen *testseed.SeedGenerator
+	seed    *testseed.TestServerSeed
+	pb.UnimplementedSmesherServiceServer
+}
+
+type globalStateServiceWrapper struct {
+	seedGen *testseed.SeedGenerator
+	pb.UnimplementedGlobalStateServiceServer
+}
+
+type nodeServiceWrapper struct {
+	seedGen *testseed.SeedGenerator
+	pb.UnimplementedNodeServiceServer
+}
+
+type FakeNode struct {
+	seedGen        *testseed.SeedGenerator
+	NodePort       int
+	InitDone       chan struct{}
+	server         *grpc.Server
+	nodeService    *nodeServiceWrapper
+	meshService    *meshServiceWrapper
+	globalState    *globalStateServiceWrapper
+	debugService   *debugServiceWrapper
+	smesherService *smesherServiceWrapper
+}
+
+var stateSynced = make(chan struct{})
+
+func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seedConf *testseed.TestServerSeed) (*FakeNode, error) {
+	appPort, err := freeport.GetFreePort()
+	if err != nil {
+		return nil, err
+	}
+	// c.nodeClient = pb.NewNodeServiceClient(conn)
+	// c.meshClient = pb.NewMeshServiceClient(conn)
+	// c.globalClient = pb.NewGlobalStateServiceClient(conn)
+	// c.debugClient = pb.NewDebugServiceClient(conn)
+	// c.smesherClient = pb.NewSmesherServiceClient(conn)
+	return &FakeNode{
+		seedGen:        seedGen,
+		NodePort:       appPort,
+		InitDone:       make(chan struct{}),
+		nodeService:    &nodeServiceWrapper{seedGen, pb.UnimplementedNodeServiceServer{}},
+		meshService:    &meshServiceWrapper{startTime, seedConf, seedGen, pb.UnimplementedMeshServiceServer{}},
+		globalState:    &globalStateServiceWrapper{seedGen, pb.UnimplementedGlobalStateServiceServer{}},
+		debugService:   &debugServiceWrapper{seedGen, pb.UnimplementedDebugServiceServer{}},
+		smesherService: &smesherServiceWrapper{seedGen, seedConf, pb.UnimplementedSmesherServiceServer{}},
+	}, nil
+}
+
+func (f *FakeNode) Start() error {
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", f.NodePort))
+	if err != nil {
+		return fmt.Errorf("failed to listen fake node: %v", err)
+	}
+
+	f.server = grpc.NewServer()
+	pb.RegisterDebugServiceServer(f.server, f.debugService)
+	pb.RegisterMeshServiceServer(f.server, f.meshService)
+	pb.RegisterNodeServiceServer(f.server, f.nodeService)
+	pb.RegisterGlobalStateServiceServer(f.server, f.globalState)
+	pb.RegisterSmesherServiceServer(f.server, f.smesherService)
+	return f.server.Serve(lis)
+}
+
+func (f *FakeNode) Stop() error {
+	f.server.Stop()
+	return nil
+}
+
+func (f *FakeNode) SeedData() {
+	f.server.Stop()
+}
+
+func (m meshServiceWrapper) GenesisTime(context.Context, *pb.GenesisTimeRequest) (*pb.GenesisTimeResponse, error) {
+	return &pb.GenesisTimeResponse{Unixtime: &pb.SimpleInt{Value: uint64(m.startTime.Unix())}}, nil
+}
+
+func (m meshServiceWrapper) NetID(context.Context, *pb.NetIDRequest) (*pb.NetIDResponse, error) {
+	return &pb.NetIDResponse{Netid: &pb.SimpleInt{Value: m.seed.NetID}}, nil
+}
+
+func (m meshServiceWrapper) EpochNumLayers(context.Context, *pb.EpochNumLayersRequest) (*pb.EpochNumLayersResponse, error) {
+	return &pb.EpochNumLayersResponse{Numlayers: &pb.SimpleInt{Value: m.seed.EpochNumLayers}}, nil
+}
+
+func (m meshServiceWrapper) LayerDuration(context.Context, *pb.LayerDurationRequest) (*pb.LayerDurationResponse, error) {
+	return &pb.LayerDurationResponse{Duration: &pb.SimpleInt{Value: m.seed.LayersDuration}}, nil
+}
+
+func (m meshServiceWrapper) MaxTransactionsPerSecond(context.Context, *pb.MaxTransactionsPerSecondRequest) (*pb.MaxTransactionsPerSecondResponse, error) {
+	return &pb.MaxTransactionsPerSecondResponse{MaxTxsPerSecond: &pb.SimpleInt{Value: m.seed.MaxTransactionPerSecond}}, nil
+}
+
+func (d *debugServiceWrapper) Accounts(context.Context, *empty.Empty) (*pb.AccountsResponse, error) {
+	accs := make([]*pb.Account, 0, len(d.seedGen.Accounts))
+	for _, acc := range d.seedGen.Accounts {
+		accs = append(accs, &pb.Account{
+			AccountId:    &pb.AccountId{Address: mustParse(acc.Account.Address)},
+			StateCurrent: nil,
+			StateProjected: &pb.AccountState{
+				Balance: &pb.Amount{Value: acc.Account.Balance},
+				Counter: acc.Account.Counter,
+			},
+		})
+	}
+	return &pb.AccountsResponse{AccountWrapper: accs}, nil
+}
+
+func (s *smesherServiceWrapper) PostConfig(context.Context, *empty.Empty) (*pb.PostConfigResponse, error) {
+	return &pb.PostConfigResponse{
+		BitsPerLabel:  s.seed.BitsPerLabel,
+		LabelsPerUnit: s.seed.LabelsPerUnit,
+		MinNumUnits:   s.seed.MinNumUnits,
+		MaxNumUnits:   s.seed.MaxNumUnits,
+	}, nil
+}
+
+func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStreamRequest, stream pb.GlobalStateService_GlobalStateStreamServer) error {
+	<-stateSynced
+	println("global state stream started")
+	for _, epoch := range g.seedGen.Epochs {
+		for _, reward := range epoch.Rewards {
+			resp := &pb.GlobalStateStreamResponse{Datum: &pb.GlobalStateData{Datum: &pb.GlobalStateData_Reward{
+				Reward: &pb.Reward{
+					LayerComputed: &pb.LayerNumber{Number: reward.LayerComputed},
+					Layer:         &pb.LayerNumber{Number: reward.Layer},
+					Total:         &pb.Amount{Value: reward.Total},
+					LayerReward:   &pb.Amount{Value: reward.LayerReward},
+					Coinbase:      &pb.AccountId{Address: mustParse(reward.Coinbase)},
+					Smesher:       &pb.SmesherId{Id: mustParse(reward.Smesher)},
+				},
+			}}}
+			if err := stream.Send(resp); err != nil {
+				return err
+			}
+		}
+	}
+	ticker := time.NewTicker(1 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			// trigger recalculate layer stats
+			//println("trigger recalculate layer stats")
+			//println("trigger recalculate layer stats")
+			//println("trigger recalculate layer stats")
+			//for _, epoch := range g.seedGen.Epochs {
+			//	for _, layer := range epoch.Layers {
+			//		resp := &pb.GlobalStateStreamResponse{Datum: &pb.GlobalStateData{Datum: &pb.GlobalStateData_GlobalState{
+			//			GlobalState: &pb.GlobalStateHash{
+			//				Layer: &pb.LayerNumber{Number: layer.Layer.Number},
+			//			},
+			//		}}}
+			//		println("send global state stream response")
+			//		if err := stream.Send(resp); err != nil {
+			//			return err
+			//		}
+			//	}
+			//}
+
+		case <-stream.Context().Done():
+			return nil
+		}
+	}
+}
+
+func (g *globalStateServiceWrapper) Account(_ context.Context, req *pb.AccountRequest) (*pb.AccountResponse, error) {
+	accAddr := utils.BytesToAddressString(req.AccountId.Address)
+	acc, ok := g.seedGen.Accounts[strings.ToLower(accAddr)]
+	if !ok {
+		return nil, status.Error(codes.NotFound, "account not found")
+	}
+	return &pb.AccountResponse{
+		AccountWrapper: &pb.Account{
+			AccountId: &pb.AccountId{
+				Address: mustParse(accAddr),
+			},
+			StateCurrent: &pb.AccountState{
+				Balance: &pb.Amount{Value: acc.Account.Balance},
+				Counter: acc.Account.Counter,
+			},
+			StateProjected: nil,
+		},
+	}, nil
+}
+
+func (g *meshServiceWrapper) LayerStream(_ *pb.LayerStreamRequest, stream pb.MeshService_LayerStreamServer) error {
+	if err := g.sendEpoch(stream); err != nil {
+		return err
+	}
+	println("sended all layers")
+	time.Sleep(1 * time.Second)
+	close(stateSynced)
+	ticker := time.NewTicker(1 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			//if err := g.sendEpoch(stream); err != nil {
+			//	return err
+			//}
+		case <-stream.Context().Done():
+			return nil
+		}
+	}
+}
+
+func (g *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) error {
+	for _, epoch := range g.seedGen.Epochs {
+		for _, layerContainer := range epoch.Layers {
+			atx := make([]*pb.Activation, 0, len(layerContainer.Activations))
+			for _, atxGenerated := range layerContainer.Activations {
+				atx = append(atx, &pb.Activation{
+					Id:        &pb.ActivationId{Id: mustParse(atxGenerated.Id)},
+					Layer:     &pb.LayerNumber{Number: atxGenerated.Layer},
+					SmesherId: &pb.SmesherId{Id: mustParse(atxGenerated.SmesherId)},
+					Coinbase:  &pb.AccountId{Address: mustParse(atxGenerated.Coinbase)},
+					PrevAtx:   &pb.ActivationId{Id: mustParse(atxGenerated.PrevAtx)},
+					NumUnits:  atxGenerated.NumUnits,
+				})
+			}
+			blocksRes := make([]*pb.Block, 0)
+			for _, blockContainer := range layerContainer.Blocks {
+				tx := make([]*pb.Transaction, 0, len(blockContainer.Transactions))
+				for _, txContainer := range blockContainer.Transactions {
+					tx = append(tx, &pb.Transaction{
+						Id: &pb.TransactionId{Id: mustParse(txContainer.Id)},
+						Datum: &pb.Transaction_CoinTransfer{
+							CoinTransfer: &pb.CoinTransferTransaction{
+								Receiver: &pb.AccountId{
+									Address: mustParse(txContainer.Receiver),
+								},
+							},
+						},
+						Sender: &pb.AccountId{
+							Address: mustParse(txContainer.Sender),
+						},
+						GasOffered: &pb.GasOffered{
+							GasPrice:    txContainer.GasPrice,
+							GasProvided: txContainer.GasProvided,
+						},
+						Amount:  &pb.Amount{Value: txContainer.Amount},
+						Counter: txContainer.Counter,
+						Signature: &pb.Signature{
+							Signature: mustParse(txContainer.Signature),
+							PublicKey: mustParse(txContainer.PublicKey),
+						},
+					})
+				}
+				blocksRes = append(blocksRes, &pb.Block{
+					Id:           mustParse(blockContainer.Block.Id),
+					Transactions: tx,
+					ActivationId: nil,
+					SmesherId: &pb.SmesherId{
+						Id: mustParse(blockContainer.SmesherID),
+					},
+				})
+			}
+			pbLayer := &pb.Layer{
+				Number:        &pb.LayerNumber{Number: layerContainer.Layer.Number},
+				Status:        pb.Layer_LayerStatus(layerContainer.Layer.Status),
+				Hash:          mustParse(layerContainer.Layer.Hash),
+				Blocks:        blocksRes,
+				Activations:   atx,
+				RootStateHash: nil,
+			}
+			if err := stream.Send(&pb.LayerStreamResponse{Layer: pbLayer}); err != nil {
+				return fmt.Errorf("send to stream: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (n *nodeServiceWrapper) SyncStart(context.Context, *pb.SyncStartRequest) (*pb.SyncStartResponse, error) {
+	return &pb.SyncStartResponse{Status: &rpcstatus.Status{Code: int32(code.Code_OK)}}, nil
+}
+
+func (n *nodeServiceWrapper) StatusStream(req *pb.StatusStreamRequest, stream pb.NodeService_StatusStreamServer) error {
+	ticker := time.NewTicker(1 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			curLayer, latestLayer, verifiedLayer := n.seedGen.GetLastLayer()
+			resp := &pb.StatusStreamResponse{
+				Status: &pb.NodeStatus{
+					ConnectedPeers: uint64(rand.Intn(10)) + 1,              // number of connected peers
+					IsSynced:       true,                                   // whether the node is synced
+					SyncedLayer:    &pb.LayerNumber{Number: latestLayer},   // latest layer we saw from the network
+					TopLayer:       &pb.LayerNumber{Number: curLayer},      // current layer, based on time
+					VerifiedLayer:  &pb.LayerNumber{Number: verifiedLayer}, // latest verified layer
+				},
+			}
+
+			if err := stream.Send(resp); err != nil {
+				return fmt.Errorf("send to stream: %w", err)
+			}
+		case <-stream.Context().Done():
+			return nil
+		}
+	}
+}
+
+func mustParse(str string) []byte {
+	res, err := utils.StringToBytes(str)
+	if err != nil {
+		panic("error while parse string to bytes: " + err.Error())
+	}
+	return res
+}

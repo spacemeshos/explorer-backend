@@ -15,7 +15,7 @@ func TestBlocks(t *testing.T) { // /blocks/{id}
 			var resp blockResp
 			res.RequireUnmarshal(t, &resp)
 			require.Equal(t, 1, len(resp.Data))
-			require.Equal(t, block, resp.Data[0])
+			require.Equal(t, block, &resp.Data[0])
 		}
 	}
 }

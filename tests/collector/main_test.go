@@ -1,14 +1,15 @@
-package api
+package collector
 
 import (
 	"context"
 	"fmt"
-	"os"
-	"testing"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"os"
+	"testing"
+	"time"
 
+	"github.com/spacemeshos/explorer-backend/collector"
 	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
 	"github.com/spacemeshos/explorer-backend/testhelpers/testserver"
@@ -17,9 +18,11 @@ import (
 const testAPIServiceDB = "explorer_test"
 
 var (
-	apiServer *testserver.TestAPIService
-	generator *testseed.SeedGenerator
-	dbPort    = 27017
+	dbPort       = 27017
+	generator    *testseed.SeedGenerator
+	node         *testserver.FakeNode
+	collectorApp *collector.Collector
+	storageDB    *storage.Storage
 )
 
 func TestMain(m *testing.M) {
@@ -29,6 +32,7 @@ func TestMain(m *testing.M) {
 		fmt.Println("failed to connect to mongo", err)
 		os.Exit(1)
 	}
+
 	database := client.Database(testAPIServiceDB)
 	if database != nil {
 		if err = database.Drop(context.TODO()); err != nil {
@@ -37,31 +41,41 @@ func TestMain(m *testing.M) {
 		}
 	}
 
-	db, err := storage.New(context.TODO(), mongoURL, testAPIServiceDB)
+	storageDB, err = storage.New(context.TODO(), mongoURL, testAPIServiceDB)
 	if err != nil {
 		fmt.Println("failed to init storage to mongo", err)
 		os.Exit(1)
 	}
-	seed := testseed.GetServerSeed()
-	db.OnNetworkInfo(seed.NetID, 2, seed.EpochNumLayers, seed.MaxTransactionPerSecond, seed.LayersDuration, seed.GetPostUnitsSize())
 
-	apiServer, err = testserver.StartTestAPIService(dbPort)
-	if err != nil {
-		fmt.Println("failed to start test api service", err)
-		os.Exit(1)
-	}
-	apiServer.Storage = db
-	generator = testseed.NewSeedGenerator(testseed.GetServerSeed())
+	seed := testseed.GetServerSeed()
+	generator = testseed.NewSeedGenerator(seed)
 	if err = generator.GenerateEpoches(10); err != nil {
 		fmt.Println("failed to generate epochs", err)
 		os.Exit(1)
 	}
-	if err = generator.SaveEpoches(db); err != nil {
-		fmt.Println("failed to save generated epochs", err)
+
+	node, err = testserver.CreateFakeSMNode(generator.FirstLayerTime, generator, seed)
+	if err != nil {
+		fmt.Println("failed to generate fake node", err)
 		os.Exit(1)
 	}
+	go func() {
+		if err = node.Start(); err != nil {
+			fmt.Println("failed to start fake node", err)
+			os.Exit(1)
+		}
+	}()
+
+	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort), storageDB)
+	storageDB.AccountUpdater = collectorApp
+	go collectorApp.Run()
+	time.Sleep(5 * time.Second)
 
 	code := m.Run()
-	db.Close()
+	storageDB.Close()
+	if err = node.Stop(); err != nil {
+		fmt.Println("failed to stop fake node", err)
+		os.Exit(1)
+	}
 	os.Exit(code)
 }

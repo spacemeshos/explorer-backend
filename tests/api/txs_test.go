@@ -9,13 +9,13 @@ import (
 func TestTransactions(t *testing.T) { // /txs
 	t.Parallel()
 	insertedTxs := generator.Epochs.GetTransactions()
-	res := apiServer.Get(t, apiPrefix+"/txs?pagesize=100")
+	res := apiServer.Get(t, apiPrefix+"/txs?pagesize=1000")
 	res.RequireOK(t)
 	var resp transactionResp
 	res.RequireUnmarshal(t, &resp)
 	require.Equal(t, len(insertedTxs), len(resp.Data))
 	for _, tx := range resp.Data {
-		require.Equal(t, insertedTxs[tx.Id], tx)
+		require.Equal(t, *insertedTxs[tx.Id], tx)
 	}
 }
 
@@ -28,6 +28,6 @@ func TestTransaction(t *testing.T) { // /txs/{id}
 		var resp transactionResp
 		res.RequireUnmarshal(t, &resp)
 		require.Equal(t, 1, len(resp.Data))
-		require.Equal(t, tx, resp.Data[0])
+		require.Equal(t, *tx, resp.Data[0])
 	}
 }

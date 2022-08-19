@@ -6,6 +6,7 @@ import (
 
 // AccountContainer ...
 type AccountContainer struct {
+	layerID      uint32
 	Account      model.Account
 	Transactions map[string]*model.Transaction
 	Rewards      map[string]*model.Reward
@@ -16,6 +17,6 @@ func (s *SeedGenerator) saveTransactionForAccount(tx *model.Transaction, account
 	s.Accounts[accountTo].Transactions[tx.Id] = tx
 }
 
-func (s *SeedGenerator) saveReward(reward *model.Reward, account string) {
-	s.Accounts[account].Rewards[reward.Smesher] = reward
+func (s *SeedGenerator) saveReward(reward *model.Reward) {
+	s.Accounts[reward.Coinbase].Rewards[reward.Smesher] = reward
 }

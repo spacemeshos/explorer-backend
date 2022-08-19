@@ -35,7 +35,7 @@ func TestNetworkInfoHandler(t *testing.T) {
 	require.Equal(t, 123, networkInfo.Network.Netid)
 	require.Equal(t, 2, networkInfo.Network.Genesis)
 	require.Equal(t, 10, networkInfo.Network.Layers)
-	require.Equal(t, 4, networkInfo.Network.Maxtx)
+	require.Equal(t, 100, networkInfo.Network.Maxtx)
 	require.Equal(t, 10, networkInfo.Network.Duration)
 }
 

@@ -33,6 +33,7 @@ func TestAccount(t *testing.T) { // /accounts/{id}
 func TestAccountTransactions(t *testing.T) { // /accounts/{id}/txs
 	t.Parallel()
 	for _, acc := range generator.Accounts {
+		println("check", acc.Account.Address)
 		res := apiServer.Get(t, apiPrefix+"/accounts/"+acc.Account.Address+"/txs?pagesize=1000")
 		res.RequireOK(t)
 		var resp transactionResp

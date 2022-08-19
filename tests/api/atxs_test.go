@@ -9,13 +9,13 @@ import (
 func TestActivations(t *testing.T) { // /atxs
 	t.Parallel()
 	insertedAtxs := generator.Epochs.GetActivations()
-	res := apiServer.Get(t, apiPrefix+"/atxs?pagesize=100")
+	res := apiServer.Get(t, apiPrefix+"/atxs?pagesize=1000")
 	res.RequireOK(t)
 	var resp atxResp
 	res.RequireUnmarshal(t, &resp)
 	require.Equal(t, len(insertedAtxs), len(resp.Data))
 	for _, atx := range resp.Data {
-		require.Equal(t, insertedAtxs[atx.Id], atx)
+		require.Equal(t, insertedAtxs[atx.Id], &atx)
 	}
 }
 

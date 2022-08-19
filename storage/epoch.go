@@ -240,55 +240,60 @@ func (s *Storage) SaveOrUpdateEpoch(parent context.Context, epoch *model.Epoch) 
 }
 
 func (s *Storage) computeStatistics(epoch *model.Epoch) {
-    layerStart, layerEnd := s.GetEpochLayers(epoch.Number)
-    if epoch.Start == 0 {
-        epoch.LayerStart = layerStart
-        epoch.Start = s.getLayerTimestamp(layerStart)
-    }
-    lastLayer := s.GetLastLayer(context.Background())
-    if lastLayer < layerEnd {
-        layerEnd = lastLayer
-    }
-    epoch.LayerEnd = layerEnd
-    epoch.End = s.getLayerTimestamp(layerEnd) + s.NetworkInfo.LayerDuration - 1
-    epoch.Layers = epoch.LayerEnd - epoch.LayerStart + 1
-    duration := float64(s.NetworkInfo.LayerDuration) * float64(s.GetLayersCount(context.Background(), s.GetEpochLayersFilter(epoch.Number, "number")))
-    layerFilter := s.GetEpochLayersFilter(epoch.Number, "layer")
-    epoch.Stats.Current.Transactions = s.GetTransactionsCount(context.Background(), layerFilter)
-    epoch.Stats.Current.TxsAmount = s.GetTransactionsAmount(context.Background(), layerFilter)
-    if duration > 0 && s.NetworkInfo.MaxTransactionsPerSecond > 0 {
-        epoch.Stats.Current.Capacity = int64(math.Round(((float64(epoch.Stats.Current.Transactions) / duration) / float64(s.NetworkInfo.MaxTransactionsPerSecond)) * 100.0))
-    }
-    atxs, _ := s.GetActivations(context.Background(), layerFilter)
-    if atxs != nil {
-        smeshers := make(map[string]int64)
-        for _, atx  := range atxs {
-            var cSize int64
-            var smesher string
-            for _, e := range atx {
-                if e.Key == "smesher" {
-                    smesher, _ = e.Value.(string)
-                    continue
-                }
-                if e.Key == "cSize" {
-                    if value, ok := e.Value.(int64); ok {
-                        cSize = value
-                    } else if value, ok := e.Value.(int32); ok {
-                        cSize = int64(value)
-                    }
-                }
-            }
-            if smesher != "" {
-                smeshers[smesher] += cSize
-                epoch.Stats.Current.Security += cSize
-            }
-        }
-        epoch.Stats.Current.Smeshers = int64(len(smeshers))
-        // degree_of_decentralization is defined as: 0.5 * (min(n,1e4)^2/1e8) + 0.5 * (1 - gini_coeff(last_100_epochs))
-        a := math.Min(float64(epoch.Stats.Current.Smeshers), 1e4)
-        epoch.Stats.Current.Decentral = int64(100.0 * (0.5 * (a * a) /1e8  + 0.5 * (1.0 - utils.Gini(smeshers))))
-    }
-    epoch.Stats.Current.Accounts = s.GetAccountsCount(context.Background(), &bson.D{{"created", bson.D{{"$lte", layerEnd}}}})
-    epoch.Stats.Cumulative.Circulation, _ = s.GetLayersRewards(context.Background(), 0, layerEnd)
-    epoch.Stats.Current.Rewards, epoch.Stats.Current.RewardsNumber = s.GetLayersRewards(context.Background(), layerStart, layerEnd)
+	layerStart, layerEnd := s.GetEpochLayers(epoch.Number)
+	if epoch.Start == 0 {
+		epoch.LayerStart = layerStart
+		epoch.Start = s.getLayerTimestamp(layerStart)
+	}
+	lastLayer := s.GetLastLayer(context.Background())
+	if lastLayer < layerEnd {
+		layerEnd = lastLayer
+	}
+	epoch.LayerEnd = layerEnd
+	epoch.End = s.getLayerTimestamp(layerEnd) + s.NetworkInfo.LayerDuration - 1
+	epoch.Layers = epoch.LayerEnd - epoch.LayerStart + 1
+	duration := float64(s.NetworkInfo.LayerDuration) * float64(s.GetLayersCount(context.Background(), s.GetEpochLayersFilter(epoch.Number, "number")))
+	layerFilter := s.GetEpochLayersFilter(epoch.Number, "layer")
+	epoch.Stats.Current.Transactions = s.GetTransactionsCount(context.Background(), layerFilter)
+	epoch.Stats.Current.TxsAmount = s.GetTransactionsAmount(context.Background(), layerFilter)
+	if duration > 0 && s.NetworkInfo.MaxTransactionsPerSecond > 0 {
+		// todo replace to utils.CalcEpochCapacity
+		epoch.Stats.Current.Capacity = int64(math.Round(((float64(epoch.Stats.Current.Transactions) / duration) / float64(s.NetworkInfo.MaxTransactionsPerSecond)) * 100.0))
+	}
+	atxs, _ := s.GetActivations(context.Background(), layerFilter)
+	if atxs != nil {
+		smeshers := make(map[string]int64)
+		for _, atx := range atxs {
+			var cSize int64
+			var smesher string
+			for _, e := range atx {
+				if e.Key == "smesher" {
+					smesher, _ = e.Value.(string)
+					continue
+				}
+				if e.Key == "cSize" {
+					if value, ok := e.Value.(int64); ok {
+						cSize = value
+					} else if value, ok := e.Value.(int32); ok {
+						cSize = int64(value)
+					}
+				}
+			}
+			if smesher != "" {
+				// todo cSize always 0, because activations does not keep info about smesher czise
+				// it contains numunits, which should be multiplied to postUnitsSize
+				// postUnitsSize = BitsPerLabel * LabelsPerUnit / 8
+				smeshers[smesher] += cSize
+				epoch.Stats.Current.Security += cSize
+			}
+		}
+		epoch.Stats.Current.Smeshers = int64(len(smeshers))
+		// degree_of_decentralization is defined as: 0.5 * (min(n,1e4)^2/1e8) + 0.5 * (1 - gini_coeff(last_100_epochs))
+		a := math.Min(float64(epoch.Stats.Current.Smeshers), 1e4)
+		// todo replace to utils.CalcDecentralCoefficient
+		epoch.Stats.Current.Decentral = int64(100.0 * (0.5*(a*a)/1e8 + 0.5*(1.0-utils.Gini(smeshers))))
+	}
+	epoch.Stats.Current.Accounts = s.GetAccountsCount(context.Background(), &bson.D{{"created", bson.D{{"$lte", layerEnd}}}})
+	epoch.Stats.Cumulative.Circulation, _ = s.GetLayersRewards(context.Background(), 0, layerEnd)
+	epoch.Stats.Current.Rewards, epoch.Stats.Current.RewardsNumber = s.GetLayersRewards(context.Background(), layerStart, layerEnd)
 }
