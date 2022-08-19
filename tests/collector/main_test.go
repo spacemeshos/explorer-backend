@@ -3,11 +3,13 @@ package collector
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"os"
 	"testing"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/spacemeshos/explorer-backend/collector"
 	"github.com/spacemeshos/explorer-backend/storage"
@@ -69,13 +71,23 @@ func TestMain(m *testing.M) {
 	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort), storageDB)
 	storageDB.AccountUpdater = collectorApp
 	go collectorApp.Run()
-	time.Sleep(5 * time.Second)
+
+	ticker := time.NewTicker(1 * time.Second)
+	counter := 0
+	for range ticker.C {
+		counter++
+		num := storageDB.GetRewardsCount(context.TODO(), &bson.D{})
+		if int(num) == len(generator.Rewards) {
+			break
+		}
+		if counter > 10 {
+			break
+		}
+	}
+	println("init done, start collector tests")
 
 	code := m.Run()
 	storageDB.Close()
-	if err = node.Stop(); err != nil {
-		fmt.Println("failed to stop fake node", err)
-		os.Exit(1)
-	}
+	node.Stop()
 	os.Exit(code)
 }

@@ -9,12 +9,13 @@ import (
 	"time"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+
 	"github.com/spacemeshos/explorer-backend/model"
 	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/utils"
 )
 
-// SeedGenerator test helper for generate epochs.
+// SeedGenerator helper for generate epochs.
 type SeedGenerator struct {
 	Epochs         SeedEpochs
 	Accounts       map[string]AccountContainer
@@ -105,6 +106,7 @@ func (s *SeedGenerator) GenerateEpoches(count int) error {
 	return nil
 }
 
+// SaveEpoches write generated data directly to db.
 func (s *SeedGenerator) SaveEpoches(db *storage.Storage) error {
 	for _, epoch := range s.Epochs {
 		if err := db.SaveEpoch(context.TODO(), &epoch.Epoch); err != nil {
@@ -167,7 +169,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 
 	for k := 0; k <= rand.Intn(3); k++ {
 		tmpAcc := generateAccount()
-		s.Accounts[tmpAcc.Address] = AccountContainer{
+		s.Accounts[strings.ToLower(tmpAcc.Address)] = AccountContainer{
 			layerID:      uint32(layerID),
 			Account:      tmpAcc,
 			Transactions: map[string]*model.Transaction{},
@@ -206,7 +208,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 			blockContainer.Transactions = append(blockContainer.Transactions, &tmpTx)
 		}
 
-		from := tmpAcc.Address //s.getRandomAcc()
+		from := tmpAcc.Address
 		atxNumUnits := uint32(rand.Intn(1000))
 		tmpSm := s.generateSmesher(tmpLayer.Number, from, uint64(atxNumUnits)*s.seed.GetPostUnitsSize())
 		layerContainer.Smeshers[tmpSm.Id] = &tmpSm

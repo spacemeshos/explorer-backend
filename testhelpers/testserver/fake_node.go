@@ -3,19 +3,20 @@ package testserver
 import (
 	"context"
 	"fmt"
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/phayes/freeport"
-	"google.golang.org/genproto/googleapis/rpc/code"
-	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"math/rand"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/phayes/freeport"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"google.golang.org/genproto/googleapis/rpc/code"
+	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
 	"github.com/spacemeshos/explorer-backend/utils"
 )
@@ -48,6 +49,7 @@ type nodeServiceWrapper struct {
 	pb.UnimplementedNodeServiceServer
 }
 
+// FakeNode simulate a spacemesh node.
 type FakeNode struct {
 	seedGen        *testseed.SeedGenerator
 	NodePort       int
@@ -62,16 +64,12 @@ type FakeNode struct {
 
 var stateSynced = make(chan struct{})
 
+// CreateFakeSMNode ...
 func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seedConf *testseed.TestServerSeed) (*FakeNode, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
 		return nil, err
 	}
-	// c.nodeClient = pb.NewNodeServiceClient(conn)
-	// c.meshClient = pb.NewMeshServiceClient(conn)
-	// c.globalClient = pb.NewGlobalStateServiceClient(conn)
-	// c.debugClient = pb.NewDebugServiceClient(conn)
-	// c.smesherClient = pb.NewSmesherServiceClient(conn)
 	return &FakeNode{
 		seedGen:        seedGen,
 		NodePort:       appPort,
@@ -84,6 +82,7 @@ func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seed
 	}, nil
 }
 
+// Start ...
 func (f *FakeNode) Start() error {
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", f.NodePort))
 	if err != nil {
@@ -99,12 +98,8 @@ func (f *FakeNode) Start() error {
 	return f.server.Serve(lis)
 }
 
-func (f *FakeNode) Stop() error {
-	f.server.Stop()
-	return nil
-}
-
-func (f *FakeNode) SeedData() {
+// Stop stop fake node.
+func (f *FakeNode) Stop() {
 	f.server.Stop()
 }
 
@@ -176,24 +171,7 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 	for {
 		select {
 		case <-ticker.C:
-			// trigger recalculate layer stats
-			//println("trigger recalculate layer stats")
-			//println("trigger recalculate layer stats")
-			//println("trigger recalculate layer stats")
-			//for _, epoch := range g.seedGen.Epochs {
-			//	for _, layer := range epoch.Layers {
-			//		resp := &pb.GlobalStateStreamResponse{Datum: &pb.GlobalStateData{Datum: &pb.GlobalStateData_GlobalState{
-			//			GlobalState: &pb.GlobalStateHash{
-			//				Layer: &pb.LayerNumber{Number: layer.Layer.Number},
-			//			},
-			//		}}}
-			//		println("send global state stream response")
-			//		if err := stream.Send(resp); err != nil {
-			//			return err
-			//		}
-			//	}
-			//}
-
+			println("global state stream sending")
 		case <-stream.Context().Done():
 			return nil
 		}
@@ -220,8 +198,8 @@ func (g *globalStateServiceWrapper) Account(_ context.Context, req *pb.AccountRe
 	}, nil
 }
 
-func (g *meshServiceWrapper) LayerStream(_ *pb.LayerStreamRequest, stream pb.MeshService_LayerStreamServer) error {
-	if err := g.sendEpoch(stream); err != nil {
+func (m *meshServiceWrapper) LayerStream(_ *pb.LayerStreamRequest, stream pb.MeshService_LayerStreamServer) error {
+	if err := m.sendEpoch(stream); err != nil {
 		return err
 	}
 	println("sended all layers")
@@ -240,8 +218,8 @@ func (g *meshServiceWrapper) LayerStream(_ *pb.LayerStreamRequest, stream pb.Mes
 	}
 }
 
-func (g *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) error {
-	for _, epoch := range g.seedGen.Epochs {
+func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) error {
+	for _, epoch := range m.seedGen.Epochs {
 		for _, layerContainer := range epoch.Layers {
 			atx := make([]*pb.Activation, 0, len(layerContainer.Activations))
 			for _, atxGenerated := range layerContainer.Activations {

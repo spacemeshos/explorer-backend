@@ -3,9 +3,10 @@ package collector
 import (
 	"context"
 	"encoding/json"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
-	"testing"
 
 	"github.com/spacemeshos/explorer-backend/model"
 )
@@ -16,7 +17,7 @@ func TestLayers(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(generator.Layers), len(layers))
 	for _, layer := range layers {
-		// temporary hack, until storage return data as slice of bson.B, not an struct.
+		// temporary hack, until storage return data as slice of bson.B not an struct.
 		layerEncoded, err := json.Marshal(layer.Map())
 		require.NoError(t, err)
 		var tmpLayer model.Layer

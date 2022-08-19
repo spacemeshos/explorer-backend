@@ -50,10 +50,11 @@ lint:
 lint-fix:
 	golangci-lint run --new-from-rev=master --config .golangci.yml --fix
 
-test:
-	#go test -race  ./...
-	go test ./tests/api/...
+test_collector:
 	go test ./tests/collector/...
+
+test_api:
+	go test ./tests/api/...
 
 stop:
 	@echo "-- stop containers";
@@ -69,3 +70,5 @@ dev_up: stop ## start local environment
 ci_up: stop ## start ci environment
 	@echo "RUN ci docker-compose.yml "
 	docker compose up --build -d
+
+.PHONY: ci_up, dev_up, stop, test_api, test_collector, lint, lint-fix, lint-ci

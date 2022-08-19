@@ -2,10 +2,11 @@ package collector
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"testing"
 
 	"github.com/spacemeshos/explorer-backend/model"
 )
@@ -47,7 +48,7 @@ func TestEpochs(t *testing.T) {
 				require.Equal(t, generatedEpoch.Stats.Current.Circulation, v["circulation"].(int64), "circulation sum mismatch")
 
 				// todo should be fixed, cause current stat calc not correct get data about commitmentSize from db
-				//require.Equal(t, generatedEpoch.Stats.Current.Decentral, v["decentral"].(int64), "decentral sum mismatch")
+				// require.Equal(t, generatedEpoch.Stats.Current.Decentral, v["decentral"].(int64), "decentral sum mismatch")
 			} else if k == "cumulative" {
 				//	t.Skip("todo test cumulative stats")
 				require.Equal(t, generatedEpoch.Stats.Cumulative.Transactions, v["transactions"].(int64))
@@ -61,10 +62,9 @@ func TestEpochs(t *testing.T) {
 				require.Equal(t, generatedEpoch.Stats.Cumulative.Circulation, v["circulation"].(int64), "circulation sum mismatch")
 
 				// todo should be fixed, cause current stat calc not correct get data about commitmentSize from db
-				//require.Equal(t, generatedEpoch.Stats.Cumulative.Decentral, v["decentral"].(int64), "decentral sum mismatch")
+				// require.Equal(t, generatedEpoch.Stats.Cumulative.Decentral, v["decentral"].(int64), "decentral sum mismatch")
 			}
 		}
-
 	}
 }
 

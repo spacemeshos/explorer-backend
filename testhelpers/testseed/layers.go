@@ -2,12 +2,14 @@ package testseed
 
 import "github.com/spacemeshos/explorer-backend/model"
 
+// BlockContainer ...
 type BlockContainer struct {
 	Block        *model.Block
 	Transactions []*model.Transaction
 	SmesherID    string
 }
 
+// LayerContainer ...
 type LayerContainer struct {
 	Layer       model.Layer
 	Blocks      []*BlockContainer
@@ -15,6 +17,7 @@ type LayerContainer struct {
 	Smeshers    map[string]*model.Smesher
 }
 
+// GetLastLayer ...
 func (s *SeedGenerator) GetLastLayer() (curLayer, latestLayer, verifiedLayer uint32) {
 	for _, epoch := range s.Epochs {
 		for _, layer := range epoch.Layers {

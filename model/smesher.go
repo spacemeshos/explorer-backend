@@ -13,7 +13,7 @@ type Geo struct {
 }
 
 type Smesher struct {
-	Id             string
+	Id             string //nolint will fix it later.
 	Geo            Geo
 	CommitmentSize uint64 `json:"cSize"`
 	Coinbase       string

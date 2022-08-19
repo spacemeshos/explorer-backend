@@ -3,10 +3,11 @@ package collector
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
-	"go.mongodb.org/mongo-driver/bson"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/spacemeshos/explorer-backend/model"
 )
@@ -17,7 +18,7 @@ func TestTransactions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(generator.Transactions), len(txs))
 	for _, tx := range txs {
-		// temporary hack, until storage return data as slice of bson.B, not an struct.
+		// temporary hack, until storage return data as slice of bson.B not an struct.
 		txEncoded, err := json.Marshal(tx.Map())
 		require.NoError(t, err)
 		var tmpTx model.Transaction

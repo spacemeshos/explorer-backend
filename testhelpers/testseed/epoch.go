@@ -19,6 +19,7 @@ type TestServerSeed struct {
 	MaxNumUnits   uint32
 }
 
+// GetPostUnitsSize ...
 func (t *TestServerSeed) GetPostUnitsSize() uint64 {
 	return (uint64(t.BitsPerLabel) * t.LabelsPerUnit) / 8
 }
