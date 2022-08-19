@@ -15,7 +15,9 @@ func TestActivations(t *testing.T) { // /atxs
 	res.RequireUnmarshal(t, &resp)
 	require.Equal(t, len(insertedAtxs), len(resp.Data))
 	for _, atx := range resp.Data {
-		require.Equal(t, insertedAtxs[atx.Id], &atx)
+		generatedAtx, ok := insertedAtxs[atx.Id]
+		require.True(t, ok)
+		require.Equal(t, generatedAtx, &atx)
 	}
 }
 
@@ -26,11 +28,13 @@ func TestActivation(t *testing.T) { // /atxs/{id}
 	res.RequireOK(t)
 	var resp atxResp
 	for _, atx := range resp.Data {
-		res := apiServer.Get(t, apiPrefix+"/atxs/"+atx.Id)
-		res.RequireOK(t)
+		response := apiServer.Get(t, apiPrefix+"/atxs/"+atx.Id)
+		response.RequireOK(t)
 		var respLoop rewardResp
-		res.RequireUnmarshal(t, &respLoop)
+		response.RequireUnmarshal(t, &respLoop)
 		require.Equal(t, 1, len(respLoop.Data))
-		require.Equal(t, insertedAtxs[atx.Id], respLoop.Data[0])
+		generatedAtx, ok := insertedAtxs[atx.Id]
+		require.True(t, ok)
+		require.Equal(t, generatedAtx, respLoop.Data[0])
 	}
 }

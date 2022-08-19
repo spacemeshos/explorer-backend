@@ -42,7 +42,9 @@ func TestSmesherAtxsHandler(t *testing.T) { // /smeshers/{id}/atxs
 			var resp atxResp
 			res.RequireUnmarshal(t, &resp)
 			require.Equal(t, 1, len(resp.Data))
-			require.Equal(t, *epoch.Activations[resp.Data[0].Id], resp.Data[0])
+			atx, ok := epoch.Activations[resp.Data[0].Id]
+			require.True(t, ok)
+			require.Equal(t, *atx, resp.Data[0])
 		}
 	}
 }
@@ -56,7 +58,9 @@ func TestSmesherRewardsHandler(t *testing.T) { // /smeshers/{id}/rewards
 			var resp rewardResp
 			res.RequireUnmarshal(t, &resp)
 			require.Equal(t, 1, len(resp.Data))
-			require.Equal(t, *generator.Rewards[resp.Data[0].Smesher], resp.Data[0])
+			rw, ok := generator.Rewards[resp.Data[0].Smesher]
+			require.True(t, ok)
+			require.Equal(t, *rw, resp.Data[0])
 		}
 	}
 }

@@ -46,7 +46,7 @@ func NewSeedGenerator(seed *TestServerSeed) *SeedGenerator {
 	}
 }
 
-// GenerateEpoches ...
+// GenerateEpoches generate epochs for test.
 func (s *SeedGenerator) GenerateEpoches(count int) error {
 	now := time.Now()
 	result := make([]*SeedEpoch, 0, count)
@@ -107,7 +107,7 @@ func (s *SeedGenerator) GenerateEpoches(count int) error {
 }
 
 // SaveEpoches write generated data directly to db.
-func (s *SeedGenerator) SaveEpoches(db *storage.Storage) error {
+func (s *SeedGenerator) SaveEpoches(ctx context.Context, db *storage.Storage) error {
 	for _, epoch := range s.Epochs {
 		if err := db.SaveEpoch(context.TODO(), &epoch.Epoch); err != nil {
 			return fmt.Errorf("failed to save epoch: %v", err)
@@ -118,39 +118,39 @@ func (s *SeedGenerator) SaveEpoches(db *storage.Storage) error {
 			}
 		}
 		for _, tx := range epoch.Transactions {
-			if err := db.SaveTransaction(context.TODO(), tx); err != nil {
+			if err := db.SaveTransaction(ctx, tx); err != nil {
 				return fmt.Errorf("failed to save transaction: %v", err)
 			}
 		}
 		for _, reward := range epoch.Rewards {
-			if err := db.SaveReward(context.TODO(), reward); err != nil {
+			if err := db.SaveReward(ctx, reward); err != nil {
 				return fmt.Errorf("failed to save reward: %v", err)
 			}
 		}
 		for _, smesher := range epoch.Smeshers {
-			if err := db.SaveSmesher(context.TODO(), smesher); err != nil {
+			if err := db.SaveSmesher(ctx, smesher); err != nil {
 				return fmt.Errorf("failed to save smesher: %v", err)
 			}
 		}
 		for _, atx := range epoch.Activations {
-			if err := db.SaveActivation(context.TODO(), atx); err != nil {
+			if err := db.SaveActivation(ctx, atx); err != nil {
 				return fmt.Errorf("failed to save activation: %v", err)
 			}
 		}
 		for _, block := range epoch.Blocks {
-			if err := db.SaveBlock(context.TODO(), block); err != nil {
+			if err := db.SaveBlock(ctx, block); err != nil {
 				return fmt.Errorf("failed to save block: %v", err)
 			}
 		}
 	}
 	for _, acc := range s.Accounts {
-		if err := db.SaveAccount(context.TODO(), acc.layerID, &acc.Account); err != nil {
+		if err := db.SaveAccount(ctx, acc.layerID, &acc.Account); err != nil {
 			return fmt.Errorf("failed to save account: %s", err)
 		}
 	}
 
 	for _, app := range s.Apps {
-		if err := db.SaveApp(context.TODO(), &app); err != nil {
+		if err := db.SaveApp(ctx, &app); err != nil {
 			return fmt.Errorf("failed to save app: %s", err)
 		}
 	}

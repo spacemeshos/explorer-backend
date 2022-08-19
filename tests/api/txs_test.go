@@ -15,7 +15,9 @@ func TestTransactions(t *testing.T) { // /txs
 	res.RequireUnmarshal(t, &resp)
 	require.Equal(t, len(insertedTxs), len(resp.Data))
 	for _, tx := range resp.Data {
-		require.Equal(t, *insertedTxs[tx.Id], tx)
+		generatedTx, ok := insertedTxs[tx.Id]
+		require.True(t, ok)
+		require.Equal(t, *generatedTx, tx)
 	}
 }
 

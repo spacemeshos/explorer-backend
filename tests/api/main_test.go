@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,20 +25,20 @@ var (
 
 func TestMain(m *testing.M) {
 	mongoURL := fmt.Sprintf("mongodb://localhost:%d", dbPort)
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURL))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(mongoURL))
 	if err != nil {
 		fmt.Println("failed to connect to mongo", err)
 		os.Exit(1)
 	}
 	database := client.Database(testAPIServiceDB)
 	if database != nil {
-		if err = database.Drop(context.TODO()); err != nil {
+		if err = database.Drop(context.Background()); err != nil {
 			fmt.Println("failed to drop db", err)
 			os.Exit(1)
 		}
 	}
 
-	db, err := storage.New(context.TODO(), mongoURL, testAPIServiceDB)
+	db, err := storage.New(context.Background(), mongoURL, testAPIServiceDB)
 	if err != nil {
 		fmt.Println("failed to init storage to mongo", err)
 		os.Exit(1)
@@ -56,7 +57,9 @@ func TestMain(m *testing.M) {
 		fmt.Println("failed to generate epochs", err)
 		os.Exit(1)
 	}
-	if err = generator.SaveEpoches(db); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	if err = generator.SaveEpoches(ctx, db); err != nil {
 		fmt.Println("failed to save generated epochs", err)
 		os.Exit(1)
 	}

@@ -64,7 +64,7 @@ type FakeNode struct {
 
 var stateSynced = make(chan struct{})
 
-// CreateFakeSMNode ...
+// CreateFakeSMNode create a fake spacemesh node.
 func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seedConf *testseed.TestServerSeed) (*FakeNode, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
@@ -82,7 +82,7 @@ func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seed
 	}, nil
 }
 
-// Start ...
+// Start register fake services and start stream generated data.
 func (f *FakeNode) Start() error {
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", f.NodePort))
 	if err != nil {
@@ -168,6 +168,7 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 		}
 	}
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -206,12 +207,11 @@ func (m *meshServiceWrapper) LayerStream(_ *pb.LayerStreamRequest, stream pb.Mes
 	time.Sleep(1 * time.Second)
 	close(stateSynced)
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			//if err := g.sendEpoch(stream); err != nil {
-			//	return err
-			//}
+			println("sending layers")
 		case <-stream.Context().Done():
 			return nil
 		}
@@ -291,6 +291,7 @@ func (n *nodeServiceWrapper) SyncStart(context.Context, *pb.SyncStartRequest) (*
 
 func (n *nodeServiceWrapper) StatusStream(req *pb.StatusStreamRequest, stream pb.NodeService_StatusStreamServer) error {
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:

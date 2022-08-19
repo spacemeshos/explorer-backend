@@ -15,7 +15,9 @@ func TestRewards(t *testing.T) { //"/rewards"
 	res.RequireUnmarshal(t, &resp)
 	require.Equal(t, len(insertedRewards), len(resp.Data))
 	for _, reward := range resp.Data {
-		require.Equal(t, insertedRewards[reward.Smesher], &reward)
+		rw, ok := insertedRewards[reward.Smesher]
+		require.True(t, ok)
+		require.Equal(t, rw, &reward)
 	}
 }
 
@@ -47,6 +49,8 @@ func TestReward(t *testing.T) { //"/rewards/{id}"
 		var respLoop rewardResp
 		res.RequireUnmarshal(t, &respLoop)
 		require.Equal(t, 1, len(respLoop.Data))
-		require.Equal(t, insertedRewards[reward.Smesher], &respLoop.Data[0])
+		rw, ok := insertedRewards[reward.Smesher]
+		require.True(t, ok)
+		require.Equal(t, rw, &respLoop.Data[0])
 	}
 }

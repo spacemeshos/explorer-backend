@@ -52,7 +52,9 @@ func TestLayerTxs(t *testing.T) { // /layers/{id:[0-9]+}/txs
 				continue
 			}
 			for _, tx := range loopResp.Data {
-				require.Equal(t, layerTx[tx.Id], tx)
+				generatedTx, ok := layerTx[tx.Id]
+				require.True(t, ok)
+				require.Equal(t, generatedTx, tx)
 			}
 		}
 	}
@@ -84,7 +86,9 @@ func TestLayerBlocks(t *testing.T) { // /layers/{id:[0-9]+}/blocks
 			var loopResp blockResp
 			res.RequireUnmarshal(t, &loopResp)
 			for _, block := range loopResp.Data {
-				require.Equal(t, epoch.Blocks[block.Id], &block)
+				generatedBlock, ok := epoch.Blocks[block.Id]
+				require.True(t, ok)
+				require.Equal(t, generatedBlock, &block)
 			}
 		}
 	}
@@ -99,7 +103,9 @@ func TestLayerRewards(t *testing.T) { // /layers/{id:[0-9]+}/rewards
 			var loopResp rewardResp
 			res.RequireUnmarshal(t, &loopResp)
 			for _, tx := range loopResp.Data {
-				require.Equal(t, epoch.Rewards[tx.Smesher], &tx)
+				generatedRw, ok := epoch.Rewards[tx.Smesher]
+				require.True(t, ok)
+				require.Equal(t, generatedRw, &tx)
 			}
 		}
 	}
@@ -114,7 +120,9 @@ func TestLayerAtxs(t *testing.T) { // /layers/{id:[0-9]+}/atxs
 			var loopResp atxResp
 			res.RequireUnmarshal(t, &loopResp)
 			for _, tx := range loopResp.Data {
-				require.Equal(t, epoch.Activations[tx.Id], &tx)
+				generatedAtx, ok := epoch.Activations[tx.Id]
+				require.True(t, ok)
+				require.Equal(t, generatedAtx, &tx)
 			}
 		}
 	}

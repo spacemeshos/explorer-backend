@@ -14,7 +14,9 @@ func TestApps(t *testing.T) { // "/apps"
 	res.RequireUnmarshal(t, &resp)
 	require.Equal(t, len(generator.Apps), len(resp.Data))
 	for _, app := range resp.Data {
-		require.Equal(t, generator.Apps[app.Address], app)
+		generatedAp, ok := generator.Apps[app.Address]
+		require.True(t, ok)
+		require.Equal(t, generatedAp, app)
 	}
 }
 

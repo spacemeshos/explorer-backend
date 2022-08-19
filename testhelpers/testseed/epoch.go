@@ -6,7 +6,7 @@ import (
 	"github.com/spacemeshos/explorer-backend/model"
 )
 
-// TestServerSeed ...
+// TestServerSeed test network config for tests.
 type TestServerSeed struct {
 	NetID                   uint64
 	EpochNumLayers          uint64
@@ -19,14 +19,12 @@ type TestServerSeed struct {
 	MaxNumUnits   uint32
 }
 
-// GetPostUnitsSize ...
+// GetPostUnitsSize calcluates size of post units.
 func (t *TestServerSeed) GetPostUnitsSize() uint64 {
 	return (uint64(t.BitsPerLabel) * t.LabelsPerUnit) / 8
 }
 
-const testAPIServiceDB = "explorer_test"
-
-// GetServerSeed ...
+// GetServerSeed generate test network config.
 func GetServerSeed() *TestServerSeed {
 	return &TestServerSeed{
 		NetID:                   123,
@@ -52,10 +50,10 @@ type SeedEpoch struct {
 	Activations        map[string]*model.Activation
 }
 
-// SeedEpochs ...
+// SeedEpochs wrapper over generated slice of epochs.
 type SeedEpochs []*SeedEpoch
 
-// GetTransactions ...
+// GetTransactions extract all transactions from epochs.
 func (s SeedEpochs) GetTransactions() map[string]*model.Transaction {
 	result := make(map[string]*model.Transaction, 0)
 	for _, epoch := range s {
@@ -66,7 +64,7 @@ func (s SeedEpochs) GetTransactions() map[string]*model.Transaction {
 	return result
 }
 
-// GetLayers ...
+// GetLayers extract all layers from epochs.
 func (s SeedEpochs) GetLayers() []model.Layer {
 	result := make([]model.Layer, 0)
 	for _, epoch := range s {
@@ -80,7 +78,7 @@ func (s SeedEpochs) GetLayers() []model.Layer {
 	return result
 }
 
-// GetActivations ...
+// GetActivations extract all activations from epochs.
 func (s SeedEpochs) GetActivations() map[string]*model.Activation {
 	result := make(map[string]*model.Activation, 0)
 	for _, epoch := range s {
@@ -91,7 +89,7 @@ func (s SeedEpochs) GetActivations() map[string]*model.Activation {
 	return result
 }
 
-// GetRewards ...
+// GetRewards extract all rewards from epochs.
 func (s SeedEpochs) GetRewards() map[string]*model.Reward {
 	result := make(map[string]*model.Reward, 0)
 	for _, epoch := range s {

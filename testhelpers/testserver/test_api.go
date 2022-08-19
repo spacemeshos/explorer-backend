@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/require"
@@ -29,8 +30,6 @@ type TestAPIService struct {
 
 // StartTestAPIService start test api service.
 func StartTestAPIService(dbPort int) (*TestAPIService, error) {
-	// http.DefaultServeMux = new(http.ServeMux)
-
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
 		return nil, err
@@ -63,7 +62,9 @@ func (tx *TestAPIService) Get(t *testing.T, path string) *testutils.TestResponse
 		t.Fatal(err)
 	}
 
-	client := http.Client{}
+	client := http.Client{
+		Timeout: 1 * time.Second,
+	}
 	res, err := client.Do(req)
 	require.NoError(t, err, "failed to make request to %s: %s", url, err)
 	t.Cleanup(func() {

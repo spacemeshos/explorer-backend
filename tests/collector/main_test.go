@@ -73,6 +73,7 @@ func TestMain(m *testing.M) {
 	go collectorApp.Run()
 
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 	counter := 0
 	for range ticker.C {
 		counter++

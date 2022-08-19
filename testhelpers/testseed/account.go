@@ -6,7 +6,7 @@ import (
 	"github.com/spacemeshos/explorer-backend/model"
 )
 
-// AccountContainer ...
+// AccountContainer is a container for accounts with transactions and rewards belongs to generated account.
 type AccountContainer struct {
 	layerID      uint32
 	Account      model.Account
