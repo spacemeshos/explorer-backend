@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,9 @@ func TestAccounts(t *testing.T) { // accounts
 	res.RequireUnmarshal(t, &resp)
 	require.Equal(t, len(generator.Accounts), len(resp.Data))
 	for _, acc := range resp.Data {
-		require.Equal(t, generator.Accounts[acc.Address].Account, acc)
+		accGenerated, ok := generator.Accounts[strings.ToLower(acc.Address)]
+		require.True(t, ok)
+		require.Equal(t, accGenerated.Account, acc)
 	}
 }
 
@@ -42,7 +45,9 @@ func TestAccountTransactions(t *testing.T) { // /accounts/{id}/txs
 			continue
 		}
 		for _, tx := range resp.Data {
-			require.Equal(t, *acc.Transactions[tx.Id], tx)
+			generatedTx, ok := acc.Transactions[tx.Id]
+			require.True(t, ok)
+			require.Equal(t, *generatedTx, tx)
 		}
 	}
 }
@@ -59,7 +64,9 @@ func TestAccountRewards(t *testing.T) { // /accounts/{id}/rewards
 			continue
 		}
 		for _, rw := range resp.Data {
-			require.Equal(t, *acc.Rewards[rw.Smesher], rw)
+			generatedRw, ok := acc.Rewards[rw.Smesher]
+			require.True(t, ok)
+			require.Equal(t, *generatedRw, rw)
 		}
 	}
 }

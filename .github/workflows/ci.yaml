@@ -45,7 +45,7 @@ jobs:
           version: latest
           only-new-issues: true
 
-  unittests:
+  unittests_api:
     runs-on: ubuntu-latest
     needs: filter-changes
     if: ${{ needs.filter-changes.outputs.nondocchanges == 'true' }}
@@ -60,5 +60,23 @@ jobs:
           go-version: ${{ env.go-version }}
       - name: start db
         run: make ci_up
-      - name: unit tests
-        run: make test
+      - name: unit test_api
+        run: make test_api
+
+  unittests_collector:
+    runs-on: ubuntu-latest
+    needs: filter-changes
+    if: ${{ needs.filter-changes.outputs.nondocchanges == 'true' }}
+    # should take around 15-18 mins
+    timeout-minutes: 20
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: set up go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.go-version }}
+      - name: start db
+        run: make ci_up
+      - name: unit test_collector
+        run: make test_collector

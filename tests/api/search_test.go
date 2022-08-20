@@ -21,12 +21,12 @@ func TestSearch(t *testing.T) { // /search/{id}
 			var txResp transactionResp
 			res.RequireUnmarshal(t, &txResp)
 			require.Equal(t, 1, len(txResp.Data))
-			require.Equal(t, tx, txResp.Data[0])
+			require.Equal(t, tx, &txResp.Data[0])
 		}
 
 		// layer
-		for _, layer := range epoch.Layers {
-			res := apiServer.Get(t, apiPrefix+fmt.Sprintf("/search/%d", layer.Number))
+		for _, layerContainer := range epoch.Layers {
+			res := apiServer.Get(t, apiPrefix+fmt.Sprintf("/search/%d", layerContainer.Layer.Number))
 			res.RequireOK(t)
 			var loopResp redirect
 			res.RequireUnmarshal(t, &loopResp)
@@ -35,7 +35,7 @@ func TestSearch(t *testing.T) { // /search/{id}
 			var resp layerResp
 			res.RequireUnmarshal(t, &resp)
 			require.Equal(t, 1, len(resp.Data))
-			require.Equal(t, layer, resp.Data[0])
+			require.Equal(t, layerContainer.Layer, resp.Data[0])
 		}
 	}
 	// account

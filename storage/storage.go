@@ -190,6 +190,7 @@ func (s *Storage) OnReward(in *pb.Reward) {
 	s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.Total, reward.LayerReward)
 	s.requestBalanceUpdate(reward.Layer, reward.Coinbase)
 	s.setChangedEpoch(reward.Layer)
+	s.updateEpochs() // trigger epoch stat recalculation todo: optimize this
 }
 
 func (s *Storage) OnTransactionReceipt(in *pb.TransactionReceipt) {
