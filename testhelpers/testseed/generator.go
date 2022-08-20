@@ -109,11 +109,11 @@ func (s *SeedGenerator) GenerateEpoches(count int) error {
 // SaveEpoches write generated data directly to db.
 func (s *SeedGenerator) SaveEpoches(ctx context.Context, db *storage.Storage) error {
 	for _, epoch := range s.Epochs {
-		if err := db.SaveEpoch(context.TODO(), &epoch.Epoch); err != nil {
+		if err := db.SaveEpoch(ctx, &epoch.Epoch); err != nil {
 			return fmt.Errorf("failed to save epoch: %v", err)
 		}
 		for _, layerContainer := range epoch.Layers {
-			if err := db.SaveLayer(context.TODO(), &layerContainer.Layer); err != nil {
+			if err := db.SaveLayer(ctx, &layerContainer.Layer); err != nil {
 				return fmt.Errorf("failed to save layer: %v", err)
 			}
 		}
@@ -338,8 +338,8 @@ func generateTransaction(index int, layer *model.Layer, sender, receiver string,
 		Scheme:      0,
 		Signature:   strings.ToLower(utils.BytesToHex(randomBytes(30))),
 		PublicKey:   strings.ToLower(utils.BytesToHex(randomBytes(32))),
-		Sender:      (sender),
-		Receiver:    (receiver),
+		Sender:      sender,
+		Receiver:    receiver,
 		SvmData:     "",
 	}
 }
@@ -348,7 +348,6 @@ func (s *SeedGenerator) generateSmesher(layerNum uint32, coinbase string, commit
 	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Smesher{
 		Id:             strings.ToLower(utils.BytesToAddressString(randomBytes(20))),
-		Geo:            model.Geo{},
 		CommitmentSize: commitmentSize,
 		Coinbase:       coinbase,
 		AtxCount:       1,
@@ -385,7 +384,7 @@ func (s *SeedGenerator) generateBlocks(layerNum, epochNum int32) model.Block {
 
 func generateAccount() model.Account {
 	return model.Account{
-		Address: (utils.BytesToAddressString(randomBytes(20))),
+		Address: utils.BytesToAddressString(randomBytes(20)),
 		Balance: 0,
 		Counter: 0,
 	}

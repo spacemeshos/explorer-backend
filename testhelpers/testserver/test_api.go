@@ -32,7 +32,7 @@ type TestAPIService struct {
 func StartTestAPIService(dbPort int) (*TestAPIService, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get free port: %s", err)
 	}
 	println("starting test api service on port", appPort)
 	server, err := api.New(context.TODO(), &api.Config{
@@ -41,7 +41,7 @@ func StartTestAPIService(dbPort int) (*TestAPIService, error) {
 		DbUrl:    fmt.Sprintf("mongodb://localhost:%d", dbPort),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create api server: %s", err)
 	}
 	go server.Run()
 	return &TestAPIService{
