@@ -68,7 +68,7 @@ var stateSynced = make(chan struct{})
 func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seedConf *testseed.TestServerSeed) (*FakeNode, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get free port: %v", err)
 	}
 	return &FakeNode{
 		seedGen:        seedGen,
@@ -163,7 +163,7 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 				},
 			}}}
 			if err := stream.Send(resp); err != nil {
-				return err
+				return fmt.Errorf("failed to send global state stream response: %v", err)
 			}
 		}
 	}
@@ -194,14 +194,13 @@ func (g *globalStateServiceWrapper) Account(_ context.Context, req *pb.AccountRe
 				Balance: &pb.Amount{Value: acc.Account.Balance},
 				Counter: acc.Account.Counter,
 			},
-			StateProjected: nil,
 		},
 	}, nil
 }
 
 func (m *meshServiceWrapper) LayerStream(_ *pb.LayerStreamRequest, stream pb.MeshService_LayerStreamServer) error {
 	if err := m.sendEpoch(stream); err != nil {
-		return err
+		return fmt.Errorf("failed to send epoch: %v", err)
 	}
 	println("sended all layers")
 	time.Sleep(1 * time.Second)
