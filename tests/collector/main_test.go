@@ -61,6 +61,7 @@ func TestMain(m *testing.M) {
 		fmt.Println("failed to generate fake node", err)
 		os.Exit(1)
 	}
+	defer node.Stop()
 	go func() {
 		if err = node.Start(); err != nil {
 			fmt.Println("failed to start fake node", err)
@@ -70,6 +71,7 @@ func TestMain(m *testing.M) {
 
 	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort), storageDB)
 	storageDB.AccountUpdater = collectorApp
+	defer storageDB.Close()
 	go collectorApp.Run()
 
 	ticker := time.NewTicker(1 * time.Second)
@@ -86,9 +88,6 @@ func TestMain(m *testing.M) {
 		}
 	}
 	println("init done, start collector tests")
-
 	code := m.Run()
-	storageDB.Close()
-	node.Stop()
 	os.Exit(code)
 }

@@ -67,7 +67,3 @@ func TestEpochs(t *testing.T) {
 		}
 	}
 }
-
-func TestEpochRecalculate(t *testing.T) {
-	t.Skip("todo test epoch recalculate statistic")
-}
