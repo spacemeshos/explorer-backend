@@ -127,8 +127,7 @@ func (d *debugServiceWrapper) Accounts(context.Context, *empty.Empty) (*pb.Accou
 	accs := make([]*pb.Account, 0, len(d.seedGen.Accounts))
 	for _, acc := range d.seedGen.Accounts {
 		accs = append(accs, &pb.Account{
-			AccountId:    &pb.AccountId{Address: mustParse(acc.Account.Address)},
-			StateCurrent: nil,
+			AccountId: &pb.AccountId{Address: mustParse(acc.Account.Address)},
 			StateProjected: &pb.AccountState{
 				Balance: &pb.Amount{Value: acc.Account.Balance},
 				Counter: acc.Account.Counter,
@@ -262,19 +261,17 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 				blocksRes = append(blocksRes, &pb.Block{
 					Id:           mustParse(blockContainer.Block.Id),
 					Transactions: tx,
-					ActivationId: nil,
 					SmesherId: &pb.SmesherId{
 						Id: mustParse(blockContainer.SmesherID),
 					},
 				})
 			}
 			pbLayer := &pb.Layer{
-				Number:        &pb.LayerNumber{Number: layerContainer.Layer.Number},
-				Status:        pb.Layer_LayerStatus(layerContainer.Layer.Status),
-				Hash:          mustParse(layerContainer.Layer.Hash),
-				Blocks:        blocksRes,
-				Activations:   atx,
-				RootStateHash: nil,
+				Number:      &pb.LayerNumber{Number: layerContainer.Layer.Number},
+				Status:      pb.Layer_LayerStatus(layerContainer.Layer.Status),
+				Hash:        mustParse(layerContainer.Layer.Hash),
+				Blocks:      blocksRes,
+				Activations: atx,
 			}
 			if err := stream.Send(&pb.LayerStreamResponse{Layer: pbLayer}); err != nil {
 				return fmt.Errorf("send to stream: %w", err)
