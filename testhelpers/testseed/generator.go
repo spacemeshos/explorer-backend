@@ -5,81 +5,172 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
+
+	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 
 	"github.com/spacemeshos/explorer-backend/model"
 	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/utils"
 )
 
-// SeedGenerator test helper for generate epochs.
+// SeedGenerator helper for generate epochs.
 type SeedGenerator struct {
-	storage  *storage.Storage
-	Epochs   SeedEpochs
-	Accounts map[string]AccountContainer
-	Apps     map[string]model.App
+	Epochs         SeedEpochs
+	Accounts       map[string]AccountContainer
+	Activations    map[string]*model.Activation
+	Blocks         map[string]*model.Block
+	Apps           map[string]model.App
+	Layers         map[uint32]*model.Layer
+	Rewards        map[string]*model.Reward
+	Transactions   map[string]*model.Transaction
+	Smeshers       map[string]*model.Smesher
+	FirstLayerTime time.Time
+	seed           *TestServerSeed
 }
 
 // NewSeedGenerator create object which allow fill database for tests.
-func NewSeedGenerator(db *storage.Storage) *SeedGenerator {
+func NewSeedGenerator(seed *TestServerSeed) *SeedGenerator {
 	return &SeedGenerator{
-		storage:  db,
-		Epochs:   make(SeedEpochs, 0),
-		Accounts: make(map[string]AccountContainer, 0),
-		Apps:     map[string]model.App{},
+		Epochs:       make(SeedEpochs, 0),
+		Accounts:     make(map[string]AccountContainer, 0),
+		Apps:         map[string]model.App{},
+		seed:         seed,
+		Activations:  map[string]*model.Activation{},
+		Blocks:       map[string]*model.Block{},
+		Layers:       map[uint32]*model.Layer{},
+		Rewards:      map[string]*model.Reward{},
+		Smeshers:     map[string]*model.Smesher{},
+		Transactions: map[string]*model.Transaction{},
 	}
 }
 
-// GenerateEpoches ...
+// GenerateEpoches generate epochs for test.
 func (s *SeedGenerator) GenerateEpoches(count int) error {
 	now := time.Now()
-	seed := GetServerSeed()
 	result := make([]*SeedEpoch, 0, count)
+	var prevEpoch *model.Epoch
 	for i := 1; i < count; i++ {
-		offset := time.Duration(int64(i)*int64(seed.EpochNumLayers*seed.LayersDuration)) * time.Second
-		layerDuration := time.Duration(seed.EpochNumLayers*seed.LayersDuration) * time.Second
+		offset := time.Duration(int64(i)*int64(s.seed.EpochNumLayers*s.seed.LayersDuration)) * time.Second
 		layerStartDate := now.Add(-1 * offset)
-		layerEndDate := layerStartDate.Add(layerDuration)
-		layersStart := int32(i) * int32(seed.EpochNumLayers)
-		layersEnd := layersStart + int32(seed.EpochNumLayers) - 1
+		layersStart := int32(i) * int32(s.seed.EpochNumLayers)
+		layersEnd := layersStart + int32(s.seed.EpochNumLayers) - 1
+		if i == 1 {
+			s.FirstLayerTime = layerStartDate
+		}
 
 		seedEpoch := &SeedEpoch{
-			Epoch:        generateEpoch(int32(i), layerStartDate, layerEndDate, layersStart, layersEnd),
-			Layers:       make([]model.Layer, 0, seed.EpochNumLayers),
-			Transactions: map[string]model.Transaction{},
-			Rewards:      map[string]model.Reward{},
-			Smeshers:     map[string]model.Smesher{},
-			Activations:  map[string]model.Activation{},
-			Blocks:       map[string]model.Block{},
+			Epoch:              s.generateEpoch(int32(i)),
+			Layers:             make([]*LayerContainer, 0, s.seed.EpochNumLayers),
+			Transactions:       map[string]*model.Transaction{},
+			Rewards:            map[string]*model.Reward{},
+			Smeshers:           map[string]*model.Smesher{},
+			SmeshersCommitment: map[string]int64{},
+			Activations:        map[string]*model.Activation{},
+			Blocks:             map[string]*model.Block{},
 		}
-		if err := s.storage.SaveEpoch(context.TODO(), &seedEpoch.Epoch); err != nil {
-			return fmt.Errorf("failed to save epoch: %v", err)
-		}
+
 		result = append(result, seedEpoch)
 
-		layerStart := seedEpoch.Epoch.Number * int32(seed.EpochNumLayers)
-		for j := layerStart; j < layersEnd; j++ {
+		layerStart := seedEpoch.Epoch.Number * int32(s.seed.EpochNumLayers)
+		for j := layerStart; j <= layersEnd; j++ {
 			if err := s.fillLayer(j, int32(i), seedEpoch); err != nil {
 				return fmt.Errorf("failed to fill layer: %v", err)
 			}
+			seedEpoch.Epoch.Layers++
 		}
+		seedEpoch.Epoch.Stats.Current.Decentral = utils.CalcDecentralCoefficient(seedEpoch.SmeshersCommitment)
+		duration := float64(s.seed.LayersDuration) * float64(layersEnd-layerStart+1)
+		seedEpoch.Epoch.Stats.Current.Capacity = utils.CalcEpochCapacity(seedEpoch.Epoch.Stats.Current.Transactions, duration, uint32(s.seed.MaxTransactionPerSecond))
+		if prevEpoch != nil {
+			seedEpoch.Epoch.Stats.Cumulative.Capacity = seedEpoch.Epoch.Stats.Current.Capacity
+			seedEpoch.Epoch.Stats.Cumulative.Decentral = prevEpoch.Stats.Current.Decentral
+			seedEpoch.Epoch.Stats.Cumulative.Smeshers = seedEpoch.Epoch.Stats.Current.Smeshers
+			seedEpoch.Epoch.Stats.Cumulative.Transactions = prevEpoch.Stats.Cumulative.Transactions + seedEpoch.Epoch.Stats.Current.Transactions
+			seedEpoch.Epoch.Stats.Cumulative.Accounts = seedEpoch.Epoch.Stats.Current.Accounts
+			seedEpoch.Epoch.Stats.Cumulative.Rewards = prevEpoch.Stats.Cumulative.Rewards + seedEpoch.Epoch.Stats.Current.Rewards
+			seedEpoch.Epoch.Stats.Cumulative.RewardsNumber = prevEpoch.Stats.Cumulative.RewardsNumber + seedEpoch.Epoch.Stats.Current.RewardsNumber
+			seedEpoch.Epoch.Stats.Cumulative.Security = prevEpoch.Stats.Current.Security
+			seedEpoch.Epoch.Stats.Cumulative.TxsAmount = prevEpoch.Stats.Cumulative.TxsAmount + seedEpoch.Epoch.Stats.Current.TxsAmount
+
+			seedEpoch.Epoch.Stats.Current.Circulation = seedEpoch.Epoch.Stats.Cumulative.Rewards
+			seedEpoch.Epoch.Stats.Cumulative.Circulation = seedEpoch.Epoch.Stats.Current.Circulation
+		} else {
+			seedEpoch.Epoch.Stats.Current.Circulation = seedEpoch.Epoch.Stats.Current.Rewards
+			seedEpoch.Epoch.Stats.Cumulative = seedEpoch.Epoch.Stats.Current
+		}
+		prevEpoch = &seedEpoch.Epoch
 	}
 	s.Epochs = result
 	return nil
 }
 
-func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) error {
-	tmpLayer := generateLayer(layerID, epochID)
-	if err := s.storage.SaveLayer(context.TODO(), &tmpLayer); err != nil {
-		return fmt.Errorf("failed to save layer: %v", err)
+// SaveEpoches write generated data directly to db.
+func (s *SeedGenerator) SaveEpoches(ctx context.Context, db *storage.Storage) error {
+	for _, epoch := range s.Epochs {
+		if err := db.SaveEpoch(context.TODO(), &epoch.Epoch); err != nil {
+			return fmt.Errorf("failed to save epoch: %v", err)
+		}
+		for _, layerContainer := range epoch.Layers {
+			if err := db.SaveLayer(context.TODO(), &layerContainer.Layer); err != nil {
+				return fmt.Errorf("failed to save layer: %v", err)
+			}
+		}
+		for _, tx := range epoch.Transactions {
+			if err := db.SaveTransaction(ctx, tx); err != nil {
+				return fmt.Errorf("failed to save transaction: %v", err)
+			}
+		}
+		for _, reward := range epoch.Rewards {
+			if err := db.SaveReward(ctx, reward); err != nil {
+				return fmt.Errorf("failed to save reward: %v", err)
+			}
+		}
+		for _, smesher := range epoch.Smeshers {
+			if err := db.SaveSmesher(ctx, smesher); err != nil {
+				return fmt.Errorf("failed to save smesher: %v", err)
+			}
+		}
+		for _, atx := range epoch.Activations {
+			if err := db.SaveActivation(ctx, atx); err != nil {
+				return fmt.Errorf("failed to save activation: %v", err)
+			}
+		}
+		for _, block := range epoch.Blocks {
+			if err := db.SaveBlock(ctx, block); err != nil {
+				return fmt.Errorf("failed to save block: %v", err)
+			}
+		}
 	}
-	seedEpoch.Layers = append(seedEpoch.Layers, tmpLayer)
-	for k := 0; k <= rand.Intn(3); k++ {
-		tmpAcc := generateAccount()
-		if err := s.storage.SaveAccount(context.TODO(), uint32(layerID), &tmpAcc); err != nil {
+	for _, acc := range s.Accounts {
+		if err := db.SaveAccount(ctx, acc.layerID, &acc.Account); err != nil {
 			return fmt.Errorf("failed to save account: %s", err)
 		}
-		s.Accounts[tmpAcc.Address] = AccountContainer{
+	}
+
+	for _, app := range s.Apps {
+		if err := db.SaveApp(ctx, &app); err != nil {
+			return fmt.Errorf("failed to save app: %s", err)
+		}
+	}
+	return nil
+}
+
+func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) error {
+	tmpLayer := s.generateLayer(layerID, epochID)
+	layerContainer := &LayerContainer{
+		Layer:       tmpLayer,
+		Blocks:      make([]*BlockContainer, 0),
+		Activations: map[string]*model.Activation{},
+		Smeshers:    map[string]*model.Smesher{},
+	}
+	seedEpoch.Layers = append(seedEpoch.Layers, layerContainer)
+
+	for k := 0; k <= rand.Intn(3); k++ {
+		tmpAcc := generateAccount()
+		s.Accounts[strings.ToLower(tmpAcc.Address)] = AccountContainer{
+			layerID:      uint32(layerID),
 			Account:      tmpAcc,
 			Transactions: map[string]*model.Transaction{},
 			Rewards:      map[string]*model.Reward{},
@@ -87,52 +178,64 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 		tmpApp := model.App{
 			Address: tmpAcc.Address,
 		}
-		if err := s.storage.SaveApp(context.TODO(), &tmpApp); err != nil {
-			return fmt.Errorf("failed to save app: %s", err)
-		}
 		s.Apps[tmpApp.Address] = tmpApp
+
+		tmpBl := s.generateBlocks(int32(tmpLayer.Number), seedEpoch.Epoch.Number)
+
+		s.Blocks[tmpBl.Id] = &tmpBl
+		blockContainer := &BlockContainer{
+			Block:        &tmpBl,
+			Transactions: make([]*model.Transaction, 0),
+		}
+		layerContainer.Blocks = append(layerContainer.Blocks, blockContainer)
+		layerContainer.Layer.BlocksNumber++
+
+		for i := 0; i < rand.Intn(3); i++ {
+			from := tmpAcc.Address
+			to := s.getRandomAcc()
+			tmpTx := generateTransaction(i, &tmpLayer, from, to, &tmpBl)
+
+			seedEpoch.Epoch.Stats.Current.Transactions++
+			seedEpoch.Epoch.Stats.Current.TxsAmount += int64(tmpTx.Amount)
+
+			layerContainer.Layer.Txs++
+			layerContainer.Layer.TxsAmount += tmpTx.Amount
+			blockContainer.Block.TxsNumber++
+			blockContainer.Block.TxsValue += tmpTx.Amount
+			s.saveTransactionForAccount(&tmpTx, from, to)
+			seedEpoch.Transactions[tmpTx.Id] = &tmpTx
+			s.Transactions[tmpTx.Id] = &tmpTx
+			blockContainer.Transactions = append(blockContainer.Transactions, &tmpTx)
+		}
+
+		from := tmpAcc.Address
+		atxNumUnits := uint32(rand.Intn(1000))
+		tmpSm := s.generateSmesher(tmpLayer.Number, from, uint64(atxNumUnits)*s.seed.GetPostUnitsSize())
+		layerContainer.Smeshers[tmpSm.Id] = &tmpSm
+		seedEpoch.Epoch.Stats.Current.Smeshers++
+		seedEpoch.SmeshersCommitment[tmpSm.Id] += int64(tmpSm.CommitmentSize)
+
+		tmpAtx := s.generateActivation(tmpLayer.Number, atxNumUnits, &tmpSm)
+		seedEpoch.Activations[tmpAtx.Id] = &tmpAtx
+		layerContainer.Activations[tmpAtx.Id] = &tmpAtx
+		s.Activations[tmpAtx.Id] = &tmpAtx
+
+		layerContainer.Layer.Smeshers++
+		layerContainer.Layer.AtxNumUnits += uint64(tmpAtx.NumUnits)
+		seedEpoch.Smeshers[strings.ToLower(tmpSm.Id)] = &tmpSm
+		blockContainer.SmesherID = tmpSm.Id
+
+		tmpRw := s.generateReward(tmpLayer.Number, &tmpSm)
+		seedEpoch.Rewards[tmpRw.Smesher] = &tmpRw
+		s.saveReward(&tmpRw)
+		seedEpoch.Blocks[tmpBl.Id] = &tmpBl
+		s.Rewards[strings.ToLower(tmpRw.Smesher)] = &tmpRw
+		s.Smeshers[strings.ToLower(tmpSm.Id)] = &tmpSm
+		seedEpoch.Epoch.Stats.Current.RewardsNumber++
+		seedEpoch.Epoch.Stats.Current.Rewards += int64(tmpRw.Total)
+		seedEpoch.Epoch.Stats.Current.Capacity += int64(tmpSm.CommitmentSize)
 	}
-	for k := 0; k < rand.Intn(3); k++ {
-		tmpBl := generateBlocks(int32(tmpLayer.Number), seedEpoch.Epoch.Number)
-		if err := s.storage.SaveBlock(context.TODO(), &tmpBl); err != nil {
-			return fmt.Errorf("failed to save block: %v", err)
-		}
-		seedEpoch.Blocks[tmpBl.Id] = tmpBl
-	}
-
-	for k := 0; k < rand.Intn(3); k++ {
-		from := s.getRandomAcc()
-		to := s.getRandomAcc()
-		tmpTx := generateTransaction(tmpLayer.Number, from, to)
-		if err := s.storage.SaveTransaction(context.TODO(), &tmpTx); err != nil {
-			return fmt.Errorf("failed to save transaction: %v", err)
-		}
-		s.saveTransactionForAccount(&tmpTx, from, to)
-		seedEpoch.Transactions[tmpTx.Id] = tmpTx
-	}
-
-	for k := 0; k < rand.Intn(3); k++ {
-		tmpAtx := generateActivation(tmpLayer.Number)
-		if err := s.storage.SaveActivation(context.TODO(), &tmpAtx); err != nil {
-			return fmt.Errorf("failed to save activation: %v", err)
-		}
-		seedEpoch.Activations[tmpAtx.Id] = tmpAtx
-
-		from := s.getRandomAcc()
-
-		tmpSm := generateSmesher(tmpAtx.SmesherId, from)
-		if err := s.storage.SaveSmesher(context.TODO(), &tmpSm); err != nil {
-			return fmt.Errorf("failed to save smesher: %v", err)
-		}
-		seedEpoch.Smeshers[tmpSm.Id] = tmpSm
-
-		tmpRw := generateReward(tmpLayer.Number, tmpSm.Id, from)
-		if err := s.storage.SaveReward(context.TODO(), &tmpRw); err != nil {
-			return fmt.Errorf("failed to save reward: %v", err)
-		}
-		seedEpoch.Rewards[tmpRw.Smesher] = tmpRw
-		s.saveReward(&tmpRw, from)
-	}
+	s.Layers[tmpLayer.Number] = &layerContainer.Layer
 	return nil
 }
 
@@ -143,136 +246,146 @@ func (s *SeedGenerator) getRandomAcc() string {
 	return ""
 }
 
-func generateActivation(layerNum uint32) model.Activation {
+func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, smesher *model.Smesher) model.Activation {
+	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Activation{
-		Id:        hashFromRandomBytes(),
+		Id:        strings.ToLower(utils.BytesToHex(randomBytes(30))),
 		Layer:     layerNum,
-		SmesherId: hashFromRandomBytes(),
-		Coinbase:  hashFromRandomBytes(),
-		PrevAtx:   hashFromRandomBytes(),
-		NumUnits:  0,
-		Timestamp: 0,
+		SmesherId: strings.ToLower(smesher.Id),
+		Coinbase:  smesher.Coinbase,
+		PrevAtx:   strings.ToLower(utils.BytesToHex(randomBytes(30))),
+		NumUnits:  atxNumUnits,
+		Timestamp: tx,
 	}
 }
 
-func generateEpoch(epochNum int32, from, to time.Time, layersStart, layersEnd int32) model.Epoch {
+func (s *SeedGenerator) generateEpoch(epochNum int32) model.Epoch {
+	layersStart := uint32(epochNum) * uint32(s.seed.EpochNumLayers)
+	layersEnd := layersStart + uint32(s.seed.EpochNumLayers) - 1
+
+	epochStart, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layersStart, uint32(s.seed.LayersDuration))
+	_, epochEnd := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layersEnd, uint32(s.seed.LayersDuration))
 	return model.Epoch{
 		Number:     epochNum,
-		Start:      uint32(from.Unix()),
-		End:        uint32(to.Unix()),
-		LayerStart: uint32(layersStart),
-		LayerEnd:   uint32(layersEnd),
-		Layers:     uint32(rand.Intn(1000)),
+		Start:      epochStart,
+		End:        epochEnd,
+		LayerStart: layersStart,
+		LayerEnd:   layersEnd,
+		Layers:     0,
 		Stats: model.Stats{
 			Current: model.Statistics{
-				Capacity:      int64(rand.Intn(1000)),
-				Decentral:     int64(rand.Intn(1000)),
-				Smeshers:      int64(rand.Intn(1000)),
-				Transactions:  int64(rand.Intn(1000)),
-				Accounts:      int64(rand.Intn(1000)),
-				Circulation:   int64(rand.Intn(1000)),
-				Rewards:       int64(rand.Intn(1000)),
-				RewardsNumber: int64(rand.Intn(1000)),
-				Security:      int64(rand.Intn(1000)),
-				TxsAmount:     int64(rand.Intn(1000)),
+				Capacity:      0,
+				Decentral:     0,
+				Smeshers:      0,
+				Transactions:  0,
+				Accounts:      0,
+				Circulation:   0,
+				Rewards:       0,
+				RewardsNumber: 0,
+				Security:      0,
+				TxsAmount:     0,
 			},
 			Cumulative: model.Statistics{
-				Capacity:      int64(rand.Intn(1000)),
-				Decentral:     int64(rand.Intn(1000)),
-				Smeshers:      int64(rand.Intn(1000)),
-				Transactions:  int64(rand.Intn(1000)),
-				Accounts:      int64(rand.Intn(1000)),
-				Circulation:   int64(rand.Intn(1000)),
-				Rewards:       int64(rand.Intn(1000)),
-				RewardsNumber: int64(rand.Intn(1000)),
-				Security:      int64(rand.Intn(1000)),
-				TxsAmount:     int64(rand.Intn(1000)),
+				Capacity:      0,
+				Decentral:     0,
+				Smeshers:      0,
+				Transactions:  0,
+				Accounts:      0,
+				Circulation:   0,
+				Rewards:       0,
+				RewardsNumber: 0,
+				Security:      0,
+				TxsAmount:     0,
 			},
 		},
 	}
 }
 
-func generateLayer(layerNum, epochNum int32) model.Layer {
+func (s *SeedGenerator) generateLayer(layerNum, epochNum int32) model.Layer {
+	start, end := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), uint32(layerNum), uint32(s.seed.LayersDuration))
 	return model.Layer{
 		Number:       uint32(layerNum),
 		Status:       2,
 		Txs:          0,
-		Start:        1660227073,
-		End:          1660227173,
-		TxsAmount:    uint64(rand.Intn(1000)),
-		AtxNumUnits:  uint64(rand.Intn(1000)),
+		Start:        start,
+		End:          end,
+		TxsAmount:    0,
+		AtxNumUnits:  0,
 		Rewards:      uint64(rand.Intn(1000)),
 		Epoch:        uint32(epochNum),
-		Smeshers:     uint32(rand.Intn(1000)),
-		Hash:         hashFromRandomBytes(),
-		BlocksNumber: uint32(rand.Intn(1000)),
+		Smeshers:     0,
+		Hash:         strings.ToLower(fmt.Sprintf("%x", sha256.Sum256(randomBytes(32)))),
+		BlocksNumber: 0,
 	}
 }
 
-func generateTransaction(layerNum uint32, sender, receiver string) model.Transaction {
+func generateTransaction(index int, layer *model.Layer, sender, receiver string, block *model.Block) model.Transaction {
 	return model.Transaction{
-		Id:          utils.BytesToHex(randomBytes(32)),
-		Layer:       layerNum,
-		Block:       "",
-		BlockIndex:  0,
+		Id:          strings.ToLower(utils.BytesToHex(randomBytes(32))),
+		Layer:       layer.Number,
+		Block:       block.Id,
+		BlockIndex:  uint32(index),
 		Index:       0,
-		State:       0,
-		Timestamp:   0,
-		GasProvided: 0,
-		GasPrice:    0,
+		State:       int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
+		Timestamp:   layer.Start,
+		GasProvided: uint64(rand.Intn(1000)),
+		GasPrice:    uint64(rand.Intn(1000)),
 		GasUsed:     0,
-		Fee:         uint64(rand.Intn(1000)),
+		Fee:         0,
 		Amount:      uint64(rand.Intn(1000)),
-		Counter:     0,
+		Counter:     uint64(rand.Intn(1000)),
 		Type:        0,
 		Scheme:      0,
-		Signature:   hashFromRandomBytes(),
-		PublicKey:   hashFromRandomBytes(),
-		Sender:      sender,
-		Receiver:    receiver,
-		SvmData:     hashFromRandomBytes(),
+		Signature:   strings.ToLower(utils.BytesToHex(randomBytes(30))),
+		PublicKey:   strings.ToLower(utils.BytesToHex(randomBytes(32))),
+		Sender:      (sender),
+		Receiver:    (receiver),
+		SvmData:     "",
 	}
 }
 
-func generateSmesher(smesherID, coinbaseAddr string) model.Smesher {
+func (s *SeedGenerator) generateSmesher(layerNum uint32, coinbase string, commitmentSize uint64) model.Smesher {
+	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Smesher{
-		Id:             smesherID,
+		Id:             strings.ToLower(utils.BytesToAddressString(randomBytes(20))),
 		Geo:            model.Geo{},
-		CommitmentSize: 0,
-		Coinbase:       coinbaseAddr,
-		AtxCount:       0,
-		Timestamp:      0,
+		CommitmentSize: commitmentSize,
+		Coinbase:       coinbase,
+		AtxCount:       1,
+		Timestamp:      tx,
 	}
 }
 
-func generateReward(layerNum uint32, smesherID, coinbaseAddr string) model.Reward {
+func (s *SeedGenerator) generateReward(layerNum uint32, smesher *model.Smesher) model.Reward {
+	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Reward{
 		Layer:         layerNum,
 		Total:         uint64(rand.Intn(1000)),
 		LayerReward:   uint64(rand.Intn(1000)),
 		LayerComputed: 0,
-		Coinbase:      coinbaseAddr,
-		Smesher:       smesherID,
-		Space:         0,
-		Timestamp:     uint32(time.Now().Unix()),
+		Coinbase:      smesher.Coinbase,
+		Smesher:       strings.ToLower(smesher.Id),
+		Space:         smesher.CommitmentSize,
+		Timestamp:     tx,
 	}
 }
 
-func generateBlocks(layerNum, epochNum int32) model.Block {
+func (s *SeedGenerator) generateBlocks(layerNum, epochNum int32) model.Block {
+	blockStart, blockEnd := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), uint32(layerNum), uint32(s.seed.LayersDuration))
 	return model.Block{
-		Id:        hashFromRandomBytes(),
+		Id:        strings.ToLower(utils.NBytesToHex(randomBytes(20), 20)),
 		Layer:     uint32(layerNum),
 		Epoch:     uint32(epochNum),
-		Start:     uint32(rand.Intn(1000)),
-		End:       uint32(rand.Intn(1000)),
-		TxsNumber: uint32(rand.Intn(1000)),
-		TxsValue:  uint64(rand.Intn(1000)),
+		Start:     blockStart,
+		End:       blockEnd,
+		TxsNumber: 0,
+		TxsValue:  0,
 	}
 }
 
 func generateAccount() model.Account {
 	return model.Account{
-		Address: utils.BytesToAddressString(randomBytes(20)),
+		Address: (utils.BytesToAddressString(randomBytes(20))),
 		Balance: 0,
 		Counter: 0,
 	}
@@ -286,8 +399,4 @@ func randomBytes(size int) []byte {
 		return nil
 	}
 	return b
-}
-
-func hashFromRandomBytes() string {
-	return fmt.Sprintf("%x", sha256.Sum256(randomBytes(32)))
 }

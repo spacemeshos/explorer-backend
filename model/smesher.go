@@ -13,12 +13,12 @@ type Geo struct {
 }
 
 type Smesher struct {
-    Id			string
-    Geo			Geo
-    CommitmentSize	uint64
-    Coinbase		string
-    AtxCount		uint32
-    Timestamp		uint32
+	Id             string //nolint will fix it later.
+	Geo            Geo
+	CommitmentSize uint64 `json:"cSize"`
+	Coinbase       string
+	AtxCount       uint32
+	Timestamp      uint32
 }
 
 type SmesherService interface {
