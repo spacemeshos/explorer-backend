@@ -95,10 +95,11 @@ func TestEpochSmeshersHandler(t *testing.T) {
 		var loopResult smesherResp
 		res.RequireUnmarshal(t, &loopResult)
 		require.Equal(t, len(ep.Smeshers), len(loopResult.Data))
-		for _, tx := range loopResult.Data {
-			generatedSmesher, ok := ep.Smeshers[strings.ToLower(tx.Id)]
+		for _, smesher := range loopResult.Data {
+			generatedSmesher, ok := ep.Smeshers[strings.ToLower(smesher.Id)]
 			require.True(t, ok)
-			require.Equal(t, *generatedSmesher, tx)
+			smesher.Rewards = generatedSmesher.Rewards // this not calculated on list endpoints, simply set as 0.
+			require.Equal(t, *generatedSmesher, smesher)
 		}
 	}
 }

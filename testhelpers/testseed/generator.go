@@ -168,7 +168,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 	seedEpoch.Layers = append(seedEpoch.Layers, layerContainer)
 
 	for k := 0; k <= rand.Intn(3); k++ {
-		tmpAcc := generateAccount()
+		tmpAcc := s.generateAccount(tmpLayer.Number)
 		s.Accounts[strings.ToLower(tmpAcc.Address)] = AccountContainer{
 			layerID:      uint32(layerID),
 			Account:      tmpAcc,
@@ -231,6 +231,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 		seedEpoch.Blocks[tmpBl.Id] = &tmpBl
 		s.Rewards[strings.ToLower(tmpRw.Smesher)] = &tmpRw
 		s.Smeshers[strings.ToLower(tmpSm.Id)] = &tmpSm
+		s.Smeshers[strings.ToLower(tmpSm.Id)].Rewards = int64(tmpRw.Total)
 		seedEpoch.Epoch.Stats.Current.RewardsNumber++
 		seedEpoch.Epoch.Stats.Current.Rewards += int64(tmpRw.Total)
 		seedEpoch.Epoch.Stats.Current.Capacity += int64(tmpSm.CommitmentSize)
@@ -382,11 +383,13 @@ func (s *SeedGenerator) generateBlocks(layerNum, epochNum int32) model.Block {
 	}
 }
 
-func generateAccount() model.Account {
+func (s *SeedGenerator) generateAccount(layerNum uint32) model.Account {
 	return model.Account{
-		Address: utils.BytesToAddressString(randomBytes(20)),
-		Balance: 0,
-		Counter: 0,
+		Address:  utils.BytesToAddressString(randomBytes(20)),
+		Balance:  0,
+		Counter:  0,
+		Created:  uint64(layerNum),
+		LayerTms: int32(s.seed.GenesisTime),
 	}
 }
 

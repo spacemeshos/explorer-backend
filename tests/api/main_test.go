@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"github.com/spacemeshos/explorer-backend/internal/storage/storagereader"
 	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
 	"github.com/spacemeshos/explorer-backend/testhelpers/testserver"
@@ -20,6 +21,7 @@ const testAPIServiceDB = "explorer_test"
 var (
 	apiServer *testserver.TestAPIService
 	generator *testseed.SeedGenerator
+	seed      *testseed.TestServerSeed
 	dbPort    = 27017
 )
 
@@ -43,15 +45,21 @@ func TestMain(m *testing.M) {
 		fmt.Println("failed to init storage to mongo", err)
 		os.Exit(1)
 	}
-	seed := testseed.GetServerSeed()
-	db.OnNetworkInfo(seed.NetID, 2, seed.EpochNumLayers, seed.MaxTransactionPerSecond, seed.LayersDuration, seed.GetPostUnitsSize())
+	seed = testseed.GetServerSeed()
+	db.OnNetworkInfo(seed.NetID, seed.GenesisTime, seed.EpochNumLayers, seed.MaxTransactionPerSecond, seed.LayersDuration, seed.GetPostUnitsSize())
 
-	apiServer, err = testserver.StartTestAPIService(dbPort)
+	dbReader, err := storagereader.NewStorageReader(context.Background(), mongoURL, testAPIServiceDB)
+	if err != nil {
+		fmt.Println("failed to init storage to mongo", err)
+		os.Exit(1)
+	}
+
+	apiServer, err = testserver.StartTestAPIServiceV2(db, dbReader)
+	// old version of app here apiServer, err = testserver.StartTestAPIService(dbPort, db)
 	if err != nil {
 		fmt.Println("failed to start test api service", err)
 		os.Exit(1)
 	}
-	apiServer.Storage = db
 	generator = testseed.NewSeedGenerator(testseed.GetServerSeed())
 	if err = generator.GenerateEpoches(10); err != nil {
 		fmt.Println("failed to generate epochs", err)

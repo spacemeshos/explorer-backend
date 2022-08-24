@@ -1,28 +1,30 @@
 package model
 
 import (
-    "context"
-
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"context"
 )
 
 type Geo struct {
-    Name	string `json:"name"`
-    Coordinates	[2]float64 `json:"coordinates"`
+	Name        string     `json:"name"`
+	Coordinates [2]float64 `json:"coordinates"`
 }
 
 type Smesher struct {
-	Id             string //nolint will fix it later.
-	Geo            Geo
-	CommitmentSize uint64 `json:"cSize"`
-	Coinbase       string
-	AtxCount       uint32
-	Timestamp      uint32
+	Id             string  `json:"id" bson:"id"` //nolint will fix it later.
+	CommitmentSize uint64  `json:"cSize" bson:"cSize"`
+	Coinbase       string  `json:"coinbase" bson:"coinbase"`
+	AtxCount       uint32  `json:"atxcount" bson:"atxcount"`
+	Timestamp      uint32  `json:"timestamp" bson:"timestamp"`
+	Name           string  `json:"name" bson:"name"`
+	Lat            float64 `json:"lat" bson:"lat"`
+	Lon            float64 `json:"lon" bson:"lon"`
+	Rewards        int64   `json:"rewards" bson:"-"`
 }
 
 type SmesherService interface {
-    GetSmesher(ctx context.Context, query *bson.D) (*Smesher, error)
-    GetSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Smesher, error)
-    SaveSmesher(ctx context.Context, in *Smesher) error
+	GetSmesher(ctx context.Context, smesherID string) (*Smesher, error)
+	GetSmeshers(ctx context.Context, page, perPage int64) (smeshers []*Smesher, total int64, err error)
+	GetSmesherActivations(ctx context.Context, smesherID string, page, perPage int64) (atxs []*Activation, total int64, err error)
+	GetSmesherRewards(ctx context.Context, smesherID string, page, perPage int64) (rewards []*Reward, total int64, err error)
+	CountSmesherRewards(ctx context.Context, smesherID string) (total, count int64, err error)
 }

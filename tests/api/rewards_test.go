@@ -17,6 +17,7 @@ func TestRewards(t *testing.T) { //"/rewards"
 	for _, reward := range resp.Data {
 		rw, ok := insertedRewards[reward.Smesher]
 		require.True(t, ok)
+		reward.ID = ""
 		require.Equal(t, rw, &reward)
 	}
 }
@@ -44,13 +45,15 @@ func TestReward(t *testing.T) { //"/rewards/{id}"
 	var resp rewardRespWithID
 	res.RequireUnmarshal(t, &resp)
 	for _, reward := range resp.Data {
-		res := apiServer.Get(t, apiPrefix+"/rewards/"+reward.ID)
-		res.RequireOK(t)
+		require.True(t, reward.ID != "")
+		resSingleReward := apiServer.Get(t, apiPrefix+"/rewards/"+reward.ID)
+		resSingleReward.RequireOK(t)
 		var respLoop rewardResp
-		res.RequireUnmarshal(t, &respLoop)
+		resSingleReward.RequireUnmarshal(t, &respLoop)
 		require.Equal(t, 1, len(respLoop.Data))
 		rw, ok := insertedRewards[reward.Smesher]
 		require.True(t, ok)
+		respLoop.Data[0].ID = "" // this id generates by mongo, reset it. // todo probably bag, reward should have db independed id
 		require.Equal(t, rw, &respLoop.Data[0])
 	}
 }

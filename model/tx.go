@@ -4,38 +4,36 @@ import (
 	"context"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/spacemeshos/explorer-backend/utils"
 )
 
 type Transaction struct {
-	Id string //nolint will fix it later
+	Id string `json:"id" bson:"id"` //nolint will fix it later
 
-	Layer      uint32
-	Block      string
-	BlockIndex uint32
-	Index      uint32 // the index of the tx in the ordered list of txs to be executed by stf in the layer
-	State      int
-	Timestamp  uint32
+	Layer      uint32 `json:"layer" bson:"layer"`
+	Block      string `json:"block" bson:"block"`
+	BlockIndex uint32 `json:"blockIndex" bson:"blockIndex"`
+	Index      uint32 `json:"index" bson:"index"` // the index of the tx in the ordered list of txs to be executed by stf in the layer
+	State      int    `json:"state" bson:"state"`
+	Timestamp  uint32 `json:"timestamp" bson:"timestamp"`
 
-	GasProvided uint64
-	GasPrice    uint64
-	GasUsed     uint64 // gas units used by the transaction (gas price in tx)
-	Fee         uint64 // transaction fee charged for the transaction
+	GasProvided uint64 `json:"gasProvided" bson:"gasProvided"`
+	GasPrice    uint64 `json:"gasPrice" bson:"gasPrice"`
+	GasUsed     uint64 `bson:"gasUsed"`        // gas units used by the transaction (gas price in tx)
+	Fee         uint64 `json:"fee" bson:"fee"` // transaction fee charged for the transaction
 
-	Amount  uint64 // amount of coin transferred in this tx by sender
-	Counter uint64 // tx counter aka nonce
+	Amount  uint64 `json:"amount" bson:"amount"`   // amount of coin transferred in this tx by sender
+	Counter uint64 `json:"counter" bson:"counter"` // tx counter aka nonce
 
-	Type      int
-	Scheme    int    // the signature's scheme
-	Signature string // the signature itself
-	PublicKey string `json:"pubKey"` // included in schemes which require signer to provide a public key
+	Type      int    `json:"type" bson:"type"`
+	Scheme    int    `json:"scheme" bson:"scheme"`       // the signature's scheme
+	Signature string `json:"signature" bson:"signature"` // the signature itself
+	PublicKey string `json:"pubKey" bson:"pubKey"`       // included in schemes which require signer to provide a public key
 
-	Sender   string // tx originator, should match signer inside Signature
-	Receiver string
-	SvmData  string // svm binary data. Decode with svm-codec
+	Sender   string `json:"sender" bson:"sender"` // tx originator, should match signer inside Signature
+	Receiver string `json:"receiver" bson:"receiver"`
+	SvmData  string `json:"svmData" bson:"svmData"` // svm binary data. Decode with svm-codec
 }
 
 type TransactionReceipt struct {
@@ -49,9 +47,8 @@ type TransactionReceipt struct {
 }
 
 type TransactionService interface {
-	GetTransaction(ctx context.Context, query *bson.D) (*Transaction, error)
-	GetTransactions(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Transaction, error)
-	SaveTransaction(ctx context.Context, in *Transaction) error
+	GetTransaction(ctx context.Context, txID string) (*Transaction, error)
+	GetTransactions(ctx context.Context, page, perPage int64) (txs []*Transaction, total int64, err error)
 }
 
 func NewTransactionReceipt(txReceipt *pb.TransactionReceipt) *TransactionReceipt {

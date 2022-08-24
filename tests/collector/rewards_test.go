@@ -29,6 +29,7 @@ func TestRewards(t *testing.T) {
 		tmpReward.Smesher = strings.ToLower(tmpReward.Smesher)
 		tmpReward.Coinbase = strings.ToLower(tmpReward.Coinbase)
 		generatedReward.Coinbase = strings.ToLower(generatedReward.Coinbase)
+		tmpReward.ID = "" // id is internal mongo id. before insert to db we do not know it.
 		require.Equal(t, *generatedReward, tmpReward)
 	}
 }

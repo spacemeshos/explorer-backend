@@ -17,6 +17,7 @@ func TestSmeshersHandler(t *testing.T) { // /smeshers
 	for _, smesher := range resp.Data {
 		generatedSmesher, ok := generator.Smeshers[strings.ToLower(smesher.Id)]
 		require.True(t, ok)
+		smesher.Rewards = generatedSmesher.Rewards // for this endpoint we not calculate extra values, cause not use this field
 		require.Equal(t, generatedSmesher, &smesher)
 	}
 }
