@@ -6,17 +6,22 @@ import (
 	"strconv"
 )
 
+const (
+	accountBlockIDLength      = 42
+	txAtxSmesherLayerIDLength = 66
+)
+
 // Search try guess entity to search and find related one.
 func (e *Service) Search(ctx context.Context, search string) (string, error) {
 	switch len(search) {
-	case 42:
+	case accountBlockIDLength:
 		if acc, _ := e.GetAccount(ctx, search); acc != nil {
 			return "/accounts/" + search, nil
 		}
 		if block, _ := e.GetBlock(ctx, search); block != nil {
 			return "/blocks/" + search, nil
 		}
-	case 66:
+	case txAtxSmesherLayerIDLength:
 		if tx, _ := e.GetTransaction(ctx, search); tx != nil {
 			return "/txs/" + search, nil
 		}

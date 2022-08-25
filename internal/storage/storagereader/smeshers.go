@@ -13,7 +13,7 @@ import (
 )
 
 // CountSmeshers returns the number of smeshers matching the query.
-func (s *StorageReader) CountSmeshers(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Reader) CountSmeshers(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
 	count, err := s.db.Collection("smeshers").CountDocuments(ctx, query, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("error count transactions: %w", err)
@@ -22,7 +22,7 @@ func (s *StorageReader) CountSmeshers(ctx context.Context, query *bson.D, opts .
 }
 
 // GetSmeshers returns the smeshers matching the query.
-func (s *StorageReader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Smesher, error) {
+func (s *Reader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Smesher, error) {
 	cursor, err := s.db.Collection("smeshers").Find(ctx, query, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error get smeshers: %w", err)
@@ -36,7 +36,7 @@ func (s *StorageReader) GetSmeshers(ctx context.Context, query *bson.D, opts ...
 }
 
 // GetSmesher returns the smesher matching the query.
-func (s *StorageReader) GetSmesher(ctx context.Context, smesherID string) (*model.Smesher, error) {
+func (s *Reader) GetSmesher(ctx context.Context, smesherID string) (*model.Smesher, error) {
 	cursor, err := s.db.Collection("smeshers").Find(ctx, &bson.D{{"id", smesherID}})
 	if err != nil {
 		return nil, fmt.Errorf("error get smesher `%s`: %w", smesherID, err)
@@ -52,7 +52,7 @@ func (s *StorageReader) GetSmesher(ctx context.Context, smesherID string) (*mode
 }
 
 // CountSmesherRewards returns the number of smesher rewards matching the query.
-func (s *StorageReader) CountSmesherRewards(ctx context.Context, smesherID string) (total, count int64, err error) {
+func (s *Reader) CountSmesherRewards(ctx context.Context, smesherID string) (total, count int64, err error) {
 	matchStage := bson.D{{"$match", bson.D{{"smesher", smesherID}}}}
 	groupStage := bson.D{
 		{"$group", bson.D{

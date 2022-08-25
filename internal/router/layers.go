@@ -12,15 +12,19 @@ import (
 
 func (a *AppRouter) layers(ctx *fiber.Ctx) error {
 	pageNum, pageSize := a.getPagination(ctx)
-	layers, layersTotal, err := a.appService.GetLayers(ctx.UserContext(), pageNum, pageSize)
+	layersList, layersTotal, err := a.appService.GetLayers(ctx.UserContext(), pageNum, pageSize)
 	if err != nil {
 		return fmt.Errorf("failed to get epoch list: %w", err)
 	}
-	return ctx.JSON(fiber.Map{"data": layers, "pagination": a.setPaginationResponse(layersTotal, pageNum, pageSize)})
+	return ctx.JSON(fiber.Map{"data": layersList, "pagination": a.setPaginationResponse(layersTotal, pageNum, pageSize)})
 }
 
 func (a *AppRouter) layer(ctx *fiber.Ctx) error {
-	layerID, _ := strconv.Atoi(ctx.Params("id"))
+	layerID, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return fiber.ErrBadRequest
+	}
 	layer, err := a.appService.GetLayer(ctx.UserContext(), layerID)
 	if err != nil {
 		return fmt.Errorf("failed to get layer info: %w", err)
@@ -41,15 +45,15 @@ func (a *AppRouter) layerDetails(ctx *fiber.Ctx) error {
 	)
 
 	switch ctx.Params("entity") {
-	case "blocks":
+	case blocks:
 		response, total, err = a.appService.GetLayerBlocks(ctx.UserContext(), layerID, pageNum, pageSize)
-	case "txs":
+	case txs:
 		response, total, err = a.appService.GetLayerTransactions(ctx.UserContext(), layerID, pageNum, pageSize)
-	case "smeshers":
+	case smeshers:
 		response, total, err = a.appService.GetLayerSmeshers(ctx.UserContext(), layerID, pageNum, pageSize)
-	case "rewards":
+	case rewards:
 		response, total, err = a.appService.GetLayerRewards(ctx.UserContext(), layerID, pageNum, pageSize)
-	case "atxs":
+	case atxs:
 		response, total, err = a.appService.GetLayerActivations(ctx.UserContext(), layerID, pageNum, pageSize)
 	default:
 		return fiber.NewError(fiber.StatusNotFound, "entity not found")

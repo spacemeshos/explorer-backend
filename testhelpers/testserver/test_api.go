@@ -55,7 +55,7 @@ func StartTestAPIService(dbPort int, db *storage.Storage) (*TestAPIService, erro
 }
 
 // StartTestAPIServiceV2 start test api service with refacored router.
-func StartTestAPIServiceV2(db *storage.Storage, dbReader *storagereader.StorageReader) (*TestAPIService, error) {
+func StartTestAPIServiceV2(db *storage.Storage, dbReader *storagereader.Reader) (*TestAPIService, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get free port: %s", err)

@@ -13,7 +13,7 @@ import (
 )
 
 // CountRewards returns the number of rewards matching the query.
-func (s *StorageReader) CountRewards(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Reader) CountRewards(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
 	count, err := s.db.Collection("rewards").CountDocuments(ctx, query, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("error count transactions: %w", err)
@@ -22,7 +22,7 @@ func (s *StorageReader) CountRewards(ctx context.Context, query *bson.D, opts ..
 }
 
 // GetRewards returns the rewards matching the query.
-func (s *StorageReader) GetRewards(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Reward, error) {
+func (s *Reader) GetRewards(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Reward, error) {
 	cursor, err := s.db.Collection("rewards").Find(ctx, query, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error get rewards: %w", err)
@@ -36,7 +36,7 @@ func (s *StorageReader) GetRewards(ctx context.Context, query *bson.D, opts ...*
 }
 
 // GetReward returns the reward matching the query.
-func (s *StorageReader) GetReward(ctx context.Context, rewardID string) (*model.Reward, error) {
+func (s *Reader) GetReward(ctx context.Context, rewardID string) (*model.Reward, error) {
 	id, err := primitive.ObjectIDFromHex(strings.ToLower(rewardID))
 	if err != nil {
 		return nil, fmt.Errorf("error create objectID from string `%s`: %w", rewardID, err)

@@ -35,9 +35,9 @@ func (a *AppRouter) accountDetails(ctx *fiber.Ctx) error {
 	)
 
 	switch ctx.Params("entity") {
-	case "txs":
+	case txs:
 		response, total, err = a.appService.GetAccountTransactions(ctx.UserContext(), accountID, pageNum, pageSize)
-	case "rewards":
+	case rewards:
 		response, total, err = a.appService.GetAccountRewards(ctx.UserContext(), accountID, pageNum, pageSize)
 	default:
 		return fiber.NewError(fiber.StatusNotFound, "entity not found")
