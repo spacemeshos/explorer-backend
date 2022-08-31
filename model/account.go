@@ -3,10 +3,8 @@ package model
 import (
 	"context"
 
+	"github.com/spacemeshos/address"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-	"github.com/spacemeshos/go-spacemesh/crypto/sha3"
-
-	"github.com/spacemeshos/explorer-backend/utils"
 )
 
 type Account struct {
@@ -47,28 +45,13 @@ func NewAccount(in *pb.Account) *Account {
 	}
 }
 
-// Hex returns an EIP55-compliant hex string representation of the address.
+// ToCheckedAddress Hex returns an EIP55-compliant hex string representation of the address.
+// deprecated, should be removed with new routing.
+// Deprecated
 func ToCheckedAddress(a string) string {
-	if len(a) != 42 || a[0] != '0' || a[1] != 'x' {
+	addr, err := address.StringToAddress(a)
+	if err != nil {
 		return ""
 	}
-	unchecksummed := make([]byte, 40)
-	copy(unchecksummed, a[2:])
-	sha := sha3.NewKeccak256()
-	sha.Write([]byte(unchecksummed))
-	hash := sha.Sum(nil)
-
-	result := []byte(unchecksummed)
-	for i := 0; i < len(result); i++ {
-		hashByte := hash[i/2]
-		if i%2 == 0 {
-			hashByte = hashByte >> 4
-		} else {
-			hashByte &= 0xf
-		}
-		if result[i] > '9' && hashByte > 7 {
-			result[i] -= 32
-		}
-	}
-	return "0x" + string(result)
+	return addr.String()
 }

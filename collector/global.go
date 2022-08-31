@@ -12,11 +12,7 @@ import (
 )
 
 func (c *Collector) GetAccountState(address string) (uint64, uint64, error) {
-    bytes, err := utils.StringToBytes(address)
-    if err != nil {
-        return 0, 0, err
-    }
-    req := &pb.AccountRequest{AccountId: &pb.AccountId{Address: bytes}}
+	req := &pb.AccountRequest{AccountId: &pb.AccountId{Address: address}}
 
     // set timeout
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
