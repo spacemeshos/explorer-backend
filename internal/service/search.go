@@ -6,17 +6,29 @@ import (
 	"strconv"
 )
 
+const (
+	// addressTestLength is the expected length of an address with testnet hrp `sm`.
+	addressTestLength = 51
+	// addressLength is the expected length of an address with mainet hrp `sm`.
+	addressLength = 48
+	// blockIDLength is the expected length of a block id.
+	blockIDLength = 42
+	// idLength is the expected length of a transactionID | activation | smesher.
+	idLength = 66
+)
+
 // Search try guess entity to search and find related one.
 func (e *Service) Search(ctx context.Context, search string) (string, error) {
 	switch len(search) {
-	case 42:
+	case addressLength, addressTestLength:
 		if acc, _ := e.GetAccount(ctx, search); acc != nil {
 			return "/accounts/" + search, nil
 		}
+	case blockIDLength:
 		if block, _ := e.GetBlock(ctx, search); block != nil {
 			return "/blocks/" + search, nil
 		}
-	case 66:
+	case idLength:
 		if tx, _ := e.GetTransaction(ctx, search); tx != nil {
 			return "/txs/" + search, nil
 		}
