@@ -71,4 +71,7 @@ ci_up: stop ## start ci environment
 	@echo "RUN ci docker-compose.yml "
 	docker compose up --build -d
 
+gogen: ## generate scalegen
+	go generate ./...
+
 .PHONY: ci_up, dev_up, stop, test_api, test_collector, lint, lint-fix, lint-ci

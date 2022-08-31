@@ -28,7 +28,7 @@ func NewActivation(atx *pb.Activation, timestamp uint32) *Activation {
 		Id:        utils.BytesToHex(atx.GetId().GetId()),
 		Layer:     atx.GetLayer().GetNumber(),
 		SmesherId: utils.BytesToHex(atx.GetSmesherId().GetId()),
-		Coinbase:  utils.BytesToAddressString(atx.GetCoinbase().GetAddress()),
+		Coinbase:  atx.GetCoinbase().GetAddress(),
 		PrevAtx:   utils.BytesToHex(atx.GetPrevAtx().GetId()),
 		NumUnits:  atx.GetNumUnits(),
 		Timestamp: timestamp,

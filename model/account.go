@@ -41,7 +41,7 @@ type AccountService interface {
 
 func NewAccount(in *pb.Account) *Account {
 	return &Account{
-		Address: utils.BytesToAddressString(in.GetAccountId().GetAddress()),
+		Address: in.GetAccountId().GetAddress(),
 		Balance: in.GetStateCurrent().GetBalance().GetValue(),
 		Counter: in.GetStateCurrent().GetCounter(),
 	}

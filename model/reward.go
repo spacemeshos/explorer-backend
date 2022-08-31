@@ -32,7 +32,7 @@ func NewReward(reward *pb.Reward) *Reward {
 		Total:         reward.GetTotal().GetValue(),
 		LayerReward:   reward.GetLayerReward().GetValue(),
 		LayerComputed: reward.GetLayerComputed().GetNumber(),
-		Coinbase:      utils.BytesToAddressString(reward.GetCoinbase().GetAddress()),
+		Coinbase:      reward.GetCoinbase().GetAddress(),
 		Smesher:       utils.BytesToHex(reward.GetSmesher().GetId()),
 	}
 }

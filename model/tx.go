@@ -1,10 +1,15 @@
 package model
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"strings"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/go-scale"
 
+	"github.com/spacemeshos/explorer-backend/pkg/transactionparser"
 	"github.com/spacemeshos/explorer-backend/utils"
 )
 
@@ -63,36 +68,42 @@ func NewTransactionReceipt(txReceipt *pb.TransactionReceipt) *TransactionReceipt
 	}
 }
 
-func NewTransaction(in *pb.Transaction, layer uint32, blockId string, timestamp uint32, blockIndex uint32) *Transaction {
-	gas := in.GetGasOffered()
-	sig := in.GetSignature()
+// NewTransaction try to parse the transaction and return a new Transaction struct.
+func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp uint32, blockIndex uint32) (*Transaction, error) {
+	txDecoded, err := transactionparser.Parse(scale.NewDecoder(bytes.NewReader(in.GetRaw())), in.GetRaw(), in.Method)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse transaction: %w", err)
+	}
 
 	tx := &Transaction{
-		Id:          utils.BytesToHex(in.GetId().GetId()),
-		Sender:      utils.BytesToAddressString(in.GetSender().GetAddress()),
-		Amount:      in.GetAmount().GetValue(),
-		Counter:     in.GetCounter(),
+		Id:          utils.BytesToHex(in.GetId()),
+		Sender:      txDecoded.GetPrincipal().String(),
+		Amount:      txDecoded.GetAmount(),
+		Counter:     txDecoded.GetCounter(),
 		Layer:       layer,
-		Block:       blockId,
+		Block:       blockID,
 		BlockIndex:  blockIndex,
 		State:       int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
 		Timestamp:   timestamp,
-		GasProvided: gas.GetGasProvided(),
-		GasPrice:    gas.GetGasPrice(),
-		Scheme:      int(sig.GetScheme()),
-		Signature:   utils.BytesToHex(sig.GetSignature()),
-		PublicKey:   utils.BytesToHex(sig.GetPublicKey()),
+		GasProvided: in.GetMaxGas(),
+		GasPrice:    txDecoded.GetGasPrice(),
+		Scheme:      txDecoded.GetType(),
+		Signature:   utils.BytesToHex(txDecoded.GetSignature()),
+		Receiver:    txDecoded.GetReceiver().String(),
 	}
-
-	if data := in.GetCoinTransfer(); data != nil {
-		tx.Receiver = utils.BytesToAddressString(data.GetReceiver().GetAddress())
-	} else if data := in.GetSmartContract(); data != nil {
-		tx.Type = int(data.GetType())
-		tx.SvmData = utils.BytesToHex(data.GetData())
-		tx.Receiver = utils.BytesToAddressString(data.GetAccountId().GetAddress())
+	keys := make([]string, 0, len(txDecoded.GetPublicKeys()))
+	for i := range txDecoded.GetPublicKeys() {
+		keys = append(keys, utils.BytesToHex(txDecoded.GetPublicKeys()[i]))
 	}
+	tx.PublicKey = strings.Join(keys, ",")
 
-	return tx
+	//if data := in.GetCoinTransfer(); data != nil {
+	//} else if data := in.GetSmartContract(); data != nil {
+	//	tx.Type = int(data.GetType())
+	//	tx.SvmData = utils.BytesToHex(data.GetData())
+	//}
+
+	return tx, nil
 }
 
 func GetTransactionStateFromResult(txResult int) int {
