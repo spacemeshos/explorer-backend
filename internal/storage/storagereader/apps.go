@@ -11,7 +11,7 @@ import (
 )
 
 // CountApps returns the number of apps matching the query.
-func (s *StorageReader) CountApps(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Reader) CountApps(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
 	count, err := s.db.Collection("apps").CountDocuments(ctx, query, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("error count apps: %w", err)
@@ -20,7 +20,7 @@ func (s *StorageReader) CountApps(ctx context.Context, query *bson.D, opts ...*o
 }
 
 // GetApps returns the apps matching the query.
-func (s *StorageReader) GetApps(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.App, error) {
+func (s *Reader) GetApps(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.App, error) {
 	cursor, err := s.db.Collection("apps").Find(ctx, query, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get apps: %w", err)

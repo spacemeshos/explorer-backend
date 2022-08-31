@@ -11,7 +11,7 @@ import (
 )
 
 // CountTransactions returns the number of transactions matching the query.
-func (s *StorageReader) CountTransactions(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Reader) CountTransactions(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
 	count, err := s.db.Collection("txs").CountDocuments(ctx, query, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("error count transactions: %w", err)
@@ -20,7 +20,7 @@ func (s *StorageReader) CountTransactions(ctx context.Context, query *bson.D, op
 }
 
 // GetTransactions returns the transactions matching the query.
-func (s *StorageReader) GetTransactions(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Transaction, error) {
+func (s *Reader) GetTransactions(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Transaction, error) {
 	cursor, err := s.db.Collection("txs").Find(ctx, query, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error get txs: %w", err)

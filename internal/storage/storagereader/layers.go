@@ -11,7 +11,7 @@ import (
 )
 
 // CountLayers returns the number of layers matching the query.
-func (s *StorageReader) CountLayers(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Reader) CountLayers(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
 	count, err := s.db.Collection("layers").CountDocuments(ctx, query, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("error count layers: %w", err)
@@ -20,7 +20,7 @@ func (s *StorageReader) CountLayers(ctx context.Context, query *bson.D, opts ...
 }
 
 // GetLayers returns the layers matching the query.
-func (s *StorageReader) GetLayers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Layer, error) {
+func (s *Reader) GetLayers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Layer, error) {
 	cursor, err := s.db.Collection("layers").Find(ctx, query, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error get layers: %s", err)
@@ -34,7 +34,7 @@ func (s *StorageReader) GetLayers(ctx context.Context, query *bson.D, opts ...*o
 }
 
 // GetLayer returns the layer matching the query.
-func (s *StorageReader) GetLayer(ctx context.Context, layerNumber int) (*model.Layer, error) {
+func (s *Reader) GetLayer(ctx context.Context, layerNumber int) (*model.Layer, error) {
 	cursor, err := s.db.Collection("layers").Find(ctx, &bson.D{{"number", layerNumber}})
 	if err != nil {
 		return nil, fmt.Errorf("error get layer `%d`: %w", layerNumber, err)

@@ -13,14 +13,14 @@ import (
 	"github.com/spacemeshos/explorer-backend/model"
 )
 
-// StorageReader is a wrapper around a mongo client. This client is read-only.
-type StorageReader struct {
+// Reader is a wrapper around a mongo client. This client is read-only.
+type Reader struct {
 	client *mongo.Client
 	db     *mongo.Database
 }
 
 // NewStorageReader creates a new storage reader.
-func NewStorageReader(ctx context.Context, dbURL string, dbName string) (*StorageReader, error) {
+func NewStorageReader(ctx context.Context, dbURL string, dbName string) (*Reader, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbURL))
@@ -31,7 +31,7 @@ func NewStorageReader(ctx context.Context, dbURL string, dbName string) (*Storag
 	if err = client.Ping(ctx, nil); err != nil {
 		return nil, fmt.Errorf("error ping to db: %s", err)
 	}
-	reader := &StorageReader{
+	reader := &Reader{
 		client: client,
 		db:     client.Database(dbName),
 	}
@@ -39,7 +39,7 @@ func NewStorageReader(ctx context.Context, dbURL string, dbName string) (*Storag
 }
 
 // GetNetworkInfo returns the network info matching the query.
-func (s *StorageReader) GetNetworkInfo(ctx context.Context) (*model.NetworkInfo, error) {
+func (s *Reader) GetNetworkInfo(ctx context.Context) (*model.NetworkInfo, error) {
 	cursor, err := s.db.Collection("networkinfo").Find(ctx, bson.D{{"id", 1}})
 	if err != nil {
 		return nil, fmt.Errorf("error get network info: %s", err)
@@ -55,7 +55,7 @@ func (s *StorageReader) GetNetworkInfo(ctx context.Context) (*model.NetworkInfo,
 }
 
 // Ping checks if the database is reachable.
-func (s *StorageReader) Ping(ctx context.Context) error {
+func (s *Reader) Ping(ctx context.Context) error {
 	if s.client == nil {
 		return errors.New("storage not initialized")
 	}

@@ -35,9 +35,9 @@ func (a *AppRouter) smesherDetails(ctx *fiber.Ctx) error {
 	)
 	pageNum, pageSize := a.getPagination(ctx)
 	switch ctx.Params("entity") {
-	case "atxs":
+	case atxs:
 		response, total, err = a.appService.GetSmesherActivations(ctx.UserContext(), ctx.Params("id"), pageNum, pageSize)
-	case "rewards":
+	case rewards:
 		response, total, err = a.appService.GetSmesherRewards(ctx.UserContext(), ctx.Params("id"), pageNum, pageSize)
 	default:
 		return fiber.NewError(fiber.StatusNotFound, "entity not found")

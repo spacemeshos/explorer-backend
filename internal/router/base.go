@@ -17,6 +17,16 @@ import (
 	"github.com/spacemeshos/explorer-backend/internal/service"
 )
 
+const (
+	// list of items to search from GET request.
+	txs      = "txs"
+	atxs     = "atxs"
+	blocks   = "blocks"
+	layers   = "layers"
+	rewards  = "rewards"
+	smeshers = "smeshers"
+)
+
 // Config is the configuration of the server.
 type Config struct {
 	ListenOn string
@@ -39,6 +49,8 @@ func InitAppRouter(conf *Config, appService service.AppService) *AppRouter {
 				log.Error("error get info. path: `%s`, err: %s", ctx.Request().URI().PathOriginal(), err)
 				if errors.Is(err, service.ErrNotFound) {
 					return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+				} else if errors.Is(err, fiber.ErrBadRequest) {
+					return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "bad request"})
 				}
 				return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 			},

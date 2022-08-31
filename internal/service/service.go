@@ -29,13 +29,13 @@ type Service struct {
 	currentLayerLoaded time.Time
 
 	cacheTTL time.Duration
-	storage  *storagereader.StorageReader
+	storage  storagereader.StorageReader
 }
 
 // NewService creates new service instance.
-func NewService(storage *storagereader.StorageReader, cacheTTL time.Duration) *Service {
+func NewService(reader storagereader.StorageReader, cacheTTL time.Duration) *Service {
 	service := &Service{
-		storage:        storage,
+		storage:        reader,
 		cacheTTL:       cacheTTL,
 		networkInfoMU:  &sync.RWMutex{},
 		currentEpochMU: &sync.RWMutex{},

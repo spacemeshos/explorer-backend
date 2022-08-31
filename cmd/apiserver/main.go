@@ -71,8 +71,6 @@ func main() {
 		mongoDbNameStringFlag = env
 	}
 
-	mongoDbURLStringFlag = "mongodb://localhost:27017"
-	mongoDbNameStringFlag = "explorer"
 	flag := true // flag switch old|new router.
 
 	app.Action = func(ctx *cli.Context) error {

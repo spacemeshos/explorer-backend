@@ -12,12 +12,12 @@ import (
 )
 
 // CountAccounts returns the number of accounts matching the query.
-func (s *StorageReader) CountAccounts(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Reader) CountAccounts(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
 	return s.db.Collection("accounts").CountDocuments(ctx, query, opts...)
 }
 
 // GetAccounts returns the accounts matching the query.
-func (s *StorageReader) GetAccounts(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Account, error) {
+func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Account, error) {
 	cursor, err := s.db.Collection("accounts").Find(ctx, query, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts: %w", err)
@@ -30,7 +30,7 @@ func (s *StorageReader) GetAccounts(ctx context.Context, query *bson.D, opts ...
 }
 
 // GetAccountSummary returns the summary of the accounts matching the query. Not all accounts from api have filled this data.
-func (s *StorageReader) GetAccountSummary(ctx context.Context, address string) (*model.AccountSummary, error) {
+func (s *Reader) GetAccountSummary(ctx context.Context, address string) (*model.AccountSummary, error) {
 	matchStage := bson.D{{"$match", bson.D{{"address", address}}}}
 	groupStage := bson.D{
 		{"$group", bson.D{

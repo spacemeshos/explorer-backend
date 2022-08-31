@@ -11,7 +11,7 @@ import (
 )
 
 // CountEpochs returns the number of epochs matching the query.
-func (s *StorageReader) CountEpochs(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
+func (s *Reader) CountEpochs(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error) {
 	count, err := s.db.Collection("epochs").CountDocuments(ctx, query, opts...)
 	if err != nil {
 		return 0, fmt.Errorf("error count epochs: %w", err)
@@ -20,7 +20,7 @@ func (s *StorageReader) CountEpochs(ctx context.Context, query *bson.D, opts ...
 }
 
 // GetEpochs returns the epochs matching the query.
-func (s *StorageReader) GetEpochs(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Epoch, error) {
+func (s *Reader) GetEpochs(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Epoch, error) {
 	cursor, err := s.db.Collection("epochs").Find(ctx, query, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error get epochs: %w", err)
@@ -33,7 +33,7 @@ func (s *StorageReader) GetEpochs(ctx context.Context, query *bson.D, opts ...*o
 }
 
 // GetEpoch returns the epoch matching the query.
-func (s *StorageReader) GetEpoch(ctx context.Context, epochNumber int) (*model.Epoch, error) {
+func (s *Reader) GetEpoch(ctx context.Context, epochNumber int) (*model.Epoch, error) {
 	cursor, err := s.db.Collection("epochs").Find(ctx, &bson.D{{"number", epochNumber}})
 	if err != nil {
 		return nil, fmt.Errorf("error get epoch `%d`: %w", epochNumber, err)
