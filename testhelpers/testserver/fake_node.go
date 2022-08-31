@@ -10,16 +10,17 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/phayes/freeport"
-	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-	"github.com/spacemeshos/go-spacemesh/common/types"
-	sdkWallet "github.com/spacemeshos/go-spacemesh/genvm/sdk/wallet"
-	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
-	"github.com/spacemeshos/go-spacemesh/signing"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/go-spacemesh/common/types"
+	sdkWallet "github.com/spacemeshos/go-spacemesh/genvm/sdk/wallet"
+	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
+	"github.com/spacemeshos/go-spacemesh/signing"
 
 	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
 	"github.com/spacemeshos/explorer-backend/utils"
@@ -166,7 +167,7 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 					Total:         &pb.Amount{Value: reward.Total},
 					LayerReward:   &pb.Amount{Value: reward.LayerReward},
 					Coinbase:      &pb.AccountId{Address: reward.Coinbase},
-					Smesher:       &pb.SmesherId{Id: mustParse(reward.Smesher)},
+					Smesher:       &pb.SmesherId{Id: addressToBytes(reward.Smesher)},
 				},
 			}}}
 			if err := stream.Send(resp); err != nil {
@@ -231,7 +232,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 				atx = append(atx, &pb.Activation{
 					Id:        &pb.ActivationId{Id: mustParse(atxGenerated.Id)},
 					Layer:     &pb.LayerNumber{Number: atxGenerated.Layer},
-					SmesherId: &pb.SmesherId{Id: mustParse(atxGenerated.SmesherId)},
+					SmesherId: &pb.SmesherId{Id: addressToBytes(atxGenerated.SmesherId)},
 					Coinbase:  &pb.AccountId{Address: atxGenerated.Coinbase},
 					PrevAtx:   &pb.ActivationId{Id: mustParse(atxGenerated.PrevAtx)},
 					NumUnits:  atxGenerated.NumUnits,
@@ -270,7 +271,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 					Id:           mustParse(blockContainer.Block.Id),
 					Transactions: tx,
 					SmesherId: &pb.SmesherId{
-						Id: mustParse(blockContainer.SmesherID),
+						Id: addressToBytes(blockContainer.SmesherID),
 					},
 				})
 			}
@@ -325,4 +326,12 @@ func mustParse(str string) []byte {
 		panic("error while parse string to bytes: " + err.Error())
 	}
 	return res
+}
+
+func addressToBytes(addr string) []byte {
+	res, err := types.StringToAddress(addr)
+	if err != nil {
+		panic("error while parse string to address: " + err.Error())
+	}
+	return res.Bytes()
 }

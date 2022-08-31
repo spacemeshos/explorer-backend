@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 
+	"github.com/spacemeshos/address"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 
 	"github.com/spacemeshos/explorer-backend/utils"
@@ -24,10 +25,14 @@ type ActivationService interface {
 }
 
 func NewActivation(atx *pb.Activation, timestamp uint32) *Activation {
+	// todo addr cast to string will panic if wrong data in bytes slice.
+	// add method validate to address package to check if bytes slice is valid.
+	addr := address.GenerateAddress(atx.GetSmesherId().GetId())
+
 	return &Activation{
 		Id:        utils.BytesToHex(atx.GetId().GetId()),
 		Layer:     atx.GetLayer().GetNumber(),
-		SmesherId: utils.BytesToHex(atx.GetSmesherId().GetId()),
+		SmesherId: addr.String(),
 		Coinbase:  atx.GetCoinbase().GetAddress(),
 		PrevAtx:   utils.BytesToHex(atx.GetPrevAtx().GetId()),
 		NumUnits:  atx.GetNumUnits(),
