@@ -10,8 +10,11 @@ import (
 
 	"github.com/spacemeshos/address"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/go-spacemesh/signing"
 
 	"github.com/spacemeshos/explorer-backend/model"
+	"github.com/spacemeshos/explorer-backend/pkg/transactionparser/transaction"
+	v0 "github.com/spacemeshos/explorer-backend/pkg/transactionparser/v0"
 	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/utils"
 )
@@ -169,10 +172,11 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 	seedEpoch.Layers = append(seedEpoch.Layers, layerContainer)
 
 	for k := 0; k <= rand.Intn(3); k++ {
-		tmpAcc := s.generateAccount(tmpLayer.Number)
+		tmpAcc, tmpAccSigner := s.generateAccount(tmpLayer.Number)
 		s.Accounts[strings.ToLower(tmpAcc.Address)] = AccountContainer{
 			layerID:      uint32(layerID),
 			Account:      tmpAcc,
+			Signer:       tmpAccSigner,
 			Transactions: map[string]*model.Transaction{},
 			Rewards:      map[string]*model.Reward{},
 		}
@@ -194,7 +198,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 		for i := 0; i < rand.Intn(3); i++ {
 			from := tmpAcc.Address
 			to := s.getRandomAcc()
-			tmpTx := generateTransaction(i, &tmpLayer, from, to, &tmpBl)
+			tmpTx := generateTransaction(i, &tmpLayer, tmpAccSigner, from, to, &tmpBl)
 
 			seedEpoch.Epoch.Stats.Current.Transactions++
 			seedEpoch.Epoch.Stats.Current.TxsAmount += int64(tmpTx.Amount)
@@ -321,7 +325,7 @@ func (s *SeedGenerator) generateLayer(layerNum, epochNum int32) model.Layer {
 	}
 }
 
-func generateTransaction(index int, layer *model.Layer, sender, receiver string, block *model.Block) model.Transaction {
+func generateTransaction(index int, layer *model.Layer, senderSigner *signing.EdSigner, sender, receiver string, block *model.Block) model.Transaction {
 	return model.Transaction{
 		Id:          strings.ToLower(utils.BytesToHex(randomBytes(32))),
 		Layer:       layer.Number,
@@ -337,9 +341,9 @@ func generateTransaction(index int, layer *model.Layer, sender, receiver string,
 		Amount:      uint64(rand.Intn(1000)),
 		Counter:     uint64(rand.Intn(1000)),
 		Type:        0,
-		Scheme:      0,
+		Scheme:      transaction.TypeSpend,
 		Signature:   strings.ToLower(utils.BytesToHex(randomBytes(30))),
-		PublicKey:   strings.ToLower(utils.BytesToHex(randomBytes(32))),
+		PublicKey:   senderSigner.PublicKey().String(),
 		Sender:      sender,
 		Receiver:    receiver,
 		SvmData:     "",
@@ -384,14 +388,19 @@ func (s *SeedGenerator) generateBlocks(layerNum, epochNum int32) model.Block {
 	}
 }
 
-func (s *SeedGenerator) generateAccount(layerNum uint32) model.Account {
+func (s *SeedGenerator) generateAccount(layerNum uint32) (model.Account, *signing.EdSigner) {
+	var key [32]byte
+	signer := signing.NewEdSigner()
+	copy(key[:], signer.PublicKey().Bytes())
 	return model.Account{
-		Address:  address.GenerateAddress(randomBytes(20)).String(),
+		Address: v0.ComputePrincipal(v0.TemplateAddress, &v0.SpawnArguments{
+			PublicKey: key,
+		}).String(),
 		Balance:  0,
 		Counter:  0,
 		Created:  uint64(layerNum),
 		LayerTms: int32(s.seed.GenesisTime),
-	}
+	}, signer
 }
 
 func randomBytes(size int) []byte {

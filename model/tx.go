@@ -97,12 +97,6 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp 
 	}
 	tx.PublicKey = strings.Join(keys, ",")
 
-	//if data := in.GetCoinTransfer(); data != nil {
-	//} else if data := in.GetSmartContract(); data != nil {
-	//	tx.Type = int(data.GetType())
-	//	tx.SvmData = utils.BytesToHex(data.GetData())
-	//}
-
 	return tx, nil
 }
 

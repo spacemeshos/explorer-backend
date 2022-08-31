@@ -10,17 +10,16 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/phayes/freeport"
+	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/go-spacemesh/common/types"
+	"github.com/spacemeshos/go-spacemesh/genvm/sdk"
+	sdkWallet "github.com/spacemeshos/go-spacemesh/genvm/sdk/wallet"
+	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-	"github.com/spacemeshos/go-spacemesh/common/types"
-	sdkWallet "github.com/spacemeshos/go-spacemesh/genvm/sdk/wallet"
-	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
-	"github.com/spacemeshos/go-spacemesh/signing"
 
 	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
 	"github.com/spacemeshos/explorer-backend/utils"
@@ -58,7 +57,7 @@ type nodeServiceWrapper struct {
 	pb.UnimplementedNodeServiceServer
 }
 
-// FakeNode simulate a spacemesh node.
+// FakeNode simulate spacemesh node.
 type FakeNode struct {
 	seedGen        *testseed.SeedGenerator
 	NodePort       int
@@ -246,7 +245,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 					if err != nil {
 						panic("invalid receiver address: " + err.Error())
 					}
-					signer := signing.NewEdSigner()
+					signer := m.seedGen.Accounts[strings.ToLower(txContainer.Sender)].Signer
 					tx = append(tx, &pb.Transaction{
 						Id:     mustParse(txContainer.Id),
 						Method: methodSend,
@@ -264,7 +263,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce{
 							Counter:  txContainer.Counter,
 							Bitfield: uint8(1),
-						}),
+						}, sdk.WithGasPrice(txContainer.GasPrice)),
 					})
 				}
 				blocksRes = append(blocksRes, &pb.Block{

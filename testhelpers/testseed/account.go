@@ -3,6 +3,8 @@ package testseed
 import (
 	"strings"
 
+	"github.com/spacemeshos/go-spacemesh/signing"
+
 	"github.com/spacemeshos/explorer-backend/model"
 )
 
@@ -10,6 +12,7 @@ import (
 type AccountContainer struct {
 	layerID      uint32
 	Account      model.Account
+	Signer       *signing.EdSigner
 	Transactions map[string]*model.Transaction
 	Rewards      map[string]*model.Reward
 }

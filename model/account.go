@@ -47,7 +47,7 @@ func NewAccount(in *pb.Account) *Account {
 
 // ToCheckedAddress Hex returns an EIP55-compliant hex string representation of the address.
 // deprecated, should be removed with new routing.
-// Deprecated
+// Deprecated.
 func ToCheckedAddress(a string) string {
 	addr, err := address.StringToAddress(a)
 	if err != nil {

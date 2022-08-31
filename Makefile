@@ -56,6 +56,9 @@ test_collector:
 test_api:
 	go test ./tests/api/...
 
+test_pkg:
+	go test ./pkg/...
+
 stop:
 	@echo "-- stop containers";
 	docker container ls -f "name=sm_*" ; true

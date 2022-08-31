@@ -29,6 +29,9 @@ func TestTransactions(t *testing.T) {
 		tmpTx.Sender = strings.ToLower(tmpTx.Sender)
 		generatedTx.Receiver = strings.ToLower(generatedTx.Receiver)
 		generatedTx.Sender = strings.ToLower(generatedTx.Sender)
+		generatedTx.PublicKey = "" // we do not encode it to send tx, omit this.
+		generatedTx.Signature = "" // we generate sign on emulation of pb stream.
+		tmpTx.Signature = ""       // we generate sign on emulation of pb stream.
 		require.Equal(t, *generatedTx, tmpTx)
 	}
 }
