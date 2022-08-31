@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-	"strings"
 
+	"github.com/spacemeshos/address"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -13,12 +13,12 @@ import (
 
 // GetAccount returns account by id.
 func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Account, error) {
-	idStr := model.ToCheckedAddress(strings.ToLower(accountID))
-	if idStr == "" {
+	addr, err := address.StringToAddress(accountID)
+	if err != nil {
 		return nil, ErrNotFound
 	}
 
-	filter := &bson.D{{"address", idStr}}
+	filter := &bson.D{{"address", addr.String()}}
 	accs, total, err := e.getAccounts(ctx, filter, options.Find().SetSort(bson.D{{"address", 1}}).SetLimit(1).SetProjection(bson.D{
 		{"_id", 0},
 		{"layer", 0},
@@ -73,15 +73,15 @@ func (e *Service) GetAccounts(ctx context.Context, page, perPage int64) ([]*mode
 
 // GetAccountTransactions returns transactions by account id.
 func (e *Service) GetAccountTransactions(ctx context.Context, accountID string, page, perPage int64) ([]*model.Transaction, int64, error) {
-	idStr := model.ToCheckedAddress(strings.ToLower(accountID))
-	if idStr == "" {
+	addr, err := address.StringToAddress(accountID)
+	if err != nil {
 		return nil, 0, ErrNotFound
 	}
 
 	filter := &bson.D{
 		{"$or", bson.A{
-			bson.D{{"sender", idStr}},
-			bson.D{{"receiver", idStr}},
+			bson.D{{"sender", addr.String()}},
+			bson.D{{"receiver", addr.String()}},
 		}},
 	}
 	return e.getTransactions(ctx, filter, e.getFindOptions("counter", page, perPage))
@@ -89,11 +89,11 @@ func (e *Service) GetAccountTransactions(ctx context.Context, accountID string, 
 
 // GetAccountRewards returns rewards by account id.
 func (e *Service) GetAccountRewards(ctx context.Context, accountID string, page, perPage int64) ([]*model.Reward, int64, error) {
-	idStr := model.ToCheckedAddress(strings.ToLower(accountID))
-	if idStr == "" {
+	addr, err := address.StringToAddress(accountID)
+	if err != nil {
 		return nil, 0, ErrNotFound
 	}
-	return e.getRewards(ctx, &bson.D{{"coinbase", idStr}}, e.getFindOptions("coinbase", page, perPage))
+	return e.getRewards(ctx, &bson.D{{"coinbase", addr.String()}}, e.getFindOptions("coinbase", page, perPage))
 }
 
 func (e *Service) getAccounts(ctx context.Context, filter *bson.D, options *options.FindOptions) (accs []*model.Account, total int64, err error) {

@@ -11,6 +11,10 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/phayes/freeport"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/go-spacemesh/common/types"
+	sdkWallet "github.com/spacemeshos/go-spacemesh/genvm/sdk/wallet"
+	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
+	"github.com/spacemeshos/go-spacemesh/signing"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
@@ -19,6 +23,10 @@ import (
 
 	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
 	"github.com/spacemeshos/explorer-backend/utils"
+)
+
+const (
+	methodSend = 1
 )
 
 type meshServiceWrapper struct {
@@ -127,7 +135,7 @@ func (d *debugServiceWrapper) Accounts(context.Context, *empty.Empty) (*pb.Accou
 	accs := make([]*pb.Account, 0, len(d.seedGen.Accounts))
 	for _, acc := range d.seedGen.Accounts {
 		accs = append(accs, &pb.Account{
-			AccountId: &pb.AccountId{Address: mustParse(acc.Account.Address)},
+			AccountId: &pb.AccountId{Address: acc.Account.Address},
 			StateProjected: &pb.AccountState{
 				Balance: &pb.Amount{Value: acc.Account.Balance},
 				Counter: acc.Account.Counter,
@@ -157,7 +165,7 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 					Layer:         &pb.LayerNumber{Number: reward.Layer},
 					Total:         &pb.Amount{Value: reward.Total},
 					LayerReward:   &pb.Amount{Value: reward.LayerReward},
-					Coinbase:      &pb.AccountId{Address: mustParse(reward.Coinbase)},
+					Coinbase:      &pb.AccountId{Address: reward.Coinbase},
 					Smesher:       &pb.SmesherId{Id: mustParse(reward.Smesher)},
 				},
 			}}}
@@ -179,15 +187,14 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 }
 
 func (g *globalStateServiceWrapper) Account(_ context.Context, req *pb.AccountRequest) (*pb.AccountResponse, error) {
-	accAddr := utils.BytesToAddressString(req.AccountId.Address)
-	acc, ok := g.seedGen.Accounts[strings.ToLower(accAddr)]
+	acc, ok := g.seedGen.Accounts[strings.ToLower(req.AccountId.Address)]
 	if !ok {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
 	return &pb.AccountResponse{
 		AccountWrapper: &pb.Account{
 			AccountId: &pb.AccountId{
-				Address: mustParse(accAddr),
+				Address: req.AccountId.Address,
 			},
 			StateCurrent: &pb.AccountState{
 				Balance: &pb.Amount{Value: acc.Account.Balance},
@@ -225,7 +232,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 					Id:        &pb.ActivationId{Id: mustParse(atxGenerated.Id)},
 					Layer:     &pb.LayerNumber{Number: atxGenerated.Layer},
 					SmesherId: &pb.SmesherId{Id: mustParse(atxGenerated.SmesherId)},
-					Coinbase:  &pb.AccountId{Address: mustParse(atxGenerated.Coinbase)},
+					Coinbase:  &pb.AccountId{Address: atxGenerated.Coinbase},
 					PrevAtx:   &pb.ActivationId{Id: mustParse(atxGenerated.PrevAtx)},
 					NumUnits:  atxGenerated.NumUnits,
 				})
@@ -234,28 +241,29 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 			for _, blockContainer := range layerContainer.Blocks {
 				tx := make([]*pb.Transaction, 0, len(blockContainer.Transactions))
 				for _, txContainer := range blockContainer.Transactions {
+					receiver, err := types.StringToAddress(txContainer.Receiver)
+					if err != nil {
+						panic("invalid receiver address: " + err.Error())
+					}
+					signer := signing.NewEdSigner()
 					tx = append(tx, &pb.Transaction{
-						Id: &pb.TransactionId{Id: mustParse(txContainer.Id)},
-						Datum: &pb.Transaction_CoinTransfer{
-							CoinTransfer: &pb.CoinTransferTransaction{
-								Receiver: &pb.AccountId{
-									Address: mustParse(txContainer.Receiver),
-								},
-							},
+						Id:     mustParse(txContainer.Id),
+						Method: methodSend,
+						Principal: &pb.AccountId{
+							Address: txContainer.Sender,
 						},
-						Sender: &pb.AccountId{
-							Address: mustParse(txContainer.Sender),
+						GasPrice: txContainer.GasPrice,
+						MaxGas:   txContainer.GasProvided,
+						Nonce: &pb.Nonce{
+							Counter: txContainer.Counter,
 						},
-						GasOffered: &pb.GasOffered{
-							GasPrice:    txContainer.GasPrice,
-							GasProvided: txContainer.GasProvided,
+						Template: &pb.AccountId{
+							Address: wallet.TemplateAddress.String(),
 						},
-						Amount:  &pb.Amount{Value: txContainer.Amount},
-						Counter: txContainer.Counter,
-						Signature: &pb.Signature{
-							Signature: mustParse(txContainer.Signature),
-							PublicKey: mustParse(txContainer.PublicKey),
-						},
+						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce{
+							Counter:  txContainer.Counter,
+							Bitfield: uint8(1),
+						}),
 					})
 				}
 				blocksRes = append(blocksRes, &pb.Block{
