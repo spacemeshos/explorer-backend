@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/websocket/v2"
 	"github.com/spacemeshos/go-spacemesh/log"
 
 	logger "github.com/spacemeshos/explorer-backend/internal/router/middleware"
@@ -80,6 +81,7 @@ func (a *AppRouter) initRoutes() {
 	a.FiberApp.Get("/synced", a.synced)
 
 	a.FiberApp.Get("/network-info", a.networkInfo)
+	a.FiberApp.Get("/ws/network-info", websocket.New(a.networkInfoWS))
 
 	a.FiberApp.Get("/epochs", a.epochs)
 	a.FiberApp.Get("/epochs/:id", a.epoch)

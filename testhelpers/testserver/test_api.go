@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/websocket"
 
 	"github.com/spacemeshos/explorer-backend/api"
 	"github.com/spacemeshos/explorer-backend/internal/router"
@@ -94,4 +96,30 @@ func (tx *TestAPIService) Get(t *testing.T, path string) *testutils.TestResponse
 		require.NoError(t, res.Body.Close())
 	})
 	return &testutils.TestResponse{Res: res}
+}
+
+// GetReadWS allow to execute WS read-only request to the fake server.
+func (tx *TestAPIService) GetReadWS(t *testing.T, path string) <-chan []byte {
+	t.Helper()
+
+	path = strings.TrimLeft(path, "/")
+	origin := fmt.Sprintf("http://localhost:%d", tx.port)
+	conn, err := websocket.Dial(fmt.Sprintf("ws://localhost:%d/%s", tx.port, path), "", origin)
+	if err != nil {
+		t.Fatal("can't connect to websocket:", err)
+	}
+	result := make(chan []byte, 10)
+	go func() {
+		defer conn.Close()
+		for {
+			data := make([]byte, 1024)
+			readLen, err := conn.Read(data)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			result <- data[:readLen]
+		}
+	}()
+	return result
 }
