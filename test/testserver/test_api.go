@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/test/testutils"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/spacemeshos/explorer-backend/api"
 	"github.com/spacemeshos/explorer-backend/storage"
-	"github.com/spacemeshos/explorer-backend/testhelpers/testutils"
 )
 
 const (

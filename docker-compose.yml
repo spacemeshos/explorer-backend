@@ -1,13 +1,8 @@
 version: '3'
 
-volumes:
-  data_mg_volume:
-
 services:
   dbMongo:
-    image: mongo:5.0.10
+    image: mongo:5
     container_name: sm_explorer_db
     ports:
       - "27017-27019:27017-27019"
-    volumes:
-      - data_mg_volume:/data/db
