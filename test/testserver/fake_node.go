@@ -3,6 +3,7 @@ package testserver
 import (
 	"context"
 	"fmt"
+	testseed2 "github.com/spacemeshos/explorer-backend/test/testseed"
 	"math/rand"
 	"net"
 	"strings"
@@ -17,41 +18,40 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/spacemeshos/explorer-backend/testhelpers/testseed"
 	"github.com/spacemeshos/explorer-backend/utils"
 )
 
 type meshServiceWrapper struct {
 	startTime time.Time
-	seed      *testseed.TestServerSeed
-	seedGen   *testseed.SeedGenerator
+	seed      *testseed2.TestServerSeed
+	seedGen   *testseed2.SeedGenerator
 	pb.UnimplementedMeshServiceServer
 }
 
 type debugServiceWrapper struct {
-	seedGen *testseed.SeedGenerator
+	seedGen *testseed2.SeedGenerator
 	pb.UnimplementedDebugServiceServer
 }
 
 type smesherServiceWrapper struct {
-	seedGen *testseed.SeedGenerator
-	seed    *testseed.TestServerSeed
+	seedGen *testseed2.SeedGenerator
+	seed    *testseed2.TestServerSeed
 	pb.UnimplementedSmesherServiceServer
 }
 
 type globalStateServiceWrapper struct {
-	seedGen *testseed.SeedGenerator
+	seedGen *testseed2.SeedGenerator
 	pb.UnimplementedGlobalStateServiceServer
 }
 
 type nodeServiceWrapper struct {
-	seedGen *testseed.SeedGenerator
+	seedGen *testseed2.SeedGenerator
 	pb.UnimplementedNodeServiceServer
 }
 
 // FakeNode simulate a spacemesh node.
 type FakeNode struct {
-	seedGen        *testseed.SeedGenerator
+	seedGen        *testseed2.SeedGenerator
 	NodePort       int
 	InitDone       chan struct{}
 	server         *grpc.Server
@@ -65,7 +65,7 @@ type FakeNode struct {
 var stateSynced = make(chan struct{})
 
 // CreateFakeSMNode create a fake spacemesh node.
-func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seedConf *testseed.TestServerSeed) (*FakeNode, error) {
+func CreateFakeSMNode(startTime time.Time, seedGen *testseed2.SeedGenerator, seedConf *testseed2.TestServerSeed) (*FakeNode, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get free port: %v", err)

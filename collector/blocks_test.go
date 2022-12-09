@@ -1,4 +1,4 @@
-package collector
+package collector_test
 
 import (
 	"context"
