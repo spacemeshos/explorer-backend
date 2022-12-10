@@ -22,59 +22,68 @@ PKGS = $(shell go list ./...)
 PLATFORMS := windows linux darwin
 os = $(word 1, $@)
 
-all:
 .PHONY: all
+all:
 
+.PHONY: apiserver
 apiserver:
 ifeq ($(OS),Windows_NT)
 	cd cmd/apiserver ; go build -o $(BIN_DIR_WIN)/apiserver.exe; cd ..
 else
 	cd cmd/apiserver ; go build -o $(BIN_DIR)/apiserver; cd ..
 endif
-.PHONY: apiserver
 
+
+.PHONY: collector
 collector:
 ifeq ($(OS),Windows_NT)
 	cd cmd/collector ; go build -o $(BIN_DIR_WIN)/collector.exe; cd ..
 else
 	cd cmd/collector ; go build -o $(BIN_DIR)/collector; cd ..
 endif
-.PHONY: collector
 
+.PHONY: lint-ci
 lint-ci:
 	golangci-lint run --new-from-rev=origin/master --config .golangci.yml
 
+.PHONY: lint
 lint:
 	golangci-lint run --new-from-rev=master --config .golangci.yml
 
+.PHONY: lint-fix
 lint-fix:
 	golangci-lint run --new-from-rev=master --config .golangci.yml --fix
 
+.PHONY: test_collector
 test_collector:
-	go test ./tests/collector/...
+	go test ./collector/...
 
+.PHONY: test_api
 test_api:
-	go test ./tests/api/...
+	go test ./api/...
 
+.PHONY: test_pkg
 test_pkg:
 	go test ./pkg/...
 
-stop:
-	@echo "-- stop containers";
-	docker container ls -f "name=sm_*" ; true
-	@echo "-- drop containers"
-	docker rm -f -v $(shell docker container ls -f "name=sm_*" -q) ; true
+.PHONY: test
+test: vet lint test_api test_collector test_pkg
 
-dev_up: stop ## start local environment
+.PHONY: vet
+vet:
+	go vet ./...
+
+.PHONY: dev_up
+dev_up: ## start local environment
 	@echo "RUN dev docker-compose.yml "
 	docker compose pull
 	docker compose up --build
 
-ci_up: stop ## start ci environment
+.PHONY: ci_up
+ci_up: ## start ci environment
 	@echo "RUN ci docker-compose.yml "
 	docker compose up --build -d
 
+.PHONY: gogen
 gogen: ## generate scalegen
 	go generate ./...
-
-.PHONY: ci_up, dev_up, stop, test_api, test_collector, lint, lint-fix, lint-ci
