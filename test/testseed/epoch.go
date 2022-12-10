@@ -12,6 +12,7 @@ type TestServerSeed struct {
 	EpochNumLayers          uint64
 	LayersDuration          uint64
 	MaxTransactionPerSecond uint64
+	GenesisTime             uint64
 
 	BitsPerLabel  uint32
 	LabelsPerUnit uint64
@@ -27,6 +28,7 @@ func (t *TestServerSeed) GetPostUnitsSize() uint64 {
 // GetServerSeed generate test network config.
 func GetServerSeed() *TestServerSeed {
 	return &TestServerSeed{
+		GenesisTime:             1234567,
 		NetID:                   123,
 		EpochNumLayers:          10,
 		LayersDuration:          10,

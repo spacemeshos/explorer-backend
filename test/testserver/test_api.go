@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/spacemeshos/explorer-backend/test/testutils"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,7 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/spacemeshos/explorer-backend/api"
+	"github.com/spacemeshos/explorer-backend/internal/router"
+	service2 "github.com/spacemeshos/explorer-backend/internal/service"
+	"github.com/spacemeshos/explorer-backend/internal/storage/storagereader"
 	"github.com/spacemeshos/explorer-backend/storage"
+	"github.com/spacemeshos/explorer-backend/test/testutils"
 )
 
 const (
@@ -29,7 +32,7 @@ type TestAPIService struct {
 }
 
 // StartTestAPIService start test api service.
-func StartTestAPIService(dbPort int) (*TestAPIService, error) {
+func StartTestAPIService(dbPort int, db *storage.Storage) (*TestAPIService, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get free port: %s", err)
@@ -45,8 +48,28 @@ func StartTestAPIService(dbPort int) (*TestAPIService, error) {
 	}
 	go server.Run()
 	return &TestAPIService{
-		server: server,
-		port:   appPort,
+		server:  server,
+		port:    appPort,
+		Storage: db,
+	}, nil
+}
+
+// StartTestAPIServiceV2 start test api service with refacored router.
+func StartTestAPIServiceV2(db *storage.Storage, dbReader *storagereader.Reader) (*TestAPIService, error) {
+	appPort, err := freeport.GetFreePort()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get free port: %s", err)
+	}
+	println("starting test api service on port", appPort)
+
+	appV2 := router.InitAppRouter(&router.Config{
+		ListenOn: fmt.Sprintf(":%d", appPort),
+	}, service2.NewService(dbReader, time.Second))
+	go appV2.Run()
+
+	return &TestAPIService{
+		Storage: db,
+		port:    appPort,
 	}, nil
 }
 

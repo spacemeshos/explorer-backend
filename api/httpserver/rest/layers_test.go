@@ -71,6 +71,7 @@ func TestLayerSmeshers(t *testing.T) { // /layers/{id:[0-9]+}/smeshers
 			for _, smesher := range loopResp.Data {
 				generatedSmesher, ok := epoch.Smeshers[strings.ToLower(smesher.Id)]
 				require.True(t, ok)
+				smesher.Rewards = generatedSmesher.Rewards // this not calculated on list endpoints, simply set as 0.
 				require.Equal(t, *generatedSmesher, smesher)
 			}
 		}
