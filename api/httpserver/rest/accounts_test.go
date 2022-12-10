@@ -17,6 +17,9 @@ func TestAccounts(t *testing.T) { // accounts
 	for _, acc := range resp.Data {
 		accGenerated, ok := generator.Accounts[strings.ToLower(acc.Address)]
 		require.True(t, ok)
+		// this not calculated on list endpoints
+		acc.LayerTms = accGenerated.Account.LayerTms
+		acc.Txs = accGenerated.Account.Txs
 		require.Equal(t, accGenerated.Account, acc)
 	}
 }

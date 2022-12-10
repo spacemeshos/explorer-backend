@@ -3,8 +3,7 @@ package collector_test
 import (
 	"context"
 	"fmt"
-	testseed2 "github.com/spacemeshos/explorer-backend/test/testseed"
-	"github.com/spacemeshos/explorer-backend/test/testserver"
+	"github.com/spacemeshos/explorer-backend/collector"
 	"os"
 	"testing"
 	"time"
@@ -13,15 +12,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/spacemeshos/explorer-backend/collector"
 	"github.com/spacemeshos/explorer-backend/storage"
+	"github.com/spacemeshos/explorer-backend/test/testseed"
+	"github.com/spacemeshos/explorer-backend/test/testserver"
 )
 
 const testAPIServiceDB = "explorer_test"
 
 var (
 	dbPort       = 27017
-	generator    *testseed2.SeedGenerator
+	generator    *testseed.SeedGenerator
 	node         *testserver.FakeNode
 	collectorApp *collector.Collector
 	storageDB    *storage.Storage
@@ -49,8 +49,8 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	seed := testseed2.GetServerSeed()
-	generator = testseed2.NewSeedGenerator(seed)
+	seed := testseed.GetServerSeed()
+	generator = testseed.NewSeedGenerator(seed)
 	if err = generator.GenerateEpoches(10); err != nil {
 		fmt.Println("failed to generate epochs", err)
 		os.Exit(1)

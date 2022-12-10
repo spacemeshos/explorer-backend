@@ -1,24 +1,19 @@
 package model
 
 import (
-    "context"
-
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"context"
 )
 
 type Block struct {
-    Id		string
-    Layer	uint32
-    Epoch	uint32
-    Start	uint32
-    End		uint32
-    TxsNumber	uint32
-    TxsValue	uint64
+	Id        string `json:"id" bson:"id"` // nolint will fix it later
+	Layer     uint32 `json:"layer" bson:"layer"`
+	Epoch     uint32 `json:"epoch" bson:"epoch"`
+	Start     uint32 `json:"start" bson:"start"`
+	End       uint32 `json:"end" bson:"end"`
+	TxsNumber uint32 `json:"txsnumber" bson:"txsnumber"`
+	TxsValue  uint64 `json:"txsvalue" bson:"txsvalue"`
 }
 
 type BlockService interface {
-    GetBlock(ctx context.Context, query *bson.D) (*Block, error)
-    GetBlocks(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Block, error)
-    SaveBlock(ctx context.Context, in *Block) error
+	GetBlock(ctx context.Context, blockID string) (*Block, error)
 }
