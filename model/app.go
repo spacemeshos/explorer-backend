@@ -1,18 +1,14 @@
 package model
 
 import (
-    "context"
-
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"context"
 )
 
 type App struct {
-    Address	string
+	Address string `json:"address" bson:"address"`
 }
 
 type AppService interface {
-    GetAccount(ctx context.Context, query *bson.D) (*App, error)
-    GetApps(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*App, error)
-    SaveApp(ctx context.Context, in *App) error
+	GetApps(ctx context.Context, pageNum, pageSize int64) (apps []*App, total int64, err error)
+	GetApp(ctx context.Context, appID string) (*App, error)
 }

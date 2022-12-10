@@ -1,39 +1,38 @@
 package model
 
 import (
-    "context"
+	"context"
 
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo/options"
-    pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-    "github.com/spacemeshos/explorer-backend/utils"
+	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+
+	"github.com/spacemeshos/explorer-backend/utils"
 )
 
 type Reward struct {
-    Layer		uint32
-    Total		uint64
-    LayerReward		uint64
-    LayerComputed	uint32	// layer number of the layer when reward was computed
-    // tx_fee = total - layer_reward
-    Coinbase		string	// account awarded this reward
-    Smesher		string	// it will be nice to always have this in reward events
-    Space		uint64
-    Timestamp		uint32
+	ID            string `json:"_id" bson:"_id"`
+	Layer         uint32 `json:"layer" bson:"layer"`
+	Total         uint64 `json:"total" bson:"total"`
+	LayerReward   uint64 `json:"layerReward" bson:"layerReward"`
+	LayerComputed uint32 `json:"layerComputed" bson:"layerComputed"` // layer number of the layer when reward was computed
+	// tx_fee = total - layer_reward
+	Coinbase  string `json:"coinbase" bson:"coinbase"` // account awarded this reward
+	Smesher   string `json:"smesher" bson:"smesher"`   // it will be nice to always have this in reward events
+	Space     uint64 `json:"space" bson:"space"`
+	Timestamp uint32 `json:"timestamp" bson:"timestamp"`
 }
 
 type RewardService interface {
-    GetReward(ctx context.Context, query *bson.D) (*Reward, error)
-    GetRewards(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*Reward, error)
-    SaveReward(ctx context.Context, in *Reward) error
+	GetReward(ctx context.Context, rewardID string) (*Reward, error)
+	GetRewards(ctx context.Context, page, perPage int64) ([]*Reward, int64, error)
 }
 
 func NewReward(reward *pb.Reward) *Reward {
-    return &Reward{
-        Layer: reward.GetLayer().GetNumber(),
-        Total: reward.GetTotal().GetValue(),
-        LayerReward: reward.GetLayerReward().GetValue(),
-        LayerComputed: reward.GetLayerComputed().GetNumber(),
-        Coinbase: utils.BytesToAddressString(reward.GetCoinbase().GetAddress()),
-        Smesher: utils.BytesToHex(reward.GetSmesher().GetId()),
-    }
+	return &Reward{
+		Layer:         reward.GetLayer().GetNumber(),
+		Total:         reward.GetTotal().GetValue(),
+		LayerReward:   reward.GetLayerReward().GetValue(),
+		LayerComputed: reward.GetLayerComputed().GetNumber(),
+		Coinbase:      reward.GetCoinbase().GetAddress(),
+		Smesher:       utils.BytesToHex(reward.GetSmesher().GetId()),
+	}
 }

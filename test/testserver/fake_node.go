@@ -3,7 +3,6 @@ package testserver
 import (
 	"context"
 	"fmt"
-	testseed2 "github.com/spacemeshos/explorer-backend/test/testseed"
 	"math/rand"
 	"net"
 	"strings"
@@ -12,46 +11,55 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/phayes/freeport"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"github.com/spacemeshos/go-spacemesh/common/types"
+	"github.com/spacemeshos/go-spacemesh/genvm/sdk"
+	sdkWallet "github.com/spacemeshos/go-spacemesh/genvm/sdk/wallet"
+	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/spacemeshos/explorer-backend/test/testseed"
 	"github.com/spacemeshos/explorer-backend/utils"
+)
+
+const (
+	methodSend = 1
 )
 
 type meshServiceWrapper struct {
 	startTime time.Time
-	seed      *testseed2.TestServerSeed
-	seedGen   *testseed2.SeedGenerator
+	seed      *testseed.TestServerSeed
+	seedGen   *testseed.SeedGenerator
 	pb.UnimplementedMeshServiceServer
 }
 
 type debugServiceWrapper struct {
-	seedGen *testseed2.SeedGenerator
+	seedGen *testseed.SeedGenerator
 	pb.UnimplementedDebugServiceServer
 }
 
 type smesherServiceWrapper struct {
-	seedGen *testseed2.SeedGenerator
-	seed    *testseed2.TestServerSeed
+	seedGen *testseed.SeedGenerator
+	seed    *testseed.TestServerSeed
 	pb.UnimplementedSmesherServiceServer
 }
 
 type globalStateServiceWrapper struct {
-	seedGen *testseed2.SeedGenerator
+	seedGen *testseed.SeedGenerator
 	pb.UnimplementedGlobalStateServiceServer
 }
 
 type nodeServiceWrapper struct {
-	seedGen *testseed2.SeedGenerator
+	seedGen *testseed.SeedGenerator
 	pb.UnimplementedNodeServiceServer
 }
 
-// FakeNode simulate a spacemesh node.
+// FakeNode simulate spacemesh node.
 type FakeNode struct {
-	seedGen        *testseed2.SeedGenerator
+	seedGen        *testseed.SeedGenerator
 	NodePort       int
 	InitDone       chan struct{}
 	server         *grpc.Server
@@ -65,7 +73,7 @@ type FakeNode struct {
 var stateSynced = make(chan struct{})
 
 // CreateFakeSMNode create a fake spacemesh node.
-func CreateFakeSMNode(startTime time.Time, seedGen *testseed2.SeedGenerator, seedConf *testseed2.TestServerSeed) (*FakeNode, error) {
+func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seedConf *testseed.TestServerSeed) (*FakeNode, error) {
 	appPort, err := freeport.GetFreePort()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get free port: %v", err)
@@ -127,7 +135,7 @@ func (d *debugServiceWrapper) Accounts(context.Context, *empty.Empty) (*pb.Accou
 	accs := make([]*pb.Account, 0, len(d.seedGen.Accounts))
 	for _, acc := range d.seedGen.Accounts {
 		accs = append(accs, &pb.Account{
-			AccountId: &pb.AccountId{Address: mustParse(acc.Account.Address)},
+			AccountId: &pb.AccountId{Address: acc.Account.Address},
 			StateProjected: &pb.AccountState{
 				Balance: &pb.Amount{Value: acc.Account.Balance},
 				Counter: acc.Account.Counter,
@@ -157,8 +165,8 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 					Layer:         &pb.LayerNumber{Number: reward.Layer},
 					Total:         &pb.Amount{Value: reward.Total},
 					LayerReward:   &pb.Amount{Value: reward.LayerReward},
-					Coinbase:      &pb.AccountId{Address: mustParse(reward.Coinbase)},
-					Smesher:       &pb.SmesherId{Id: mustParse(reward.Smesher)},
+					Coinbase:      &pb.AccountId{Address: reward.Coinbase},
+					Smesher:       &pb.SmesherId{Id: addressToBytes(reward.Smesher)},
 				},
 			}}}
 			if err := stream.Send(resp); err != nil {
@@ -179,15 +187,14 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 }
 
 func (g *globalStateServiceWrapper) Account(_ context.Context, req *pb.AccountRequest) (*pb.AccountResponse, error) {
-	accAddr := utils.BytesToAddressString(req.AccountId.Address)
-	acc, ok := g.seedGen.Accounts[strings.ToLower(accAddr)]
+	acc, ok := g.seedGen.Accounts[strings.ToLower(req.AccountId.Address)]
 	if !ok {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
 	return &pb.AccountResponse{
 		AccountWrapper: &pb.Account{
 			AccountId: &pb.AccountId{
-				Address: mustParse(accAddr),
+				Address: req.AccountId.Address,
 			},
 			StateCurrent: &pb.AccountState{
 				Balance: &pb.Amount{Value: acc.Account.Balance},
@@ -224,8 +231,8 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 				atx = append(atx, &pb.Activation{
 					Id:        &pb.ActivationId{Id: mustParse(atxGenerated.Id)},
 					Layer:     &pb.LayerNumber{Number: atxGenerated.Layer},
-					SmesherId: &pb.SmesherId{Id: mustParse(atxGenerated.SmesherId)},
-					Coinbase:  &pb.AccountId{Address: mustParse(atxGenerated.Coinbase)},
+					SmesherId: &pb.SmesherId{Id: addressToBytes(atxGenerated.SmesherId)},
+					Coinbase:  &pb.AccountId{Address: atxGenerated.Coinbase},
 					PrevAtx:   &pb.ActivationId{Id: mustParse(atxGenerated.PrevAtx)},
 					NumUnits:  atxGenerated.NumUnits,
 				})
@@ -234,35 +241,36 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 			for _, blockContainer := range layerContainer.Blocks {
 				tx := make([]*pb.Transaction, 0, len(blockContainer.Transactions))
 				for _, txContainer := range blockContainer.Transactions {
+					receiver, err := types.StringToAddress(txContainer.Receiver)
+					if err != nil {
+						panic("invalid receiver address: " + err.Error())
+					}
+					signer := m.seedGen.Accounts[strings.ToLower(txContainer.Sender)].Signer
 					tx = append(tx, &pb.Transaction{
-						Id: &pb.TransactionId{Id: mustParse(txContainer.Id)},
-						Datum: &pb.Transaction_CoinTransfer{
-							CoinTransfer: &pb.CoinTransferTransaction{
-								Receiver: &pb.AccountId{
-									Address: mustParse(txContainer.Receiver),
-								},
-							},
+						Id:     mustParse(txContainer.Id),
+						Method: methodSend,
+						Principal: &pb.AccountId{
+							Address: txContainer.Sender,
 						},
-						Sender: &pb.AccountId{
-							Address: mustParse(txContainer.Sender),
+						GasPrice: txContainer.GasPrice,
+						MaxGas:   txContainer.GasProvided,
+						Nonce: &pb.Nonce{
+							Counter: txContainer.Counter,
 						},
-						GasOffered: &pb.GasOffered{
-							GasPrice:    txContainer.GasPrice,
-							GasProvided: txContainer.GasProvided,
+						Template: &pb.AccountId{
+							Address: wallet.TemplateAddress.String(),
 						},
-						Amount:  &pb.Amount{Value: txContainer.Amount},
-						Counter: txContainer.Counter,
-						Signature: &pb.Signature{
-							Signature: mustParse(txContainer.Signature),
-							PublicKey: mustParse(txContainer.PublicKey),
-						},
+						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce{
+							Counter:  txContainer.Counter,
+							Bitfield: uint8(1),
+						}, sdk.WithGasPrice(txContainer.GasPrice)),
 					})
 				}
 				blocksRes = append(blocksRes, &pb.Block{
 					Id:           mustParse(blockContainer.Block.Id),
 					Transactions: tx,
 					SmesherId: &pb.SmesherId{
-						Id: mustParse(blockContainer.SmesherID),
+						Id: addressToBytes(blockContainer.SmesherID),
 					},
 				})
 			}
@@ -317,4 +325,12 @@ func mustParse(str string) []byte {
 		panic("error while parse string to bytes: " + err.Error())
 	}
 	return res
+}
+
+func addressToBytes(addr string) []byte {
+	res, err := types.StringToAddress(addr)
+	if err != nil {
+		panic("error while parse string to address: " + err.Error())
+	}
+	return res.Bytes()
 }

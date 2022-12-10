@@ -3,6 +3,8 @@ package testseed
 import (
 	"strings"
 
+	"github.com/spacemeshos/go-spacemesh/signing"
+
 	"github.com/spacemeshos/explorer-backend/model"
 )
 
@@ -10,6 +12,7 @@ import (
 type AccountContainer struct {
 	layerID      uint32
 	Account      model.Account
+	Signer       *signing.EdSigner
 	Transactions map[string]*model.Transaction
 	Rewards      map[string]*model.Reward
 }
@@ -17,6 +20,18 @@ type AccountContainer struct {
 func (s *SeedGenerator) saveTransactionForAccount(tx *model.Transaction, accountFrom, accountTo string) {
 	s.Accounts[strings.ToLower(accountFrom)].Transactions[tx.Id] = tx
 	s.Accounts[strings.ToLower(accountTo)].Transactions[tx.Id] = tx
+
+	tmpContainerFrom := s.Accounts[strings.ToLower(accountFrom)]
+	tmpContainerFrom.Account.Txs++
+	s.Accounts[strings.ToLower(accountFrom)] = tmpContainerFrom
+
+	if accountTo == accountFrom {
+		return
+	}
+
+	tmpContainerTo := s.Accounts[strings.ToLower(accountTo)]
+	tmpContainerTo.Account.Txs++
+	s.Accounts[strings.ToLower(accountTo)] = tmpContainerTo
 }
 
 func (s *SeedGenerator) saveReward(reward *model.Reward) {

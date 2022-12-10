@@ -62,8 +62,12 @@ test_collector:
 test_api:
 	go test ./api/...
 
+.PHONY: test_pkg
+test_pkg:
+	go test ./pkg/...
+
 .PHONY: test
-test: vet lint test_api test_collector
+test: vet lint test_api test_collector test_pkg
 
 .PHONY: vet
 vet:
@@ -79,3 +83,7 @@ dev_up: ## start local environment
 ci_up: ## start ci environment
 	@echo "RUN ci docker-compose.yml "
 	docker compose up --build -d
+
+.PHONY: gogen
+gogen: ## generate scalegen
+	go generate ./...

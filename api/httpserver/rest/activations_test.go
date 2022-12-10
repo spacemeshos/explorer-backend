@@ -24,17 +24,19 @@ func TestActivations(t *testing.T) { // /atxs
 func TestActivation(t *testing.T) { // /atxs/{id}
 	t.Parallel()
 	insertedAtxs := generator.Epochs.GetActivations()
-	res := apiServer.Get(t, apiPrefix+"/atxs?pagesize=100")
+	res := apiServer.Get(t, apiPrefix+"/atxs?pagesize=1000")
 	res.RequireOK(t)
 	var resp atxResp
+	res.RequireUnmarshal(t, &resp)
+	require.Equal(t, len(insertedAtxs), len(resp.Data))
 	for _, atx := range resp.Data {
 		response := apiServer.Get(t, apiPrefix+"/atxs/"+atx.Id)
 		response.RequireOK(t)
-		var respLoop rewardResp
+		var respLoop atxResp
 		response.RequireUnmarshal(t, &respLoop)
 		require.Equal(t, 1, len(respLoop.Data))
 		generatedAtx, ok := insertedAtxs[atx.Id]
 		require.True(t, ok)
-		require.Equal(t, generatedAtx, respLoop.Data[0])
+		require.Equal(t, *generatedAtx, respLoop.Data[0])
 	}
 }
