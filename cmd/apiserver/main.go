@@ -71,7 +71,7 @@ func main() {
 		mongoDbNameStringFlag = env
 	}
 
-	flag := true // flag switch old|new router.
+	flag := false // flag switch old|new router.
 
 	app.Action = func(ctx *cli.Context) error {
 		if flag {
