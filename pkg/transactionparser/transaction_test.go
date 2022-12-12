@@ -43,14 +43,14 @@ func TestSpawn(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 			signer := signing.NewEdSigner()
-			rawTx := sdkWallet.SelfSpawn(signer.PrivateKey(), testCase.opts...)
-
+			rawTx := sdkWallet.SelfSpawn(signer.PrivateKey(), types.Nonce{}, testCase.opts...)
 			args := wallet.SpawnArguments{}
 			copy(args.PublicKey[:], signer.PublicKey().Bytes())
 			principal := core.ComputePrincipal(wallet.TemplateAddress, &args)
 
 			decodedTx, err := transactionparser.Parse(scale.NewDecoder(bytes.NewReader(rawTx)), rawTx, 0)
 			require.NoError(t, err)
+
 			require.Equal(t, testCase.gasPrice, decodedTx.GetGasPrice())
 			require.Equal(t, principal.String(), decodedTx.GetPrincipal().String())
 		})
@@ -73,7 +73,7 @@ func TestSpend(t *testing.T) {
 			to:       types.GenerateAddress(generatePublicKey(t)),
 			opts:     []sdk.Opt{},
 			nonce: types.Nonce{
-				Counter:  123,
+				Counter:  1,
 				Bitfield: uint8(1),
 			},
 		},
@@ -84,7 +84,7 @@ func TestSpend(t *testing.T) {
 			to:       types.GenerateAddress(generatePublicKey(t)),
 			opts:     []sdk.Opt{sdk.WithGasPrice(2)},
 			nonce: types.Nonce{
-				Counter:  723,
+				Counter:  2,
 				Bitfield: uint8(4),
 			},
 		},
@@ -95,13 +95,13 @@ func TestSpend(t *testing.T) {
 			t.Parallel()
 			signer := signing.NewEdSigner()
 			rawTx := sdkWallet.Spend(signer.PrivateKey(), testCase.to, testCase.amount, testCase.nonce, testCase.opts...)
-
 			args := wallet.SpawnArguments{}
 			copy(args.PublicKey[:], signing.Public(signer.PrivateKey()))
 			accAddress := core.ComputePrincipal(wallet.TemplateAddress, &args)
 
 			decodedTx, err := transactionparser.Parse(scale.NewDecoder(bytes.NewReader(rawTx)), rawTx, 1)
 			require.NoError(t, err)
+
 			require.Equal(t, testCase.gasPrice, decodedTx.GetGasPrice())
 			require.Equal(t, testCase.to.String(), decodedTx.GetReceiver().String())
 			require.Equal(t, testCase.amount, decodedTx.GetAmount())
@@ -117,18 +117,27 @@ func TestSpawnMultisig(t *testing.T) {
 		gasPrice uint64
 		ref      uint8
 		opts     []sdk.Opt
+		nonce    types.Nonce
 	}{
 		{
 			name:     "default gas price",
 			gasPrice: 1,
 			ref:      3,
 			opts:     []sdk.Opt{},
+			nonce: types.Nonce{
+				Counter:  1,
+				Bitfield: uint8(1),
+			},
 		},
 		{
 			name:     "non default gasPrice",
 			gasPrice: 2,
 			ref:      5,
 			opts:     []sdk.Opt{sdk.WithGasPrice(2)},
+			nonce: types.Nonce{
+				Counter:  2,
+				Bitfield: uint8(1),
+			},
 		},
 	}
 	for _, tc := range table {
@@ -147,7 +156,7 @@ func TestSpawnMultisig(t *testing.T) {
 
 			var agg *sdkMultisig.Aggregator
 			for i := 0; i < len(pks); i++ {
-				part := sdkMultisig.SelfSpawn(uint8(i), pks[i], multisig.TemplateAddress3, pubs, testCase.opts...)
+				part := sdkMultisig.SelfSpawn(uint8(i), pks[i], multisig.TemplateAddress3, pubs, testCase.nonce, testCase.opts...)
 				if agg == nil {
 					agg = part
 				} else {
@@ -184,7 +193,7 @@ func TestSpendMultisig(t *testing.T) {
 			opts:     []sdk.Opt{},
 			ref:      3,
 			nonce: types.Nonce{
-				Counter:  123,
+				Counter:  1,
 				Bitfield: uint8(1),
 			},
 		},
@@ -196,7 +205,7 @@ func TestSpendMultisig(t *testing.T) {
 			to:       types.GenerateAddress(generatePublicKey(t)),
 			opts:     []sdk.Opt{sdk.WithGasPrice(2)},
 			nonce: types.Nonce{
-				Counter:  723,
+				Counter:  2,
 				Bitfield: uint8(4),
 			},
 		},
