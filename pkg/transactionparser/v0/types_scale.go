@@ -7,125 +7,6 @@ import (
 	"github.com/spacemeshos/go-scale"
 )
 
-func (t *SpawnArguments) EncodeScale(enc *scale.Encoder) (total int, err error) {
-	{
-		n, err := scale.EncodeByteArray(enc, t.PublicKey[:])
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *SpawnArguments) DecodeScale(dec *scale.Decoder) (total int, err error) {
-	{
-		n, err := scale.DecodeByteArray(dec, t.PublicKey[:])
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *SpawnMultisigArguments) EncodeScale(enc *scale.Encoder) (total int, err error) {
-	{
-		n, err := scale.EncodeStructSlice(enc, t.PublicKeys)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *SpawnMultisigArguments) DecodeScale(dec *scale.Decoder) (total int, err error) {
-	{
-		field, n, err := scale.DecodeStructSlice[PublicKey](dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-		t.PublicKeys = field
-	}
-	return total, nil
-}
-
-func (t *SpawnPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
-	{
-		n, err := t.Arguments.EncodeScale(enc)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		n, err := scale.EncodeCompact64(enc, uint64(t.GasPrice))
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *SpawnPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
-	{
-		n, err := t.Arguments.DecodeScale(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		field, n, err := scale.DecodeCompact64(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-		t.GasPrice = uint64(field)
-	}
-	return total, nil
-}
-
-func (t *SpawnMultisigPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
-	{
-		n, err := t.Arguments.EncodeScale(enc)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		n, err := scale.EncodeCompact64(enc, uint64(t.GasPrice))
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *SpawnMultisigPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
-	{
-		n, err := t.Arguments.DecodeScale(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		field, n, err := scale.DecodeCompact64(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-		t.GasPrice = uint64(field)
-	}
-	return total, nil
-}
-
 func (t *Nonce) EncodeScale(enc *scale.Encoder) (total int, err error) {
 	{
 		n, err := scale.EncodeCompact64(enc, uint64(t.Counter))
@@ -164,97 +45,9 @@ func (t *Nonce) DecodeScale(dec *scale.Decoder) (total int, err error) {
 	return total, nil
 }
 
-func (t *SpendArguments) EncodeScale(enc *scale.Encoder) (total int, err error) {
-	{
-		n, err := scale.EncodeByteArray(enc, t.Destination[:])
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		n, err := scale.EncodeCompact64(enc, uint64(t.Amount))
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *SpendArguments) DecodeScale(dec *scale.Decoder) (total int, err error) {
-	{
-		n, err := scale.DecodeByteArray(dec, t.Destination[:])
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		field, n, err := scale.DecodeCompact64(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-		t.Amount = uint64(field)
-	}
-	return total, nil
-}
-
-func (t *SpendPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
-	{
-		n, err := t.Arguments.EncodeScale(enc)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		n, err := t.Nonce.EncodeScale(enc)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		n, err := scale.EncodeCompact64(enc, uint64(t.GasPrice))
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *SpendPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
-	{
-		n, err := t.Arguments.DecodeScale(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		n, err := t.Nonce.DecodeScale(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		field, n, err := scale.DecodeCompact64(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-		t.GasPrice = uint64(field)
-	}
-	return total, nil
-}
-
 func (t *SpawnTransaction) EncodeScale(enc *scale.Encoder) (total int, err error) {
 	{
-		n, err := scale.EncodeCompact8(enc, uint8(t.Version))
+		n, err := scale.EncodeCompact8(enc, uint8(t.Type))
 		if err != nil {
 			return total, err
 		}
@@ -305,7 +98,7 @@ func (t *SpawnTransaction) DecodeScale(dec *scale.Decoder) (total int, err error
 			return total, err
 		}
 		total += n
-		t.Version = uint8(field)
+		t.Type = uint8(field)
 	}
 	{
 		n, err := scale.DecodeByteArray(dec, t.Principal[:])
@@ -346,9 +139,82 @@ func (t *SpawnTransaction) DecodeScale(dec *scale.Decoder) (total int, err error
 	return total, nil
 }
 
+func (t *SpawnPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
+	{
+		n, err := t.Nonce.EncodeScale(enc)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		n, err := scale.EncodeCompact64(enc, uint64(t.GasPrice))
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		n, err := t.Arguments.EncodeScale(enc)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpawnPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
+	{
+		n, err := t.Nonce.DecodeScale(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		field, n, err := scale.DecodeCompact64(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+		t.GasPrice = uint64(field)
+	}
+	{
+		n, err := t.Arguments.DecodeScale(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpawnArguments) EncodeScale(enc *scale.Encoder) (total int, err error) {
+	{
+		n, err := scale.EncodeByteArray(enc, t.PublicKey[:])
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpawnArguments) DecodeScale(dec *scale.Decoder) (total int, err error) {
+	{
+		n, err := scale.DecodeByteArray(dec, t.PublicKey[:])
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
 func (t *SpawnMultisigTransaction) EncodeScale(enc *scale.Encoder) (total int, err error) {
 	{
-		n, err := scale.EncodeCompact8(enc, uint8(t.Version))
+		n, err := scale.EncodeCompact8(enc, uint8(t.Type))
 		if err != nil {
 			return total, err
 		}
@@ -399,7 +265,7 @@ func (t *SpawnMultisigTransaction) DecodeScale(dec *scale.Decoder) (total int, e
 			return total, err
 		}
 		total += n
-		t.Version = uint8(field)
+		t.Type = uint8(field)
 	}
 	{
 		n, err := scale.DecodeByteArray(dec, t.Principal[:])
@@ -440,9 +306,69 @@ func (t *SpawnMultisigTransaction) DecodeScale(dec *scale.Decoder) (total int, e
 	return total, nil
 }
 
+func (t *SpawnMultisigPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
+	{
+		n, err := t.Arguments.EncodeScale(enc)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		n, err := scale.EncodeCompact64(enc, uint64(t.GasPrice))
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpawnMultisigPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
+	{
+		n, err := t.Arguments.DecodeScale(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		field, n, err := scale.DecodeCompact64(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+		t.GasPrice = uint64(field)
+	}
+	return total, nil
+}
+
+func (t *SpawnMultisigArguments) EncodeScale(enc *scale.Encoder) (total int, err error) {
+	{
+		n, err := scale.EncodeStructSlice(enc, t.PublicKeys)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpawnMultisigArguments) DecodeScale(dec *scale.Decoder) (total int, err error) {
+	{
+		field, n, err := scale.DecodeStructSlice[PublicKey](dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+		t.PublicKeys = field
+	}
+	return total, nil
+}
+
 func (t *SpendTransaction) EncodeScale(enc *scale.Encoder) (total int, err error) {
 	{
-		n, err := scale.EncodeCompact8(enc, uint8(t.Version))
+		n, err := scale.EncodeCompact8(enc, uint8(t.Type))
 		if err != nil {
 			return total, err
 		}
@@ -486,7 +412,7 @@ func (t *SpendTransaction) DecodeScale(dec *scale.Decoder) (total int, err error
 			return total, err
 		}
 		total += n
-		t.Version = uint8(field)
+		t.Type = uint8(field)
 	}
 	{
 		n, err := scale.DecodeByteArray(dec, t.Principal[:])
@@ -512,6 +438,94 @@ func (t *SpendTransaction) DecodeScale(dec *scale.Decoder) (total int, err error
 	}
 	{
 		n, err := scale.DecodeByteArray(dec, t.Sign[:])
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpendArguments) EncodeScale(enc *scale.Encoder) (total int, err error) {
+	{
+		n, err := scale.EncodeByteArray(enc, t.Destination[:])
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		n, err := scale.EncodeCompact64(enc, uint64(t.Amount))
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpendArguments) DecodeScale(dec *scale.Decoder) (total int, err error) {
+	{
+		n, err := scale.DecodeByteArray(dec, t.Destination[:])
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		field, n, err := scale.DecodeCompact64(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+		t.Amount = uint64(field)
+	}
+	return total, nil
+}
+
+func (t *SpendPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
+	{
+		n, err := t.Nonce.EncodeScale(enc)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		n, err := scale.EncodeCompact64(enc, uint64(t.GasPrice))
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		n, err := t.Arguments.EncodeScale(enc)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	return total, nil
+}
+
+func (t *SpendPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
+	{
+		n, err := t.Nonce.DecodeScale(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+	}
+	{
+		field, n, err := scale.DecodeCompact64(dec)
+		if err != nil {
+			return total, err
+		}
+		total += n
+		t.GasPrice = uint64(field)
+	}
+	{
+		n, err := t.Arguments.DecodeScale(dec)
 		if err != nil {
 			return total, err
 		}

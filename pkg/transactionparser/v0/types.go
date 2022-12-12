@@ -28,6 +28,12 @@ func init() {
 	TemplateAddress3[len(TemplateAddress3)-1] = 4
 }
 
+// Nonce returns nonce of the transaction.
+type Nonce struct {
+	Counter  uint64
+	Bitfield uint8
+}
+
 // Signature returns the signature of the transaction.
 type Signature [64]byte
 
@@ -42,47 +48,6 @@ func (h *PublicKey) EncodeScale(e *scale.Encoder) (int, error) {
 // DecodeScale implements scale codec interface.
 func (h *PublicKey) DecodeScale(d *scale.Decoder) (int, error) {
 	return scale.DecodeByteArray(d, h[:])
-}
-
-// SpawnArguments is the arguments of the spawn transaction.
-type SpawnArguments struct {
-	PublicKey PublicKey
-}
-
-// SpawnMultisigArguments arguments for multisig spawn transaction.
-type SpawnMultisigArguments struct {
-	PublicKeys []PublicKey
-}
-
-// SpawnPayload provides arguments for spawn transaction.
-type SpawnPayload struct {
-	Arguments SpawnArguments
-	GasPrice  uint64
-}
-
-// SpawnMultisigPayload payload of the multisig spawn transaction.
-type SpawnMultisigPayload struct {
-	Arguments SpawnMultisigArguments
-	GasPrice  uint64
-}
-
-// Nonce returns nonce of the transaction.
-type Nonce struct {
-	Counter  uint64
-	Bitfield uint8
-}
-
-// SpendArguments arguments of the spend transaction.
-type SpendArguments struct {
-	Destination address.Address
-	Amount      uint64
-}
-
-// SpendPayload payload of the spend transaction.
-type SpendPayload struct {
-	Arguments SpendArguments
-	Nonce     Nonce
-	GasPrice  uint64
 }
 
 func getMultisigTemplate(pkNum int) address.Address {
@@ -110,7 +75,7 @@ func ComputePrincipal(template address.Address, args scale.Encodable) address.Ad
 
 // SpawnTransaction initial transaction for wallet.
 type SpawnTransaction struct {
-	Version   uint8
+	Type      uint8
 	Principal address.Address
 	Method    uint8
 	Template  address.Address
@@ -118,8 +83,20 @@ type SpawnTransaction struct {
 	Sign      Signature
 }
 
+// SpawnPayload provides arguments for spawn transaction.
+type SpawnPayload struct {
+	Nonce     Nonce
+	GasPrice  uint64
+	Arguments SpawnArguments
+}
+
+// SpawnArguments is the arguments of the spawn transaction.
+type SpawnArguments struct {
+	PublicKey PublicKey
+}
+
 // GetType returns type of the transaction.
-func (t *SpawnTransaction) GetType() int {
+func (t *SpawnTransaction) GetType() uint8 {
 	return transaction.TypeSpawn
 }
 
@@ -162,7 +139,7 @@ func (t *SpawnTransaction) GetSignature() []byte {
 
 // SpawnMultisigTransaction initial transaction for multisig wallet.
 type SpawnMultisigTransaction struct {
-	Version   uint8
+	Type      uint8
 	Principal address.Address
 	Method    uint8
 	Template  address.Address
@@ -170,8 +147,19 @@ type SpawnMultisigTransaction struct {
 	Sign      Signature
 }
 
+// SpawnMultisigPayload payload of the multisig spawn transaction.
+type SpawnMultisigPayload struct {
+	Arguments SpawnMultisigArguments
+	GasPrice  uint64
+}
+
+// SpawnMultisigArguments arguments for multisig spawn transaction.
+type SpawnMultisigArguments struct {
+	PublicKeys []PublicKey
+}
+
 // GetType returns type of the transaction.
-func (t *SpawnMultisigTransaction) GetType() int {
+func (t *SpawnMultisigTransaction) GetType() uint8 {
 	return transaction.TypeMultisigSpawn
 }
 
@@ -220,15 +208,28 @@ func (t *SpawnMultisigTransaction) GetSignature() []byte {
 
 // SpendTransaction coin transfer transaction. also includes multisig.
 type SpendTransaction struct {
-	Version   uint8
+	Type      uint8
 	Principal address.Address
 	Method    uint8
 	Payload   SpendPayload
 	Sign      Signature
 }
 
+// SpendArguments arguments of the spend transaction.
+type SpendArguments struct {
+	Destination address.Address
+	Amount      uint64
+}
+
+// SpendPayload payload of the spend transaction.
+type SpendPayload struct {
+	Nonce     Nonce
+	GasPrice  uint64
+	Arguments SpendArguments
+}
+
 // GetType returns transaction type.
-func (t *SpendTransaction) GetType() int {
+func (t *SpendTransaction) GetType() uint8 {
 	return transaction.TypeSpend
 }
 
