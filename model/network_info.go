@@ -1,7 +1,7 @@
 package model
 
 type NetworkInfo struct {
-	NetId                    uint32 `json:"netid" bson:"netid"` // nolint will fix it later
+	GenesisId                string `json:"genesisid" bson:"genesisid"` // nolint will fix it later
 	GenesisTime              uint32 `json:"genesis" bson:"genesis"`
 	EpochNumLayers           uint32 `json:"layers" bson:"layers"`
 	MaxTransactionsPerSecond uint32 `json:"maxtx" bson:"maxtx"`
