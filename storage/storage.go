@@ -117,8 +117,8 @@ func (s *Storage) Close() {
 	}
 }
 
-func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers uint64, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64) {
-	s.NetworkInfo.NetId = uint32(netId)
+func (s *Storage) OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLayers uint64, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64) {
+	s.NetworkInfo.GenesisId = genesisId
 	s.NetworkInfo.GenesisTime = uint32(genesisTime)
 	s.NetworkInfo.EpochNumLayers = uint32(epochNumLayers)
 	s.NetworkInfo.MaxTransactionsPerSecond = uint32(maxTransactionsPerSecond)
@@ -127,8 +127,8 @@ func (s *Storage) OnNetworkInfo(netId uint64, genesisTime uint64, epochNumLayers
 
 	s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
 
-	log.Info("Network Info: id: %v, genesis: %v, epoch layers: %v, max tx: %v, duration: %v",
-		s.NetworkInfo.NetId,
+	log.Info("Network Info: id: %s, genesis: %v, epoch layers: %v, max tx: %v, duration: %v",
+		s.NetworkInfo.GenesisId,
 		s.NetworkInfo.GenesisTime,
 		s.NetworkInfo.EpochNumLayers,
 		s.NetworkInfo.MaxTransactionsPerSecond,

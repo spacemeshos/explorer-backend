@@ -32,7 +32,6 @@ type Transaction struct {
 	Counter uint64 `json:"counter" bson:"counter"` // tx counter aka nonce
 
 	Type      int    `json:"type" bson:"type"`
-	Scheme    int    `json:"scheme" bson:"scheme"`       // the signature's scheme
 	Signature string `json:"signature" bson:"signature"` // the signature itself
 	PublicKey string `json:"pubKey" bson:"pubKey"`       // included in schemes which require signer to provide a public key
 
@@ -87,7 +86,7 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp 
 		Timestamp:   timestamp,
 		GasProvided: in.GetMaxGas(),
 		GasPrice:    txDecoded.GetGasPrice(),
-		Scheme:      txDecoded.GetType(),
+		Type:        int(txDecoded.GetType()),
 		Signature:   utils.BytesToHex(txDecoded.GetSignature()),
 		Receiver:    txDecoded.GetReceiver().String(),
 	}
