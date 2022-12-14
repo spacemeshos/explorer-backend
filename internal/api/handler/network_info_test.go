@@ -1,4 +1,4 @@
-package rest_test
+package handler_test
 
 import (
 	"net/http"
@@ -13,7 +13,7 @@ const apiPrefix = "" // will be replaced to v2 after some endpoints will be refa
 func TestNetworkInfoHandler(t *testing.T) {
 	type resp struct {
 		Network struct {
-			Netid              uint64 `json:"netid"`
+			Genesisid          string `json:"genesisid"`
 			Genesis            uint64 `json:"genesis"`
 			Layers             uint64 `json:"layers"`
 			Maxtx              uint64 `json:"maxtx"`
@@ -34,7 +34,7 @@ func TestNetworkInfoHandler(t *testing.T) {
 	var networkInfo resp
 	res.RequireOK(t)
 	res.RequireUnmarshal(t, &networkInfo)
-	require.Equal(t, seed.NetID, networkInfo.Network.Netid)
+	require.Equal(t, string(seed.GenesisID), networkInfo.Network.Genesisid)
 	require.Equal(t, seed.GenesisTime, networkInfo.Network.Genesis)
 	require.Equal(t, seed.EpochNumLayers, networkInfo.Network.Layers)
 	require.Equal(t, seed.MaxTransactionPerSecond, networkInfo.Network.Maxtx)

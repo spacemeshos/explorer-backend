@@ -2,7 +2,6 @@ package testserver
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,8 +11,7 @@ import (
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/require"
 
-	"github.com/spacemeshos/explorer-backend/api"
-	"github.com/spacemeshos/explorer-backend/internal/router"
+	apiv2 "github.com/spacemeshos/explorer-backend/internal/api"
 	service2 "github.com/spacemeshos/explorer-backend/internal/service"
 	"github.com/spacemeshos/explorer-backend/internal/storage/storagereader"
 	"github.com/spacemeshos/explorer-backend/storage"
@@ -27,31 +25,7 @@ const (
 // TestAPIService wrapper over fake api service.
 type TestAPIService struct {
 	Storage *storage.Storage
-	server  *api.Server
 	port    int
-}
-
-// StartTestAPIService start test api service.
-func StartTestAPIService(dbPort int, db *storage.Storage) (*TestAPIService, error) {
-	appPort, err := freeport.GetFreePort()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get free port: %s", err)
-	}
-	println("starting test api service on port", appPort)
-	server, err := api.New(context.TODO(), &api.Config{
-		ListenOn: ":" + fmt.Sprint(appPort),
-		DbName:   testAPIServiceDB,
-		DbUrl:    fmt.Sprintf("mongodb://localhost:%d", dbPort),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create api server: %s", err)
-	}
-	go server.Run()
-	return &TestAPIService{
-		server:  server,
-		port:    appPort,
-		Storage: db,
-	}, nil
 }
 
 // StartTestAPIServiceV2 start test api service with refacored router.
@@ -62,11 +36,8 @@ func StartTestAPIServiceV2(db *storage.Storage, dbReader *storagereader.Reader) 
 	}
 	println("starting test api service on port", appPort)
 
-	appV2 := router.InitAppRouter(&router.Config{
-		ListenOn: fmt.Sprintf(":%d", appPort),
-	}, service2.NewService(dbReader, time.Second))
-	go appV2.Run()
-
+	api := apiv2.Init(service2.NewService(dbReader, time.Second))
+	go api.Run(fmt.Sprintf(":%d", appPort))
 	return &TestAPIService{
 		Storage: db,
 		port:    appPort,

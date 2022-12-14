@@ -8,7 +8,7 @@ import (
 
 // TestServerSeed test network config for tests.
 type TestServerSeed struct {
-	NetID                   uint64
+	GenesisID               []byte
 	EpochNumLayers          uint64
 	LayersDuration          uint64
 	MaxTransactionPerSecond uint64
@@ -29,7 +29,7 @@ func (t *TestServerSeed) GetPostUnitsSize() uint64 {
 func GetServerSeed() *TestServerSeed {
 	return &TestServerSeed{
 		GenesisTime:             1234567,
-		NetID:                   123,
+		GenesisID:               []byte("genesisid"),
 		EpochNumLayers:          10,
 		LayersDuration:          10,
 		MaxTransactionPerSecond: 100,
