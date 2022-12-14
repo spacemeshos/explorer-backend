@@ -60,7 +60,7 @@ test_collector:
 
 .PHONY: test_api
 test_api:
-	go test ./api/...
+	go test ./internal/api/...
 
 .PHONY: test_pkg
 test_pkg:

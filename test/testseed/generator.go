@@ -13,7 +13,6 @@ import (
 	"github.com/spacemeshos/go-spacemesh/signing"
 
 	"github.com/spacemeshos/explorer-backend/model"
-	"github.com/spacemeshos/explorer-backend/pkg/transactionparser/transaction"
 	v0 "github.com/spacemeshos/explorer-backend/pkg/transactionparser/v0"
 	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/utils"
@@ -340,8 +339,7 @@ func generateTransaction(index int, layer *model.Layer, senderSigner *signing.Ed
 		Fee:         0,
 		Amount:      uint64(rand.Intn(1000)),
 		Counter:     uint64(rand.Intn(1000)),
-		Type:        0,
-		Scheme:      transaction.TypeSpend,
+		Type:        3,
 		Signature:   strings.ToLower(utils.BytesToHex(randomBytes(30))),
 		PublicKey:   senderSigner.PublicKey().String(),
 		Sender:      sender,

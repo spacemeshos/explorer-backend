@@ -3,16 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"time"
-
-	"github.com/spacemeshos/go-spacemesh/log"
-	"github.com/urfave/cli"
-
-	"github.com/spacemeshos/explorer-backend/api"
-	api2 "github.com/spacemeshos/explorer-backend/internal/api"
+	"github.com/spacemeshos/address"
+	"github.com/spacemeshos/explorer-backend/internal/api"
 	appService "github.com/spacemeshos/explorer-backend/internal/service"
 	"github.com/spacemeshos/explorer-backend/internal/storage/storagereader"
+	"github.com/spacemeshos/go-spacemesh/log"
+	"github.com/urfave/cli/v2"
+	"os"
+	"time"
 )
 
 var (
@@ -25,29 +23,40 @@ var (
 	listenStringFlag      string
 	mongoDbURLStringFlag  string
 	mongoDbNameStringFlag string
+	testnetBoolFlag       bool
 )
 
 var flags = []cli.Flag{
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:        "listen",
 		Usage:       "Explorer API listen string in format <host>:<port>",
 		Required:    false,
 		Destination: &listenStringFlag,
 		Value:       ":5000",
+		EnvVars:     []string{"SPACEMESH_API_LISTEN"},
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:        "mongodb",
 		Usage:       "Explorer MongoDB Uri string in format mongodb://<host>:<port>",
 		Required:    false,
 		Destination: &mongoDbURLStringFlag,
 		Value:       "mongodb://localhost:27017",
+		EnvVars:     []string{"SPACEMESH_MONGO_URI"},
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:        "db",
 		Usage:       "MongoDB Explorer database name string",
 		Required:    false,
 		Destination: &mongoDbNameStringFlag,
 		Value:       "explorer",
+		EnvVars:     []string{"SPACEMESH_MONGO_DB"},
+	},
+	&cli.BoolFlag{
+		Name:        "testnet",
+		Usage:       `Use this flag to enable testnet preset ("stest" instead of "sm" for wallet addresses)`,
+		Required:    false,
+		Destination: &testnetBoolFlag,
+		EnvVars:     []string{"SPACEMESH_TESTNET"},
 	},
 }
 
@@ -58,35 +67,31 @@ func main() {
 	app.Flags = flags
 	app.Writer = os.Stderr
 
-	env, ok := os.LookupEnv("SPACEMESH_API_LISTEN")
-	if ok {
-		listenStringFlag = env
-	}
-	env, ok = os.LookupEnv("SPACEMESH_MONGO_URI")
-	if ok {
-		mongoDbURLStringFlag = env
-	}
-	env, ok = os.LookupEnv("SPACEMESH_MONGO_DB")
-	if ok {
-		mongoDbNameStringFlag = env
-	}
-
-	flag := true // flag switch old|new router.
-
 	app.Action = func(ctx *cli.Context) error {
-		if flag {
-			if err := newApp(mongoDbURLStringFlag, mongoDbNameStringFlag, listenStringFlag); err != nil {
-				log.Error("error start service", err.Error())
-				return err
-			}
-		} else {
-			if err := oldApp(mongoDbURLStringFlag, mongoDbNameStringFlag, listenStringFlag); err != nil {
-				log.Error("error start service", err.Error())
-				return err
-			}
+		if testnetBoolFlag {
+			address.SetAddressConfig("stest")
+			log.Info(`network HRP set to "stest"`)
 		}
 
-		log.Info("Server is shutdown")
+		if err := newApp(mongoDbURLStringFlag, mongoDbNameStringFlag, listenStringFlag); err != nil {
+			log.Error("error start service", err.Error())
+			return err
+		}
+
+		dbReader, err := storagereader.NewStorageReader(context.Background(), mongoDbURLStringFlag, mongoDbNameStringFlag)
+		if err != nil {
+			return fmt.Errorf("error init storage reader: %w", err)
+		}
+
+		service := appService.NewService(dbReader, time.Minute)
+		server := api.Init(service)
+
+		log.Info(fmt.Sprintf("starting server on %s", listenStringFlag))
+		if err = server.Run(listenStringFlag); err != nil {
+			return fmt.Errorf("error start service: %w", err)
+		}
+
+		log.Info("server is shutdown")
 		return nil
 	}
 
@@ -98,38 +103,7 @@ func main() {
 	os.Exit(0)
 }
 
-func oldApp(mongoDbURL, mongoDbName, listen string) error {
-	serverCfg := &api.Config{
-		ListenOn: listen,
-		DbUrl:    mongoDbURL,
-		DbName:   mongoDbName,
-	}
-
-	server, err := api.New(context.Background(), serverCfg)
-	if err != nil {
-		log.Info("%+v", err)
-		return err
-	}
-
-	if err = server.Run(); err != nil {
-		log.Info("%+v", err)
-		return err
-	}
-	return nil
-}
-
 func newApp(mongoDbURL, mongoDbName, address string) error {
-	dbReader, err := storagereader.NewStorageReader(context.Background(), mongoDbURL, mongoDbName)
-	if err != nil {
-		return fmt.Errorf("error init storage reader: %w", err)
-	}
-	service := appService.NewService(dbReader, time.Minute)
 
-	//TODO: refactor after removing httpserver pkg
-	a := api2.Init(service)
-	log.Info(fmt.Sprintf("starting server on %s", address))
-	if err = a.Run(address); err != nil {
-		return fmt.Errorf("error start service: %w", err)
-	}
 	return nil
 }

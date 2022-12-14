@@ -115,8 +115,8 @@ func (m meshServiceWrapper) GenesisTime(context.Context, *pb.GenesisTimeRequest)
 	return &pb.GenesisTimeResponse{Unixtime: &pb.SimpleInt{Value: uint64(m.startTime.Unix())}}, nil
 }
 
-func (m meshServiceWrapper) NetID(context.Context, *pb.NetIDRequest) (*pb.NetIDResponse, error) {
-	return &pb.NetIDResponse{Netid: &pb.SimpleInt{Value: m.seed.NetID}}, nil
+func (m meshServiceWrapper) GenesisID(context.Context, *pb.GenesisIDRequest) (*pb.GenesisIDResponse, error) {
+	return &pb.GenesisIDResponse{GenesisId: []byte("genesisid")}, nil
 }
 
 func (m meshServiceWrapper) EpochNumLayers(context.Context, *pb.EpochNumLayersRequest) (*pb.EpochNumLayersResponse, error) {

@@ -1,4 +1,4 @@
-package rest_test
+package handler_test
 
 import (
 	"context"
@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	seed = testseed.GetServerSeed()
-	db.OnNetworkInfo(seed.NetID, seed.GenesisTime, seed.EpochNumLayers, seed.MaxTransactionPerSecond, seed.LayersDuration, seed.GetPostUnitsSize())
+	db.OnNetworkInfo(string(seed.GenesisID), seed.GenesisTime, seed.EpochNumLayers, seed.MaxTransactionPerSecond, seed.LayersDuration, seed.GetPostUnitsSize())
 
 	dbReader, err := storagereader.NewStorageReader(context.Background(), mongoURL, testAPIServiceDB)
 	if err != nil {

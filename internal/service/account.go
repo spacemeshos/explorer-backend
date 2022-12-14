@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/spacemeshos/go-spacemesh/log"
 
 	"github.com/spacemeshos/address"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,6 +16,7 @@ import (
 func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Account, error) {
 	addr, err := address.StringToAddress(accountID)
 	if err != nil {
+		log.Error("GetAccount error: %v", err)
 		return nil, ErrNotFound
 	}
 
