@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/spacemeshos/explorer-backend/api"
-	"github.com/spacemeshos/explorer-backend/internal/router"
+	api2 "github.com/spacemeshos/explorer-backend/internal/api"
 	appService "github.com/spacemeshos/explorer-backend/internal/service"
 	"github.com/spacemeshos/explorer-backend/internal/storage/storagereader"
 )
@@ -71,7 +71,7 @@ func main() {
 		mongoDbNameStringFlag = env
 	}
 
-	flag := false // flag switch old|new router.
+	flag := true // flag switch old|new router.
 
 	app.Action = func(ctx *cli.Context) error {
 		if flag {
@@ -118,17 +118,17 @@ func oldApp(mongoDbURL, mongoDbName, listen string) error {
 	return nil
 }
 
-func newApp(mongoDbURL, mongoDbName, listen string) error {
+func newApp(mongoDbURL, mongoDbName, address string) error {
 	dbReader, err := storagereader.NewStorageReader(context.Background(), mongoDbURL, mongoDbName)
 	if err != nil {
 		return fmt.Errorf("error init storage reader: %w", err)
 	}
 	service := appService.NewService(dbReader, time.Minute)
-	app := router.InitAppRouter(&router.Config{
-		ListenOn: listen,
-	}, service)
-	log.Info(fmt.Sprintf("starting server on %s", listen))
-	if err = app.Run(); err != nil {
+
+	//TODO: refactor after removing httpserver pkg
+	a := api2.Init(service)
+	log.Info(fmt.Sprintf("starting server on %s", address))
+	if err = a.Run(address); err != nil {
 		return fmt.Errorf("error start service: %w", err)
 	}
 	return nil
