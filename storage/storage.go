@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"errors"
+	"github.com/spacemeshos/explorer-backend/utils"
 	"sync"
 	"time"
 
@@ -43,7 +44,8 @@ type Storage struct {
 }
 
 func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbUrl))
 
 	if err != nil {
@@ -111,7 +113,8 @@ func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) 
 
 func (s *Storage) Close() {
 	if s.client != nil {
-		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 		s.db = nil
 		s.client.Disconnect(ctx)
 	}
@@ -267,7 +270,7 @@ func (s *Storage) setChangedEpoch(layer uint32) {
 
 func (s *Storage) updateLayer(in *pb.Layer) {
 	layer, blocks, atxs, txs := model.NewLayer(in, &s.NetworkInfo)
-	log.Info("updateLayer(%v) -> %v, %v, %v, %v", in.Number.Number, layer.Number, len(blocks), len(atxs), len(txs))
+	log.Info("updateLayer(%v) -> %v, %v, %v, %v, %v", in.Number.Number, layer.Number, len(blocks), len(atxs), len(txs), utils.BytesToHex(in.Hash))
 	s.updateNetworkStatus(layer)
 	s.SaveOrUpdateBlocks(context.Background(), blocks)
 	s.updateActivations(layer, atxs)
@@ -402,7 +405,7 @@ func (s *Storage) updateAccounts() {
 
 func (s *Storage) GetEpochLayersFilter(epochNumber int32, key string) *bson.D {
 	layerStart, layerEnd := s.GetEpochLayers(epochNumber)
-	return &bson.D{{key, bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
+	return &bson.D{{Key: key, Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
 }
 
 func (s *Storage) getLayerTimestamp(layer uint32) uint32 {

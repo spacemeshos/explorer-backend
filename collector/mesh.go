@@ -102,6 +102,4 @@ func (c *Collector) layersPump() error {
 		layer := response.GetLayer()
 		c.listener.OnLayer(layer)
 	}
-
-	return nil
 }

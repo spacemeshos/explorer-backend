@@ -20,10 +20,10 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 		return nil, ErrNotFound
 	}
 
-	filter := &bson.D{{"address", addr.String()}}
-	accs, total, err := e.getAccounts(ctx, filter, options.Find().SetSort(bson.D{{"address", 1}}).SetLimit(1).SetProjection(bson.D{
-		{"_id", 0},
-		{"layer", 0},
+	filter := &bson.D{{Key: "address", Value: addr.String()}}
+	accs, total, err := e.getAccounts(ctx, filter, options.Find().SetSort(bson.D{{Key: "address", Value: 1}}).SetLimit(1).SetProjection(bson.D{
+		{Key: "_id", Value: 0},
+		{Key: "layer", Value: 0},
 	}))
 	if err != nil {
 		return nil, fmt.Errorf("error find account: %w", err)
@@ -54,9 +54,9 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 	}
 
 	acc.Txs, err = e.storage.CountTransactions(ctx, &bson.D{
-		{"$or", bson.A{
-			bson.D{{"sender", acc.Address}},
-			bson.D{{"receiver", acc.Address}},
+		{Key: "$or", Value: bson.A{
+			bson.D{{Key: "sender", Value: acc.Address}},
+			bson.D{{Key: "receiver", Value: acc.Address}},
 		}},
 	})
 	if err != nil {
@@ -68,8 +68,8 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 // GetAccounts returns accounts by filter.
 func (e *Service) GetAccounts(ctx context.Context, page, perPage int64) ([]*model.Account, int64, error) {
 	return e.getAccounts(ctx, &bson.D{}, e.getFindOptions("layer", page, perPage).SetProjection(bson.D{
-		{"_id", 0},
-		{"layer", 0},
+		{Key: "_id", Value: 0},
+		{Key: "layer", Value: 0},
 	}))
 }
 
@@ -81,9 +81,9 @@ func (e *Service) GetAccountTransactions(ctx context.Context, accountID string, 
 	}
 
 	filter := &bson.D{
-		{"$or", bson.A{
-			bson.D{{"sender", addr.String()}},
-			bson.D{{"receiver", addr.String()}},
+		{Key: "$or", Value: bson.A{
+			bson.D{{Key: "sender", Value: addr.String()}},
+			bson.D{{Key: "receiver", Value: addr.String()}},
 		}},
 	}
 	return e.getTransactions(ctx, filter, e.getFindOptions("counter", page, perPage))
@@ -95,7 +95,7 @@ func (e *Service) GetAccountRewards(ctx context.Context, accountID string, page,
 	if err != nil {
 		return nil, 0, ErrNotFound
 	}
-	return e.getRewards(ctx, &bson.D{{"coinbase", addr.String()}}, e.getFindOptions("coinbase", page, perPage))
+	return e.getRewards(ctx, &bson.D{{Key: "coinbase", Value: addr.String()}}, e.getFindOptions("coinbase", page, perPage))
 }
 
 func (e *Service) getAccounts(ctx context.Context, filter *bson.D, options *options.FindOptions) (accs []*model.Account, total int64, err error) {

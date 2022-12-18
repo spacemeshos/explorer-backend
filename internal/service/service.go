@@ -86,10 +86,10 @@ func (e *Service) GetNetworkInfo(ctx context.Context) (net *model.NetworkInfo, e
 
 func (e *Service) getFindOptions(key string, page, perPage int64) *options.FindOptions {
 	return options.Find().
-		SetSort(bson.D{{key, -1}}).
+		SetSort(bson.D{{Key: key, Value: -1}}).
 		SetLimit(perPage).
 		SetSkip((page - 1) * perPage).
-		SetProjection(bson.D{{"_id", 0}})
+		SetProjection(bson.D{{Key: "_id", Value: 0}})
 }
 
 func (e *Service) getEpochLayers(epoch int) (uint32, uint32) {

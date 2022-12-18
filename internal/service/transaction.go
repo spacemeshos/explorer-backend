@@ -13,8 +13,8 @@ import (
 
 // GetTransaction returns tx by id.
 func (e *Service) GetTransaction(ctx context.Context, txID string) (*model.Transaction, error) {
-	filter := &bson.D{{"id", strings.ToLower(txID)}}
-	txs, total, err := e.getTransactions(ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
+	filter := &bson.D{{Key: "id", Value: strings.ToLower(txID)}}
+	txs, total, err := e.getTransactions(ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
 	if err != nil {
 		return nil, fmt.Errorf("error get transaction: %w", err)
 	}

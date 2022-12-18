@@ -18,7 +18,7 @@ func (e *Service) GetCurrentEpoch(ctx context.Context) (*model.Epoch, error) {
 	loadTime := e.currentEpochLoaded
 	e.currentEpochMU.RUnlock()
 	if epoch == nil || loadTime.Add(e.cacheTTL).Unix() < time.Now().Unix() {
-		epochs, err := e.storage.GetEpochs(ctx, &bson.D{}, options.Find().SetSort(bson.D{{"number", -1}}).SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
+		epochs, err := e.storage.GetEpochs(ctx, &bson.D{}, options.Find().SetSort(bson.D{{Key: "number", Value: -1}}).SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get epoch: %w", err)
 		}
@@ -63,7 +63,7 @@ func (e *Service) GetEpochs(ctx context.Context, page, perPage int64) ([]*model.
 // GetEpochLayers returns layers for the given epoch.
 func (e *Service) GetEpochLayers(ctx context.Context, epochNum int, page, perPage int64) (layers []*model.Layer, total int64, err error) {
 	layerStart, layerEnd := e.getEpochLayers(epochNum)
-	filter := &bson.D{{"number", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
+	filter := &bson.D{{Key: "number", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
 	total, err = e.storage.CountLayers(ctx, filter)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count layers for epoch `%d`: %w", epochNum, err)
@@ -83,33 +83,33 @@ func (e *Service) GetEpochLayers(ctx context.Context, epochNum int, page, perPag
 // GetEpochTransactions returns transactions for the given epoch.
 func (e *Service) GetEpochTransactions(ctx context.Context, epochNum int, page, perPage int64) (txs []*model.Transaction, total int64, err error) {
 	layerStart, layerEnd := e.getEpochLayers(epochNum)
-	filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
+	filter := &bson.D{{Key: "layer", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
 	return e.getTransactions(ctx, filter, e.getFindOptions("id", page, perPage))
 }
 
 // GetEpochSmeshers returns smeshers for the given epoch.
 func (e *Service) GetEpochSmeshers(ctx context.Context, epochNum int, page, perPage int64) (smeshers []*model.Smesher, total int64, err error) {
 	layerStart, layerEnd := e.getEpochLayers(epochNum)
-	filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
+	filter := &bson.D{{Key: "layer", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
 	return e.getSmeshers(ctx, filter, e.getFindOptions("id", page, perPage).SetProjection(bson.D{
-		{"id", 0},
-		{"layer", 0},
-		{"coinbase", 0},
-		{"prevAtx", 0},
-		{"cSize", 0},
+		{Key: "id", Value: 0},
+		{Key: "layer", Value: 0},
+		{Key: "coinbase", Value: 0},
+		{Key: "prevAtx", Value: 0},
+		{Key: "cSize", Value: 0},
 	}))
 }
 
 // GetEpochRewards returns rewards for the given epoch.
 func (e *Service) GetEpochRewards(ctx context.Context, epochNum int, page, perPage int64) (rewards []*model.Reward, total int64, err error) {
 	layerStart, layerEnd := e.getEpochLayers(epochNum)
-	filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
+	filter := &bson.D{{Key: "layer", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
 	return e.getRewards(ctx, filter, e.getFindOptions("smesher", page, perPage))
 }
 
 // GetEpochActivations returns activations for the given epoch.
 func (e *Service) GetEpochActivations(ctx context.Context, epochNum int, page, perPage int64) (atxs []*model.Activation, total int64, err error) {
 	layerStart, layerEnd := e.getEpochLayers(epochNum)
-	filter := &bson.D{{"layer", bson.D{{"$gte", layerStart}, {"$lte", layerEnd}}}}
+	filter := &bson.D{{Key: "layer", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
 	return e.getActivations(ctx, filter, e.getFindOptions("id", page, perPage))
 }

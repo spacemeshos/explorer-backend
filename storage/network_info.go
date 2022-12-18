@@ -17,7 +17,7 @@ import (
 func (s *Storage) GetNetworkInfo(parent context.Context) (*model.NetworkInfo, error) {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	cursor, err := s.db.Collection("networkinfo").Find(ctx, bson.D{{"id", 1}})
+	cursor, err := s.db.Collection("networkinfo").Find(ctx, bson.D{{Key: "id", Value: 1}})
 	if err != nil {
 		log.Info("GetNetworkInfo: %v", err)
 		return nil, err
@@ -49,23 +49,23 @@ func (s *Storage) GetNetworkInfo(parent context.Context) (*model.NetworkInfo, er
 func (s *Storage) SaveOrUpdateNetworkInfo(parent context.Context, in *model.NetworkInfo) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("networkinfo").UpdateOne(ctx, bson.D{{"id", 1}}, bson.D{
-		{"$set", bson.D{
-			{"id", 1},
-			{"genesisid", in.GenesisId},
-			{"genesis", in.GenesisTime},
-			{"layers", in.EpochNumLayers},
-			{"maxtx", in.MaxTransactionsPerSecond},
-			{"duration", in.LayerDuration},
-			{"lastlayer", in.LastLayer},
-			{"lastlayerts", in.LastLayerTimestamp},
-			{"lastapprovedlayer", in.LastApprovedLayer},
-			{"lastconfirmedlayer", in.LastConfirmedLayer},
-			{"connectedpeers", in.ConnectedPeers},
-			{"issynced", in.IsSynced},
-			{"syncedlayer", in.SyncedLayer},
-			{"toplayer", in.TopLayer},
-			{"verifiedlayer", in.VerifiedLayer},
+	_, err := s.db.Collection("networkinfo").UpdateOne(ctx, bson.D{{Key: "id", Value: 1}}, bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "id", Value: 1},
+			{Key: "genesisid", Value: in.GenesisId},
+			{Key: "genesis", Value: in.GenesisTime},
+			{Key: "layers", Value: in.EpochNumLayers},
+			{Key: "maxtx", Value: in.MaxTransactionsPerSecond},
+			{Key: "duration", Value: in.LayerDuration},
+			{Key: "lastlayer", Value: in.LastLayer},
+			{Key: "lastlayerts", Value: in.LastLayerTimestamp},
+			{Key: "lastapprovedlayer", Value: in.LastApprovedLayer},
+			{Key: "lastconfirmedlayer", Value: in.LastConfirmedLayer},
+			{Key: "connectedpeers", Value: in.ConnectedPeers},
+			{Key: "issynced", Value: in.IsSynced},
+			{Key: "syncedlayer", Value: in.SyncedLayer},
+			{Key: "toplayer", Value: in.TopLayer},
+			{Key: "verifiedlayer", Value: in.VerifiedLayer},
 		}},
 	}, options.Update().SetUpsert(true))
 	if err != nil {

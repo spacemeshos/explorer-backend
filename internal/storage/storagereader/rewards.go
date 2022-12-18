@@ -41,7 +41,7 @@ func (s *Reader) GetReward(ctx context.Context, rewardID string) (*model.Reward,
 	if err != nil {
 		return nil, fmt.Errorf("error create objectID from string `%s`: %w", rewardID, err)
 	}
-	cursor, err := s.db.Collection("rewards").Find(ctx, &bson.D{{"_id", id}})
+	cursor, err := s.db.Collection("rewards").Find(ctx, &bson.D{{Key: "_id", Value: id}})
 	if err != nil {
 		return nil, fmt.Errorf("error get reward `%s`: %w", rewardID, err)
 	}

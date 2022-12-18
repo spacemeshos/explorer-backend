@@ -13,7 +13,7 @@ import (
 
 // GetBlock returns block by id.
 func (e *Service) GetBlock(ctx context.Context, blockID string) (*model.Block, error) {
-	blocks, _, err := e.getBlocks(ctx, &bson.D{{"id", strings.ToLower(blockID)}}, options.Find().SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
+	blocks, _, err := e.getBlocks(ctx, &bson.D{{Key: "id", Value: strings.ToLower(blockID)}}, options.Find().SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
 	if err != nil {
 		return nil, fmt.Errorf("error get block by `%s`: %w", blockID, err)
 	}

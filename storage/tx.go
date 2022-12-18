@@ -17,13 +17,13 @@ import (
 
 func (s *Storage) InitTransactionsStorage(ctx context.Context) error {
 	models := []mongo.IndexModel{
-		{Keys: bson.D{{"id", 1}}, Options: options.Index().SetName("idIndex").SetUnique(true)},
-		{Keys: bson.D{{"layer", 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)},
-		{Keys: bson.D{{"block", 1}}, Options: options.Index().SetName("blockIndex").SetUnique(false)},
-		{Keys: bson.D{{"sender", 1}}, Options: options.Index().SetName("senderIndex").SetUnique(false)},
-		{Keys: bson.D{{"receiver", 1}}, Options: options.Index().SetName("receiverIndex").SetUnique(false)},
-		{Keys: bson.D{{"timestamp", -1}}, Options: options.Index().SetName("timestampIndex").SetUnique(false)},
-		{Keys: bson.D{{"counter", -1}}, Options: options.Index().SetName("counterIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "id", Value: 1}}, Options: options.Index().SetName("idIndex").SetUnique(true)},
+		{Keys: bson.D{{Key: "layer", Value: 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "block", Value: 1}}, Options: options.Index().SetName("blockIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "sender", Value: 1}}, Options: options.Index().SetName("senderIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "receiver", Value: 1}}, Options: options.Index().SetName("receiverIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "timestamp", Value: -1}}, Options: options.Index().SetName("timestampIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "counter", Value: -1}}, Options: options.Index().SetName("counterIndex").SetUnique(false)},
 	}
 	_, err := s.db.Collection("txs").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(20*time.Second))
 	return err
@@ -81,13 +81,13 @@ func (s *Storage) GetTransactionsAmount(parent context.Context, query *bson.D) i
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	matchStage := bson.D{
-		{"$match", query},
+		{Key: "$match", Value: query},
 	}
 	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", ""},
-			{"amount", bson.D{
-				{"$sum", "$amount"},
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "amount", Value: bson.D{
+				{Key: "$sum", Value: "$amount"},
 			}},
 		}},
 	}
@@ -110,7 +110,7 @@ func (s *Storage) GetTransactionsAmount(parent context.Context, query *bson.D) i
 func (s *Storage) IsTransactionExists(parent context.Context, txId string) bool {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	count, err := s.db.Collection("txs").CountDocuments(ctx, bson.D{{"id", txId}})
+	count, err := s.db.Collection("txs").CountDocuments(ctx, bson.D{{Key: "id", Value: txId}})
 	if err != nil {
 		log.Info("IsTransactionExists: %v", err)
 		return false
@@ -142,25 +142,25 @@ func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction)
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	_, err := s.db.Collection("txs").InsertOne(ctx, bson.D{
-		{"id", in.Id},
-		{"layer", in.Layer},
-		{"block", in.Block},
-		{"blockIndex", in.BlockIndex},
-		{"index", in.Index},
-		{"state", in.State},
-		{"timestamp", in.Timestamp},
-		{"gasProvided", in.GasProvided},
-		{"gasPrice", in.GasPrice},
-		{"gasUsed", in.GasUsed},
-		{"fee", in.Fee},
-		{"amount", in.Amount},
-		{"counter", in.Counter},
-		{"type", in.Type},
-		{"signature", in.Signature},
-		{"pubKey", in.PublicKey},
-		{"sender", in.Sender},
-		{"receiver", in.Receiver},
-		{"svmData", in.SvmData},
+		{Key: "id", Value: in.Id},
+		{Key: "layer", Value: in.Layer},
+		{Key: "block", Value: in.Block},
+		{Key: "blockIndex", Value: in.BlockIndex},
+		{Key: "index", Value: in.Index},
+		{Key: "state", Value: in.State},
+		{Key: "timestamp", Value: in.Timestamp},
+		{Key: "gasProvided", Value: in.GasProvided},
+		{Key: "gasPrice", Value: in.GasPrice},
+		{Key: "gasUsed", Value: in.GasUsed},
+		{Key: "fee", Value: in.Fee},
+		{Key: "amount", Value: in.Amount},
+		{Key: "counter", Value: in.Counter},
+		{Key: "type", Value: in.Type},
+		{Key: "signature", Value: in.Signature},
+		{Key: "pubKey", Value: in.PublicKey},
+		{Key: "sender", Value: in.Sender},
+		{Key: "receiver", Value: in.Receiver},
+		{Key: "svmData", Value: in.SvmData},
 	})
 	if err != nil {
 		log.Info("SaveTransaction: %v", err)
@@ -173,25 +173,25 @@ func (s *Storage) SaveTransactions(parent context.Context, in map[string]*model.
 	defer cancel()
 	for _, tx := range in {
 		_, err := s.db.Collection("txs").InsertOne(ctx, bson.D{
-			{"id", tx.Id},
-			{"layer", tx.Layer},
-			{"block", tx.Block},
-			{"blockIndex", tx.BlockIndex},
-			{"index", tx.Index},
-			{"state", tx.State},
-			{"timestamp", tx.Timestamp},
-			{"gasProvided", tx.GasProvided},
-			{"gasPrice", tx.GasPrice},
-			{"gasUsed", tx.GasUsed},
-			{"fee", tx.Fee},
-			{"amount", tx.Amount},
-			{"counter", tx.Counter},
-			{"type", tx.Type},
-			{"signature", tx.Signature},
-			{"pubKey", tx.PublicKey},
-			{"sender", tx.Sender},
-			{"receiver", tx.Receiver},
-			{"svmData", tx.SvmData},
+			{Key: "id", Value: tx.Id},
+			{Key: "layer", Value: tx.Layer},
+			{Key: "block", Value: tx.Block},
+			{Key: "blockIndex", Value: tx.BlockIndex},
+			{Key: "index", Value: tx.Index},
+			{Key: "state", Value: tx.State},
+			{Key: "timestamp", Value: tx.Timestamp},
+			{Key: "gasProvided", Value: tx.GasProvided},
+			{Key: "gasPrice", Value: tx.GasPrice},
+			{Key: "gasUsed", Value: tx.GasUsed},
+			{Key: "fee", Value: tx.Fee},
+			{Key: "amount", Value: tx.Amount},
+			{Key: "counter", Value: tx.Counter},
+			{Key: "type", Value: tx.Type},
+			{Key: "signature", Value: tx.Signature},
+			{Key: "pubKey", Value: tx.PublicKey},
+			{Key: "sender", Value: tx.Sender},
+			{Key: "receiver", Value: tx.Receiver},
+			{Key: "svmData", Value: tx.SvmData},
 		})
 		if err != nil {
 			log.Info("SaveTransactions: %v", err)
@@ -204,13 +204,13 @@ func (s *Storage) SaveTransactions(parent context.Context, in map[string]*model.
 func (s *Storage) UpdateTransaction(parent context.Context, in *model.TransactionReceipt) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("txs").UpdateOne(ctx, bson.D{{"id", in.Id}}, bson.D{
-		{"$set", bson.D{
-			{"index", in.Index},
-			{"state", model.GetTransactionStateFromResult(in.Result)},
-			{"gasUsed", in.GasUsed},
-			{"fee", in.Fee},
-			{"svmData", in.SvmData},
+	_, err := s.db.Collection("txs").UpdateOne(ctx, bson.D{{Key: "id", Value: in.Id}}, bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "index", Value: in.Index},
+			{Key: "state", Value: model.GetTransactionStateFromResult(in.Result)},
+			{Key: "gasUsed", Value: in.GasUsed},
+			{Key: "fee", Value: in.Fee},
+			{Key: "svmData", Value: in.SvmData},
 		}},
 	})
 	if err != nil {

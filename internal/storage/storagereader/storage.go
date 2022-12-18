@@ -40,7 +40,7 @@ func NewStorageReader(ctx context.Context, dbURL string, dbName string) (*Reader
 
 // GetNetworkInfo returns the network info matching the query.
 func (s *Reader) GetNetworkInfo(ctx context.Context) (*model.NetworkInfo, error) {
-	cursor, err := s.db.Collection("networkinfo").Find(ctx, bson.D{{"id", 1}})
+	cursor, err := s.db.Collection("networkinfo").Find(ctx, bson.D{{Key: "id", Value: 1}})
 	if err != nil {
 		return nil, fmt.Errorf("error get network info: %s", err)
 	}

@@ -24,7 +24,7 @@ func (e *Service) GetReward(ctx context.Context, rewardID string) (*model.Reward
 
 // GetRewards returns rewards by filter.
 func (e *Service) GetRewards(ctx context.Context, page, perPage int64) ([]*model.Reward, int64, error) {
-	return e.getRewards(ctx, &bson.D{}, options.Find().SetSort(bson.D{{"layer", -1}}).SetLimit(perPage).SetSkip((page-1)*perPage))
+	return e.getRewards(ctx, &bson.D{}, options.Find().SetSort(bson.D{{Key: "layer", Value: -1}}).SetLimit(perPage).SetSkip((page-1)*perPage))
 }
 
 func (e *Service) getRewards(ctx context.Context, filter *bson.D, options *options.FindOptions) (rewards []*model.Reward, total int64, err error) {

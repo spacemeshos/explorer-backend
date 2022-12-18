@@ -67,8 +67,6 @@ func (c *Collector) globalStatePump() error {
 			c.listener.OnTransactionReceipt(receipt)
 		}
 	}
-
-	return nil
 }
 
 /*
