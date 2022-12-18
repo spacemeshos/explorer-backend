@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"github.com/spacemeshos/go-spacemesh/log"
 

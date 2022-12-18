@@ -17,8 +17,8 @@ func (e *Service) GetApps(ctx context.Context, page, pageSize int64) (apps []*mo
 
 // GetApp returns app by address.
 func (e *Service) GetApp(ctx context.Context, appID string) (*model.App, error) {
-	filter := &bson.D{{"address", appID}}
-	apps, _, err := e.getApps(ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
+	filter := &bson.D{{Key: "address", Value: appID}}
+	apps, _, err := e.getApps(ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
 	if err != nil {
 		return nil, fmt.Errorf("error find app: %w", err)
 	}

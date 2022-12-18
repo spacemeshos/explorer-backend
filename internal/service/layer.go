@@ -18,7 +18,7 @@ func (e *Service) GetCurrentLayer(ctx context.Context) (*model.Layer, error) {
 	loadTime := e.currentLayerLoaded
 	e.currentLayerMU.RUnlock()
 	if layer == nil || loadTime.Add(e.cacheTTL).Unix() < time.Now().Unix() {
-		layers, err := e.storage.GetLayers(ctx, &bson.D{}, options.Find().SetSort(bson.D{{"number", -1}}).SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
+		layers, err := e.storage.GetLayers(ctx, &bson.D{}, options.Find().SetSort(bson.D{{Key: "number", Value: -1}}).SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
 		if err != nil {
 			return nil, fmt.Errorf("error get layers: %s", err)
 		}
@@ -49,7 +49,7 @@ func (e *Service) GetLayer(ctx context.Context, layerNum int) (*model.Layer, err
 
 // GetLayerByHash returns layer by hash.
 func (e *Service) GetLayerByHash(ctx context.Context, layerHash string) (*model.Layer, error) {
-	layers, err := e.storage.GetLayers(ctx, &bson.D{{"hash", layerHash}})
+	layers, err := e.storage.GetLayers(ctx, &bson.D{{Key: "hash", Value: layerHash}})
 	if err != nil {
 		return nil, fmt.Errorf("error get layer by hash `%s`: %w", layerHash, err)
 	}
@@ -74,32 +74,32 @@ func (e *Service) GetLayers(ctx context.Context, page, perPage int64) (layers []
 
 // GetLayerTransactions returns transactions for layer.
 func (e *Service) GetLayerTransactions(ctx context.Context, layerNum int, page, perPage int64) (txs []*model.Transaction, total int64, err error) {
-	return e.getTransactions(ctx, &bson.D{{"layer", layerNum}}, e.getFindOptions("id", page, perPage))
+	return e.getTransactions(ctx, &bson.D{{Key: "layer", Value: layerNum}}, e.getFindOptions("id", page, perPage))
 }
 
 // GetLayerSmeshers returns smeshers for layer.
 func (e *Service) GetLayerSmeshers(ctx context.Context, layerNum int, page, perPage int64) (smeshers []*model.Smesher, total int64, err error) {
-	filter := &bson.D{{"layer", layerNum}}
+	filter := &bson.D{{Key: "layer", Value: layerNum}}
 	return e.getSmeshers(ctx, filter, e.getFindOptions("id", page, perPage).SetProjection(bson.D{
-		{"id", 0},
-		{"layer", 0},
-		{"coinbase", 0},
-		{"prevAtx", 0},
-		{"cSize", 0},
+		{Key: "id", Value: 0},
+		{Key: "layer", Value: 0},
+		{Key: "coinbase", Value: 0},
+		{Key: "prevAtx", Value: 0},
+		{Key: "cSize", Value: 0},
 	}))
 }
 
 // GetLayerRewards returns rewards for layer.
 func (e *Service) GetLayerRewards(ctx context.Context, layerNum int, page, perPage int64) (rewards []*model.Reward, total int64, err error) {
-	return e.getRewards(ctx, &bson.D{{"layer", layerNum}}, e.getFindOptions("smesher", page, perPage))
+	return e.getRewards(ctx, &bson.D{{Key: "layer", Value: layerNum}}, e.getFindOptions("smesher", page, perPage))
 }
 
 // GetLayerActivations returns activations for layer.
 func (e *Service) GetLayerActivations(ctx context.Context, layerNum int, page, perPage int64) (atxs []*model.Activation, total int64, err error) {
-	return e.getActivations(ctx, &bson.D{{"layer", layerNum}}, e.getFindOptions("id", page, perPage))
+	return e.getActivations(ctx, &bson.D{{Key: "layer", Value: layerNum}}, e.getFindOptions("id", page, perPage))
 }
 
 // GetLayerBlocks returns blocks for layer.
 func (e *Service) GetLayerBlocks(ctx context.Context, layerNum int, page, perPage int64) (blocks []*model.Block, total int64, err error) {
-	return e.getBlocks(ctx, &bson.D{{"layer", layerNum}}, e.getFindOptions("id", page, perPage))
+	return e.getBlocks(ctx, &bson.D{{Key: "layer", Value: layerNum}}, e.getFindOptions("id", page, perPage))
 }

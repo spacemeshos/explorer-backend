@@ -35,7 +35,7 @@ func (s *Reader) GetLayers(ctx context.Context, query *bson.D, opts ...*options.
 
 // GetLayer returns the layer matching the query.
 func (s *Reader) GetLayer(ctx context.Context, layerNumber int) (*model.Layer, error) {
-	cursor, err := s.db.Collection("layers").Find(ctx, &bson.D{{"number", layerNumber}})
+	cursor, err := s.db.Collection("layers").Find(ctx, &bson.D{{Key: "number", Value: layerNumber}})
 	if err != nil {
 		return nil, fmt.Errorf("error get layer `%d`: %w", layerNumber, err)
 	}

@@ -41,12 +41,12 @@ func (e *Service) GetSmeshers(ctx context.Context, page, perPage int64) (smesher
 
 // GetSmesherActivations returns smesher activations by filter.
 func (e *Service) GetSmesherActivations(ctx context.Context, smesherID string, page, perPage int64) (atxs []*model.Activation, total int64, err error) {
-	return e.getActivations(ctx, &bson.D{{"smesher", smesherID}}, e.getFindOptions("id", page, perPage))
+	return e.getActivations(ctx, &bson.D{{Key: "smesher", Value: smesherID}}, e.getFindOptions("id", page, perPage))
 }
 
 // GetSmesherRewards returns smesher rewards by filter.
 func (e *Service) GetSmesherRewards(ctx context.Context, smesherID string, page, perPage int64) (rewards []*model.Reward, total int64, err error) {
-	return e.getRewards(ctx, &bson.D{{"smesher", smesherID}}, e.getFindOptions("layer", page, perPage))
+	return e.getRewards(ctx, &bson.D{{Key: "smesher", Value: smesherID}}, e.getFindOptions("layer", page, perPage))
 }
 
 // CountSmesherRewards returns smesher rewards count by filter.
@@ -72,7 +72,7 @@ func (e *Service) getSmeshers(ctx context.Context, filter *bson.D, options *opti
 	if total == 0 {
 		return []*model.Smesher{}, 0, nil
 	}
-	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{{"id", bson.M{"$in": smeshersList}}})
+	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{{Key: "id", Value: bson.M{"$in": smeshersList}}})
 	if err != nil {
 		return nil, 0, fmt.Errorf("error load smeshers: %w", err)
 	}

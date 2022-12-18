@@ -34,7 +34,7 @@ func (s *Reader) GetEpochs(ctx context.Context, query *bson.D, opts ...*options.
 
 // GetEpoch returns the epoch matching the query.
 func (s *Reader) GetEpoch(ctx context.Context, epochNumber int) (*model.Epoch, error) {
-	cursor, err := s.db.Collection("epochs").Find(ctx, &bson.D{{"number", epochNumber}})
+	cursor, err := s.db.Collection("epochs").Find(ctx, &bson.D{{Key: "number", Value: epochNumber}})
 	if err != nil {
 		return nil, fmt.Errorf("error get epoch `%d`: %w", epochNumber, err)
 	}

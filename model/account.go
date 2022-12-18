@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 
-	"github.com/spacemeshos/address"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 )
 
@@ -43,15 +42,4 @@ func NewAccount(in *pb.Account) *Account {
 		Balance: in.GetStateCurrent().GetBalance().GetValue(),
 		Counter: in.GetStateCurrent().GetCounter(),
 	}
-}
-
-// ToCheckedAddress Hex returns an EIP55-compliant hex string representation of the address.
-// deprecated, should be removed with new routing.
-// Deprecated.
-func ToCheckedAddress(a string) string {
-	addr, err := address.StringToAddress(a)
-	if err != nil {
-		return ""
-	}
-	return addr.String()
 }

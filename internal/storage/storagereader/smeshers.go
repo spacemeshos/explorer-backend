@@ -37,7 +37,7 @@ func (s *Reader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*option
 
 // GetSmesher returns the smesher matching the query.
 func (s *Reader) GetSmesher(ctx context.Context, smesherID string) (*model.Smesher, error) {
-	cursor, err := s.db.Collection("smeshers").Find(ctx, &bson.D{{"id", smesherID}})
+	cursor, err := s.db.Collection("smeshers").Find(ctx, &bson.D{{Key: "id", Value: smesherID}})
 	if err != nil {
 		return nil, fmt.Errorf("error get smesher `%s`: %w", smesherID, err)
 	}
@@ -53,18 +53,18 @@ func (s *Reader) GetSmesher(ctx context.Context, smesherID string) (*model.Smesh
 
 // CountSmesherRewards returns the number of smesher rewards matching the query.
 func (s *Reader) CountSmesherRewards(ctx context.Context, smesherID string) (total, count int64, err error) {
-	matchStage := bson.D{{"$match", bson.D{{"smesher", smesherID}}}}
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "smesher", Value: smesherID}}}}
 	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", ""},
-			{"total", bson.D{
-				{"$sum", "$total"},
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "total", Value: bson.D{
+				{Key: "$sum", Value: "$total"},
 			}},
-			{"layerReward", bson.D{
-				{"$sum", "$layerReward"},
+			{Key: "layerReward", Value: bson.D{
+				{Key: "$sum", Value: "$layerReward"},
 			}},
-			{"count", bson.D{
-				{"$sum", 1},
+			{Key: "count", Value: bson.D{
+				{Key: "$sum", Value: 1},
 			}},
 		}},
 	}

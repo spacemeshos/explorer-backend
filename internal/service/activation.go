@@ -18,8 +18,8 @@ func (e *Service) GetActivations(ctx context.Context, page, perPage int64) (atxs
 
 // GetActivation returns atx by id.
 func (e *Service) GetActivation(ctx context.Context, activationID string) (*model.Activation, error) {
-	filter := &bson.D{{"id", strings.ToLower(activationID)}}
-	atx, total, err := e.getActivations(ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{"_id", 0}}))
+	filter := &bson.D{{Key: "id", Value: strings.ToLower(activationID)}}
+	atx, total, err := e.getActivations(ctx, filter, options.Find().SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
 	if err != nil {
 		return nil, fmt.Errorf("error find atx: %w", err)
 	}

@@ -31,24 +31,24 @@ func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*option
 
 // GetAccountSummary returns the summary of the accounts matching the query. Not all accounts from api have filled this data.
 func (s *Reader) GetAccountSummary(ctx context.Context, address string) (*model.AccountSummary, error) {
-	matchStage := bson.D{{"$match", bson.D{{"address", address}}}}
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "address", Value: address}}}}
 	groupStage := bson.D{
-		{"$group", bson.D{
-			{"_id", ""},
-			{"sent", bson.D{
-				{"$sum", "$sent"},
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "sent", Value: bson.D{
+				{Key: "$sum", Value: "$sent"},
 			}},
-			{"received", bson.D{
-				{"$sum", "$received"},
+			{Key: "received", Value: bson.D{
+				{Key: "$sum", Value: "$received"},
 			}},
-			{"awards", bson.D{
-				{"$sum", "$reward"},
+			{Key: "awards", Value: bson.D{
+				{Key: "$sum", Value: "$reward"},
 			}},
-			{"fees", bson.D{
-				{"$sum", "$fee"},
+			{Key: "fees", Value: bson.D{
+				{Key: "$sum", Value: "$fee"},
 			}},
-			{"layer", bson.D{
-				{"$max", "$layer"},
+			{Key: "layer", Value: bson.D{
+				{Key: "$max", Value: "$layer"},
 			}},
 		}},
 	}
