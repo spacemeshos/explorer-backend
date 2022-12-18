@@ -38,9 +38,9 @@ func (e *Service) Search(ctx context.Context, search string) (string, error) {
 		if smesher, _ := e.GetSmesher(ctx, search); smesher != nil {
 			return "/smeshers/" + search, nil
 		}
-		if layer, _ := e.GetLayerByHash(ctx, search); layer != nil {
-			return fmt.Sprintf("/smeshers/%d", layer.Number), nil
-		}
+		//if layer, _ := e.GetLayerByHash(ctx, search); layer != nil {
+		//	return fmt.Sprintf("/smeshers/%d", layer.Number), nil
+		//}
 	default:
 		if reward, _ := e.GetReward(ctx, search); reward != nil {
 			return "rewards/" + search, nil

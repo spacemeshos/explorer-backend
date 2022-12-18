@@ -25,7 +25,7 @@ type Layer struct {
 
 type LayerService interface {
 	GetLayer(ctx context.Context, layerNum int) (*Layer, error)
-	GetLayerByHash(ctx context.Context, layerHash string) (*Layer, error)
+	//GetLayerByHash(ctx context.Context, layerHash string) (*Layer, error)
 	GetLayers(ctx context.Context, page, perPage int64) (layers []*Layer, total int64, err error)
 	GetLayerTransactions(ctx context.Context, layerNum int, pageNum, pageSize int64) (txs []*Transaction, total int64, err error)
 	GetLayerSmeshers(ctx context.Context, layerNum int, pageNum, pageSize int64) (smeshers []*Smesher, total int64, err error)

@@ -48,16 +48,16 @@ func (e *Service) GetLayer(ctx context.Context, layerNum int) (*model.Layer, err
 }
 
 // GetLayerByHash returns layer by hash.
-func (e *Service) GetLayerByHash(ctx context.Context, layerHash string) (*model.Layer, error) {
-	layers, err := e.storage.GetLayers(ctx, &bson.D{{Key: "hash", Value: layerHash}})
-	if err != nil {
-		return nil, fmt.Errorf("error get layer by hash `%s`: %w", layerHash, err)
-	}
-	if len(layers) == 0 {
-		return nil, ErrNotFound
-	}
-	return layers[0], nil
-}
+//func (e *Service) GetLayerByHash(ctx context.Context, layerHash string) (*model.Layer, error) {
+//	layers, err := e.storage.GetLayers(ctx, &bson.D{{Key: "hash", Value: layerHash}})
+//	if err != nil {
+//		return nil, fmt.Errorf("error get layer by hash `%s`: %w", layerHash, err)
+//	}
+//	if len(layers) == 0 {
+//		return nil, ErrNotFound
+//	}
+//	return layers[0], nil
+//}
 
 // GetLayers returns layers.
 func (e *Service) GetLayers(ctx context.Context, page, perPage int64) (layers []*model.Layer, total int64, err error) {
