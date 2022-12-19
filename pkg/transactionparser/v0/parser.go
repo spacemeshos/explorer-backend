@@ -22,10 +22,10 @@ const (
 func ParseTransaction(rawTx []byte, method uint32) (transaction.DecodedTransactioner, error) {
 	switch method {
 	case methodSpawn:
-		var spawnMultisigTx SpawnMultisigTransaction
-		if err := codec.Decode(rawTx, &spawnMultisigTx); err == nil {
-			return &spawnMultisigTx, nil
-		}
+		//var spawnMultisigTx SpawnMultisigTransaction
+		//if err := codec.Decode(rawTx, &spawnMultisigTx); err == nil {
+		//	return &spawnMultisigTx, nil
+		//}
 		var spawnTx SpawnTransaction
 		if err := codec.Decode(rawTx, &spawnTx); err == nil {
 			return &spawnTx, nil
