@@ -18,10 +18,6 @@ import (
 	"github.com/spacemeshos/explorer-backend/test/testutils"
 )
 
-const (
-	testAPIServiceDB = "explorer_test"
-)
-
 // TestAPIService wrapper over fake api service.
 type TestAPIService struct {
 	Storage *storage.Storage

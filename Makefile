@@ -44,11 +44,11 @@ endif
 
 .PHONY: lint-ci
 lint-ci:
-	golangci-lint run --new-from-rev=origin/master --config .golangci.yml
+	golangci-lint run ./...
 
 .PHONY: lint
 lint:
-	golangci-lint run --new-from-rev=master --config .golangci.yml
+	golangci-lint run ./...
 
 .PHONY: lint-fix
 lint-fix:

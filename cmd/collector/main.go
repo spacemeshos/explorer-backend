@@ -90,12 +90,18 @@ func main() {
 
 		pidFile, err = os.OpenFile("/var/run/explorer-collector", os.O_RDWR|os.O_CREATE, 0644)
 		if err == nil {
-			pidFile.Write([]byte("started"))
-			pidFile.Close()
+			_, err := pidFile.Write([]byte("started"))
+			if err != nil {
+				return err
+			}
+			err = pidFile.Close()
+			if err != nil {
+				return err
+			}
 		}
 
 		go func() {
-			_ = <-sigs
+			<-sigs
 			os.Remove("/var/run/explorer-collector")
 			os.Exit(0)
 		}()
