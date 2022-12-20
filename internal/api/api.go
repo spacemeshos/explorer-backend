@@ -49,7 +49,7 @@ func Init(appService service.AppService) *Api {
 	}
 }
 
-func (a *Api) Run(address string) error {
+func (a *Api) Run(address string) {
 	log.Info("server is running. For exit <CTRL-c>")
 	if err := a.Echo.Start(address); err != nil {
 		log.Error("server stopped: %s", err)
@@ -58,13 +58,10 @@ func (a *Api) Run(address string) error {
 	sysSignal := make(chan os.Signal, 1)
 	signal.Notify(sysSignal, syscall.SIGINT, syscall.SIGTERM)
 
-	select {
-	case s := <-sysSignal:
-		log.Info("exiting, got signal %v", s)
-		if err := a.Shutdown(); err != nil {
-			log.Error("error on shutdown: %v", err)
-		}
-		return nil
+	s := <-sysSignal
+	log.Info("exiting, got signal %v", s)
+	if err := a.Shutdown(); err != nil {
+		log.Error("error on shutdown: %v", err)
 	}
 }
 

@@ -16,12 +16,37 @@ import (
 )
 
 func (s *Storage) InitAccountsStorage(ctx context.Context) error {
-	_, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "address", Value: 1}}, Options: options.Index().SetName("addressIndex").SetUnique(true)})
-	_, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "created", Value: 1}}, Options: options.Index().SetName("createIndex").SetUnique(false)})
-	_, err = s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "layer", Value: -1}}, Options: options.Index().SetName("modifiedIndex").SetUnique(false)})
-	_, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "address", Value: 1}}, Options: options.Index().SetName("addressIndex").SetUnique(false)})
-	_, err = s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "layer", Value: 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)})
-	return err
+	if _, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "address", Value: 1}},
+		Options: options.Index().SetName("addressIndex").SetUnique(true)}); err != nil {
+		return err
+	}
+
+	if _, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "created", Value: 1}},
+		Options: options.Index().SetName("createIndex").SetUnique(false)}); err != nil {
+		return err
+	}
+
+	if _, err := s.db.Collection("accounts").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "layer", Value: -1}},
+		Options: options.Index().SetName("modifiedIndex").SetUnique(false)}); err != nil {
+		return err
+	}
+
+	if _, err := s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "address", Value: 1}},
+		Options: options.Index().SetName("addressIndex").SetUnique(false)}); err != nil {
+		return err
+	}
+
+	if _, err := s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "layer", Value: 1}},
+		Options: options.Index().SetName("layerIndex").SetUnique(false)}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Storage) GetAccount(parent context.Context, query *bson.D) (*model.Account, error) {
@@ -80,16 +105,16 @@ func (s *Storage) GetAccounts(parent context.Context, query *bson.D, opts ...*op
 func (s *Storage) AddAccount(parent context.Context, layer uint32, address string, balance uint64) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
+	_, _ = s.db.Collection("accounts").InsertOne(ctx, bson.D{
 		{Key: "address", Value: address},
 		{Key: "created", Value: layer},
 		{Key: "layer", Value: layer},
 		{Key: "balance", Value: balance},
 		{Key: "counter", Value: uint64(0)},
 	})
-	if err != nil {
-		//        log.Info("AddAccount: %v", err)
-	}
+	//if err != nil {
+	//        log.Info("AddAccount: %v", err)
+	//}
 	return nil
 }
 

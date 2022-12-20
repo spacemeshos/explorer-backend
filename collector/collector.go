@@ -1,6 +1,7 @@
 package collector
 
 import (
+	"google.golang.org/grpc/credentials/insecure"
 	"time"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
@@ -60,7 +61,7 @@ func (c *Collector) Run() {
 		log.Info("dial node %v", c.apiUrl)
 		c.connecting = true
 
-		conn, err := grpc.Dial(c.apiUrl, grpc.WithInsecure())
+		conn, err := grpc.Dial(c.apiUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Error("cannot dial node: %v", err)
 			time.Sleep(1 * time.Second)
@@ -80,10 +81,25 @@ func (c *Collector) Run() {
 			continue
 		}
 
-		go c.syncStatusPump()
+		go func() {
+			err := c.syncStatusPump()
+			if err != nil {
+				log.Error("cannot start sync status pump: %v", err)
+			}
+		}()
 		//        go c.errorPump()
-		go c.layersPump()
-		go c.globalStatePump()
+		go func() {
+			err := c.layersPump()
+			if err != nil {
+				log.Error("cannot start sync layers pump: %v", err)
+			}
+		}()
+		go func() {
+			err := c.globalStatePump()
+			if err != nil {
+				log.Error("cannot start sync global state pump: %v", err)
+			}
+		}()
 
 		for c.connecting || c.closing || c.online {
 			state := <-c.notify

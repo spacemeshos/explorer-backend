@@ -73,11 +73,6 @@ func main() {
 			log.Info(`network HRP set to "stest"`)
 		}
 
-		if err := newApp(mongoDbURLStringFlag, mongoDbNameStringFlag, listenStringFlag); err != nil {
-			log.Error("error start service", err.Error())
-			return err
-		}
-
 		dbReader, err := storagereader.NewStorageReader(context.Background(), mongoDbURLStringFlag, mongoDbNameStringFlag)
 		if err != nil {
 			return fmt.Errorf("error init storage reader: %w", err)
@@ -87,9 +82,7 @@ func main() {
 		server := api.Init(service)
 
 		log.Info(fmt.Sprintf("starting server on %s", listenStringFlag))
-		if err = server.Run(listenStringFlag); err != nil {
-			return fmt.Errorf("error start service: %w", err)
-		}
+		server.Run(listenStringFlag)
 
 		log.Info("server is shutdown")
 		return nil
@@ -101,9 +94,4 @@ func main() {
 	}
 
 	os.Exit(0)
-}
-
-func newApp(mongoDbURL, mongoDbName, address string) error {
-
-	return nil
 }

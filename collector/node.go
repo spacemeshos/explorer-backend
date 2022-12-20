@@ -44,7 +44,11 @@ func (c *Collector) syncStatusPump() error {
 		return err
 	}
 
-	c.syncStart()
+	err = c.syncStart()
+	if err != nil {
+		log.Error("cannot start sync: %v", err)
+		return err
+	}
 
 	for {
 		res, err := stream.Recv()
@@ -75,34 +79,34 @@ func (c *Collector) syncStatusPump() error {
 	}
 }
 
-func (c *Collector) errorPump() error {
-	req := pb.ErrorStreamRequest{}
-
-	log.Info("Start node error pump")
-	defer func() {
-		c.notify <- -streamType_node_Error
-		log.Info("Stop node error pump")
-	}()
-
-	c.notify <- +streamType_node_Error
-
-	stream, err := c.nodeClient.ErrorStream(context.Background(), &req)
-	if err != nil {
-		log.Error("cannot get error stream: %v", err)
-		return err
-	}
-
-	for {
-		res, err := stream.Recv()
-		if err == io.EOF {
-			log.Info("errorPump: EOF")
-			return err
-		}
-		if err != nil {
-			log.Error("cannot receive error: %v", err)
-			return err
-		}
-
-		log.Info("Node error: %v", res.GetError().GetMsg())
-	}
-}
+//func (c *Collector) errorPump() error {
+//	req := pb.ErrorStreamRequest{}
+//
+//	log.Info("Start node error pump")
+//	defer func() {
+//		c.notify <- -streamType_node_Error
+//		log.Info("Stop node error pump")
+//	}()
+//
+//	c.notify <- +streamType_node_Error
+//
+//	stream, err := c.nodeClient.ErrorStream(context.Background(), &req)
+//	if err != nil {
+//		log.Error("cannot get error stream: %v", err)
+//		return err
+//	}
+//
+//	for {
+//		res, err := stream.Recv()
+//		if err == io.EOF {
+//			log.Info("errorPump: EOF")
+//			return err
+//		}
+//		if err != nil {
+//			log.Error("cannot receive error: %v", err)
+//			return err
+//		}
+//
+//		log.Info("Node error: %v", res.GetError().GetMsg())
+//	}
+//}

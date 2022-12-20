@@ -116,7 +116,10 @@ func (s *Storage) Close() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		s.db = nil
-		s.client.Disconnect(ctx)
+		err := s.client.Disconnect(ctx)
+		if err != nil {
+			log.Error("error while disconnecting from database: %v", err)
+		}
 	}
 }
 
@@ -128,7 +131,11 @@ func (s *Storage) OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLa
 	s.NetworkInfo.LayerDuration = uint32(layerDuration)
 	s.postUnitSize = postUnitSize
 
-	s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
+	err := s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("OnNetworkInfo: error %v", err)
+	}
 
 	log.Info("Network Info: id: %s, genesis: %v, epoch layers: %v, max tx: %v, duration: %v",
 		s.NetworkInfo.GenesisId,
@@ -146,7 +153,11 @@ func (s *Storage) OnNodeStatus(connectedPeers uint64, isSynced bool, syncedLayer
 	s.NetworkInfo.TopLayer = topLayer
 	s.NetworkInfo.VerifiedLayer = verifiedLayer
 
-	s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
+	err := s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("OnNodeStatus: error %v", err)
+	}
 }
 
 func (s *Storage) GetEpochLayers(epoch int32) (uint32, uint32) {
@@ -172,7 +183,11 @@ func (s *Storage) OnAccount(in *pb.Account) {
 	if account == nil {
 		return
 	}
-	s.UpdateAccount(context.Background(), account.Address, account.Balance, account.Counter)
+	err := s.UpdateAccount(context.Background(), account.Address, account.Balance, account.Counter)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("OnAccount: error %v", err)
+	}
 }
 
 func (s *Storage) OnReward(in *pb.Reward) {
@@ -187,10 +202,26 @@ func (s *Storage) OnReward(in *pb.Reward) {
 		reward.Space = smesher.CommitmentSize
 	}
 	reward.Timestamp = s.getLayerTimestamp(reward.Layer)
-	s.SaveReward(context.Background(), reward)
-	s.AddAccount(context.Background(), reward.Layer, reward.Coinbase, 0)
+
+	err = s.SaveReward(context.Background(), reward)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("OnReward save: error %v", err)
+	}
+
+	err = s.AddAccount(context.Background(), reward.Layer, reward.Coinbase, 0)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("OnReward add account: error %v", err)
+	}
+
 	//    s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.LayerReward, reward.Total - reward.LayerReward)
-	s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.Total, reward.LayerReward)
+	err = s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.Total, reward.LayerReward)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("OnReward add account reward: error %v", err)
+	}
+
 	s.requestBalanceUpdate(reward.Layer, reward.Coinbase)
 	s.setChangedEpoch(reward.Layer)
 	s.updateEpochs() // trigger epoch stat recalculation todo: optimize this
@@ -198,7 +229,11 @@ func (s *Storage) OnReward(in *pb.Reward) {
 
 func (s *Storage) OnTransactionReceipt(in *pb.TransactionReceipt) {
 	log.Info("OnTransactionReceipt(%+v)", in)
-	s.UpdateTransaction(context.Background(), model.NewTransactionReceipt(in))
+	err := s.UpdateTransaction(context.Background(), model.NewTransactionReceipt(in))
+	//TODO: better error handling
+	if err != nil {
+		log.Error("OnTransactionReceipt: error %v", err)
+	}
 }
 
 func (s *Storage) pushLayer(layer *pb.Layer) {
@@ -235,7 +270,7 @@ func (s *Storage) getAccountsQueue(accounts map[string]bool) int {
 	defer s.accountsLock.Unlock()
 	for layer, accs := range s.accountsQueue {
 		if layer <= s.NetworkInfo.LastConfirmedLayer {
-			for acc, _ := range accs {
+			for acc := range accs {
 				accounts[acc] = true
 			}
 		}
@@ -272,11 +307,23 @@ func (s *Storage) updateLayer(in *pb.Layer) {
 	layer, blocks, atxs, txs := model.NewLayer(in, &s.NetworkInfo)
 	log.Info("updateLayer(%v) -> %v, %v, %v, %v, %v", in.Number.Number, layer.Number, len(blocks), len(atxs), len(txs), utils.BytesToHex(in.Hash))
 	s.updateNetworkStatus(layer)
-	s.SaveOrUpdateBlocks(context.Background(), blocks)
+
+	err := s.SaveOrUpdateBlocks(context.Background(), blocks)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("updateLayer: error %v", err)
+	}
+
 	s.updateActivations(layer, atxs)
 	s.updateTransactions(layer, txs)
 	s.updateLayerRewards(layer)
-	s.SaveOrUpdateLayer(context.Background(), layer)
+
+	err = s.SaveOrUpdateLayer(context.Background(), layer)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("updateLayer: error %v", err)
+	}
+
 	s.setChangedEpoch(layer.Number)
 	s.accountsReady.Signal()
 	s.updateEpochs()
@@ -290,16 +337,40 @@ func (s *Storage) updateNetworkStatus(layer *model.Layer) {
 	} else if layer.Status == int(pb.Layer_LAYER_STATUS_CONFIRMED) {
 		s.NetworkInfo.LastConfirmedLayer = layer.Number
 	}
-	s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
+
+	err := s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("updateNetworkStatus: error %v", err)
+	}
 }
 
 func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation) {
 	log.Info("updateActivations(%v)", len(atxs))
-	s.SaveOrUpdateActivations(context.Background(), atxs)
+	err := s.SaveOrUpdateActivations(context.Background(), atxs)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("updateActivations: error %v", err)
+	}
+
 	for _, atx := range atxs {
-		s.SaveSmesher(context.Background(), atx.GetSmesher(s.postUnitSize))
-		s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
-		s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
+		err := s.SaveSmesher(context.Background(), atx.GetSmesher(s.postUnitSize))
+		//TODO: better error handling
+		if err != nil {
+			log.Error("updateActivations: error %v", err)
+		}
+
+		err = s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
+		//TODO: better error handling
+		if err != nil {
+			log.Error("updateActivations: error %v", err)
+		}
+
+		err = s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
+		//TODO: better error handling
+		if err != nil {
+			log.Error("updateActivations: error %v", err)
+		}
 	}
 }
 
@@ -310,14 +381,34 @@ func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.T
 		if err != nil {
 			continue
 		}
+
 		if tx.Sender != "" {
-			s.AddAccount(context.Background(), layer.Number, tx.Sender, 0)
-			s.AddAccountSent(context.Background(), layer.Number, tx.Sender, tx.Amount)
+			err := s.AddAccount(context.Background(), layer.Number, tx.Sender, 0)
+			//TODO: better error handling
+			if err != nil {
+				log.Error("updateTransactions: error %v", err)
+			}
+
+			err = s.AddAccountSent(context.Background(), layer.Number, tx.Sender, tx.Amount)
+			//TODO: better error handling
+			if err != nil {
+				log.Error("updateTransactions: error %v", err)
+			}
+
 			s.requestBalanceUpdate(layer.Number, tx.Sender)
 		}
 		if tx.Receiver != "" {
-			s.AddAccount(context.Background(), layer.Number, tx.Receiver, 0)
-			s.AddAccountReceived(context.Background(), layer.Number, tx.Receiver, tx.Amount)
+			err := s.AddAccount(context.Background(), layer.Number, tx.Receiver, 0)
+			//TODO: better error handling
+			if err != nil {
+				log.Error("updateTransactions: error %v", err)
+			}
+
+			err = s.AddAccountReceived(context.Background(), layer.Number, tx.Receiver, tx.Amount)
+			//TODO: better error handling
+			if err != nil {
+				log.Error("updateTransactions: error %v", err)
+			}
 			s.requestBalanceUpdate(layer.Number, tx.Receiver)
 		}
 	}
@@ -350,7 +441,12 @@ func (s *Storage) updateEpoch(epochNumber int32, prev *model.Epoch) *model.Epoch
 		epoch.Stats.Current.Circulation = epoch.Stats.Current.Rewards
 		epoch.Stats.Cumulative = epoch.Stats.Current
 	}
-	s.SaveOrUpdateEpoch(context.Background(), epoch)
+	err := s.SaveOrUpdateEpoch(context.Background(), epoch)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("updateEpoch: error %v", err)
+	}
+
 	return epoch
 }
 
@@ -373,7 +469,12 @@ func (s *Storage) updateAccount(address string) {
 		return
 	}
 	log.Info("Update account %v: balance %v, counter %v", address, balance, counter)
-	s.UpdateAccount(context.Background(), address, balance, counter)
+
+	err = s.UpdateAccount(context.Background(), address, balance, counter)
+	//TODO: better error handling
+	if err != nil {
+		log.Error("updateEpoch: error %v", err)
+	}
 }
 
 func (s *Storage) updateLayers() {
@@ -396,7 +497,7 @@ func (s *Storage) updateAccounts() {
 
 		accounts := make(map[string]bool)
 		if s.getAccountsQueue(accounts) > 0 {
-			for address, _ := range accounts {
+			for address := range accounts {
 				s.updateAccount(address)
 			}
 		}
