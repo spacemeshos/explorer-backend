@@ -1,6 +1,7 @@
 package collector
 
 import (
+	"context"
 	"google.golang.org/grpc/credentials/insecure"
 	"time"
 
@@ -26,6 +27,7 @@ type Listener interface {
 	OnAccount(account *pb.Account)
 	OnReward(reward *pb.Reward)
 	OnTransactionReceipt(receipt *pb.TransactionReceipt)
+	GetLastLayer(parent context.Context) uint32
 }
 
 type Collector struct {
@@ -77,6 +79,13 @@ func (c *Collector) Run() {
 		err = c.getNetworkInfo()
 		if err != nil {
 			log.Error("cannot get network info: %v", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		err = c.syncMissingLayers()
+		if err != nil {
+			log.Error("cannot sync missing layers: %v", err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
