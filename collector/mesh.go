@@ -108,9 +108,14 @@ func (c *Collector) syncMissingLayers() error {
 	status, err := c.nodeClient.Status(context.Background(), &pb.StatusRequest{})
 	if err != nil {
 		log.Error("cannot receive node status: %v", err)
+		return err
 	}
 	syncedLayerNum := status.Status.SyncedLayer.Number
 	lastLayer := c.listener.GetLastLayer(context.TODO())
+
+	if syncedLayerNum == lastLayer {
+		return nil
+	}
 
 	layers, err := c.meshClient.LayersQuery(context.Background(), &pb.LayersQueryRequest{
 		StartLayer: &pb.LayerNumber{Number: lastLayer + 1},
