@@ -319,6 +319,10 @@ func (n *nodeServiceWrapper) StatusStream(req *pb.StatusStreamRequest, stream pb
 	}
 }
 
+func (n *nodeServiceWrapper) Status(context.Context, *pb.StatusRequest) (*pb.StatusResponse, error) {
+	return &pb.StatusResponse{Status: &pb.NodeStatus{SyncedLayer: &pb.LayerNumber{Number: 0}}}, nil
+}
+
 func mustParse(str string) []byte {
 	res, err := utils.StringToBytes(str)
 	if err != nil {
