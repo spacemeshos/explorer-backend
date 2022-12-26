@@ -253,7 +253,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 							Address: txContainer.Sender,
 						},
 						GasPrice: txContainer.GasPrice,
-						MaxGas:   txContainer.GasProvided,
+						MaxGas:   txContainer.MaxGas,
 						Nonce: &pb.Nonce{
 							Counter: txContainer.Counter,
 						},
