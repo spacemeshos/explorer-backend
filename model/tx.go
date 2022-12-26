@@ -23,10 +23,10 @@ type Transaction struct {
 	State      int    `json:"state" bson:"state"`
 	Timestamp  uint32 `json:"timestamp" bson:"timestamp"`
 
-	GasProvided uint64 `json:"gasProvided" bson:"gasProvided"`
-	GasPrice    uint64 `json:"gasPrice" bson:"gasPrice"`
-	GasUsed     uint64 `bson:"gasUsed"`        // gas units used by the transaction (gas price in tx)
-	Fee         uint64 `json:"fee" bson:"fee"` // transaction fee charged for the transaction
+	MaxGas   uint64 `json:"maxGas" bson:"maxGas"`
+	GasPrice uint64 `json:"gasPrice" bson:"gasPrice"`
+	GasUsed  uint64 `bson:"gasUsed" json:"gasUsed"` // gas units used by the transaction (gas price in tx)
+	Fee      uint64 `json:"fee" bson:"fee"`         // transaction fee charged for the transaction
 
 	Amount  uint64 `json:"amount" bson:"amount"`   // amount of coin transferred in this tx by sender
 	Counter uint64 `json:"counter" bson:"counter"` // tx counter aka nonce
@@ -75,20 +75,20 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp 
 	}
 
 	tx := &Transaction{
-		Id:          utils.BytesToHex(in.GetId()),
-		Sender:      txDecoded.GetPrincipal().String(),
-		Amount:      txDecoded.GetAmount(),
-		Counter:     txDecoded.GetCounter(),
-		Layer:       layer,
-		Block:       blockID,
-		BlockIndex:  blockIndex,
-		State:       int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
-		Timestamp:   timestamp,
-		GasProvided: in.GetMaxGas(),
-		GasPrice:    txDecoded.GetGasPrice(),
-		Type:        int(txDecoded.GetType()),
-		Signature:   utils.BytesToHex(txDecoded.GetSignature()),
-		Receiver:    txDecoded.GetReceiver().String(),
+		Id:         utils.BytesToHex(in.GetId()),
+		Sender:     txDecoded.GetPrincipal().String(),
+		Amount:     txDecoded.GetAmount(),
+		Counter:    txDecoded.GetCounter(),
+		Layer:      layer,
+		Block:      blockID,
+		BlockIndex: blockIndex,
+		State:      int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
+		Timestamp:  timestamp,
+		MaxGas:     in.GetMaxGas(),
+		GasPrice:   txDecoded.GetGasPrice(),
+		Type:       int(txDecoded.GetType()),
+		Signature:  utils.BytesToHex(txDecoded.GetSignature()),
+		Receiver:   txDecoded.GetReceiver().String(),
 	}
 	keys := make([]string, 0, len(txDecoded.GetPublicKeys()))
 	for i := range txDecoded.GetPublicKeys() {
