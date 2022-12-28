@@ -86,6 +86,7 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp 
 		Timestamp:  timestamp,
 		MaxGas:     in.GetMaxGas(),
 		GasPrice:   txDecoded.GetGasPrice(),
+		Fee:        in.GetMaxGas() * txDecoded.GetGasPrice(),
 		Type:       int(txDecoded.GetType()),
 		Signature:  utils.BytesToHex(txDecoded.GetSignature()),
 		Receiver:   txDecoded.GetReceiver().String(),
