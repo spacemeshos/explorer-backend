@@ -325,6 +325,8 @@ func (s *SeedGenerator) generateLayer(layerNum, epochNum int32) model.Layer {
 }
 
 func generateTransaction(index int, layer *model.Layer, senderSigner *signing.EdSigner, sender, receiver string, block *model.Block) model.Transaction {
+	maxGas := uint64(rand.Intn(1000))
+	gasPrice := uint64(rand.Intn(1000))
 	return model.Transaction{
 		Id:         strings.ToLower(utils.BytesToHex(randomBytes(32))),
 		Layer:      layer.Number,
@@ -333,10 +335,10 @@ func generateTransaction(index int, layer *model.Layer, senderSigner *signing.Ed
 		Index:      0,
 		State:      int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
 		Timestamp:  layer.Start,
-		MaxGas:     uint64(rand.Intn(1000)),
-		GasPrice:   uint64(rand.Intn(1000)),
+		MaxGas:     maxGas,
+		GasPrice:   gasPrice,
 		GasUsed:    0,
-		Fee:        0,
+		Fee:        maxGas * gasPrice,
 		Amount:     uint64(rand.Intn(1000)),
 		Counter:    uint64(rand.Intn(1000)),
 		Type:       3,
