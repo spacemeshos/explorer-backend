@@ -19,7 +19,7 @@ type Api struct {
 	Echo *echo.Echo
 }
 
-func Init(appService service.AppService, allowedOrigins []string) *Api {
+func Init(appService service.AppService, allowedOrigins []string, debug bool) *Api {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -36,7 +36,6 @@ func Init(appService service.AppService, allowedOrigins []string) *Api {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: allowedOrigins,
 	}))
-
 	handler.Upgrader.CheckOrigin = func(r *http.Request) bool {
 		origin := r.Header.Get("origin")
 		for _, val := range allowedOrigins {
@@ -55,6 +54,11 @@ func Init(appService service.AppService, allowedOrigins []string) *Api {
 			return nil
 		},
 	}))
+
+	if debug {
+		e.Debug = true
+		e.Use(middleware.Logger())
+	}
 
 	router.Init(e)
 
