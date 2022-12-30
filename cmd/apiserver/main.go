@@ -24,6 +24,7 @@ var (
 	mongoDbURLStringFlag  string
 	mongoDbNameStringFlag string
 	testnetBoolFlag       bool
+	allowedOrigins        = cli.NewStringSlice("*")
 )
 
 var flags = []cli.Flag{
@@ -58,6 +59,12 @@ var flags = []cli.Flag{
 		Destination: &testnetBoolFlag,
 		EnvVars:     []string{"SPACEMESH_TESTNET"},
 	},
+	&cli.StringSliceFlag{
+		Name:        "allowed-origins",
+		Usage:       `Use this flag to set allowed origins for CORS (default: "*")`,
+		Destination: allowedOrigins,
+		EnvVars:     []string{"ALLOWED_ORIGINS"},
+	},
 }
 
 func main() {
@@ -79,7 +86,7 @@ func main() {
 		}
 
 		service := appService.NewService(dbReader, time.Minute)
-		server := api.Init(service)
+		server := api.Init(service, allowedOrigins.Value())
 
 		log.Info(fmt.Sprintf("starting server on %s", listenStringFlag))
 		server.Run(listenStringFlag)

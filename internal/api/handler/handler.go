@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/explorer-backend/internal/service"
 )
@@ -14,6 +15,8 @@ const (
 	rewards  = "rewards"
 	smeshers = "smeshers"
 )
+
+var Upgrader = websocket.Upgrader{}
 
 type ApiContext struct {
 	echo.Context
