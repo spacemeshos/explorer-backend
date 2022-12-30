@@ -44,6 +44,7 @@ jobs:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
           version: latest
           only-new-issues: true
+          args: --timeout=3m
 
   unittests_api:
     runs-on: ubuntu-latest
