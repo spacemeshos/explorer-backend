@@ -48,11 +48,11 @@ lint-ci:
 
 .PHONY: lint
 lint:
-	golangci-lint run ./...
+	golangci-lint run --timeout=3m ./...
 
 .PHONY: lint-fix
 lint-fix:
-	golangci-lint run --new-from-rev=master --config .golangci.yml --fix
+	golangci-lint run --fix
 
 .PHONY: test_collector
 test_collector:
