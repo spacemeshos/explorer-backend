@@ -10,6 +10,7 @@ func Init(e *echo.Echo) {
 	e.GET("/synced", handler.Synced)
 
 	e.GET("/network-info", handler.NetworkInfo)
+	e.GET("/ws/network-info", handler.NetworkInfoWS)
 
 	e.GET("/epochs", handler.Epochs)
 	e.GET("/epochs/:id", handler.Epoch)

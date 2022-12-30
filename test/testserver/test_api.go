@@ -3,6 +3,8 @@ package testserver
 import (
 	"bytes"
 	"fmt"
+	"golang.org/x/net/websocket"
+	"log"
 	"net/http"
 	"strings"
 	"testing"
@@ -32,7 +34,7 @@ func StartTestAPIServiceV2(db *storage.Storage, dbReader *storagereader.Reader) 
 	}
 	println("starting test api service on port", appPort)
 
-	api := apiv2.Init(service2.NewService(dbReader, time.Second))
+	api := apiv2.Init(service2.NewService(dbReader, time.Second), []string{"*"})
 	go api.Run(fmt.Sprintf(":%d", appPort))
 	return &TestAPIService{
 		Storage: db,
@@ -61,4 +63,30 @@ func (tx *TestAPIService) Get(t *testing.T, path string) *testutils.TestResponse
 		require.NoError(t, res.Body.Close())
 	})
 	return &testutils.TestResponse{Res: res}
+}
+
+// GetReadWS allow to execute WS read-only request to the fake server.
+func (tx *TestAPIService) GetReadWS(t *testing.T, path string) <-chan []byte {
+	t.Helper()
+
+	path = strings.TrimLeft(path, "/")
+	origin := fmt.Sprintf("http://localhost:%d", tx.port)
+	conn, err := websocket.Dial(fmt.Sprintf("ws://localhost:%d/%s", tx.port, path), "", origin)
+	if err != nil {
+		t.Fatal("can't connect to websocket:", err)
+	}
+	result := make(chan []byte, 10)
+	go func() {
+		defer conn.Close()
+		for {
+			data := make([]byte, 1024)
+			readLen, err := conn.Read(data)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			result <- data[:readLen]
+		}
+	}()
+	return result
 }

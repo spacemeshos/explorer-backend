@@ -5,16 +5,14 @@ go 1.18
 require (
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/golang/protobuf v1.5.2
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/websocket v1.5.0
 	github.com/labstack/echo/v4 v4.9.1
-	github.com/oasisprotocol/curve25519-voi v0.0.0-20221003100820-41fad3beba17
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
 	github.com/spacemeshos/api/release/go v1.5.1
 	github.com/spacemeshos/go-scale v1.1.1
 	github.com/spacemeshos/go-spacemesh v0.2.19-beta.0
 	github.com/stretchr/testify v1.8.1
-	github.com/urfave/cli v1.22.9
 	github.com/urfave/cli/v2 v2.23.7
 	go.mongodb.org/mongo-driver v1.10.1
 	google.golang.org/genproto v0.0.0-20221114212237-e4508ebdbee1
@@ -42,6 +40,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
+	github.com/oasisprotocol/curve25519-voi v0.0.0-20221003100820-41fad3beba17 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect

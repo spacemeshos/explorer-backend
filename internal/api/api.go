@@ -8,6 +8,7 @@ import (
 	"github.com/spacemeshos/explorer-backend/internal/api/router"
 	"github.com/spacemeshos/explorer-backend/internal/service"
 	"github.com/spacemeshos/go-spacemesh/log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,7 +19,7 @@ type Api struct {
 	Echo *echo.Echo
 }
 
-func Init(appService service.AppService) *Api {
+func Init(appService service.AppService, allowedOrigins []string) *Api {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -32,7 +33,20 @@ func Init(appService service.AppService) *Api {
 	})
 	e.HideBanner = true
 	e.HidePort = true
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: allowedOrigins,
+	}))
+
+	handler.Upgrader.CheckOrigin = func(r *http.Request) bool {
+		origin := r.Header.Get("origin")
+		for _, val := range allowedOrigins {
+			if origin == val || val == "*" {
+				return true
+			}
+		}
+		return false
+	}
+
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogStatus: true,
 		LogURI:    true,
