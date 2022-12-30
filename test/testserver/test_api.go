@@ -34,7 +34,7 @@ func StartTestAPIServiceV2(db *storage.Storage, dbReader *storagereader.Reader) 
 	}
 	println("starting test api service on port", appPort)
 
-	api := apiv2.Init(service2.NewService(dbReader, time.Second), []string{"*"})
+	api := apiv2.Init(service2.NewService(dbReader, time.Second), []string{"*"}, false)
 	go api.Run(fmt.Sprintf(":%d", appPort))
 	return &TestAPIService{
 		Storage: db,

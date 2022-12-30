@@ -2,11 +2,13 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"net/http"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -51,21 +53,20 @@ func NetworkInfo(c echo.Context) error {
 func NetworkInfoWS(c echo.Context) error {
 	ws, err := Upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		return err
+		log.Error("NetworkInfoWS: upgrade error: %w\n", err)
+		return nil
 	}
 	defer ws.Close()
 
-	if err := serveNetworkInfo(c, ws); err != nil {
-		log.Error("NetworkInfoWS: serve network info: %s", err)
-		return err
-	}
-
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-	for range ticker.C {
+
+	for ; true; <-ticker.C {
 		if err := serveNetworkInfo(c, ws); err != nil {
-			log.Error("NetworkInfoWS: serve network info: %s", err)
-			return err
+			if !errors.Is(err, syscall.EPIPE) {
+				log.Error("NetworkInfoWS: serve network info: %s", err)
+				return nil
+			}
 		}
 	}
 

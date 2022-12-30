@@ -25,6 +25,7 @@ var (
 	mongoDbNameStringFlag string
 	testnetBoolFlag       bool
 	allowedOrigins        = cli.NewStringSlice("*")
+	debug                 bool
 )
 
 var flags = []cli.Flag{
@@ -65,6 +66,13 @@ var flags = []cli.Flag{
 		Destination: allowedOrigins,
 		EnvVars:     []string{"ALLOWED_ORIGINS"},
 	},
+	&cli.BoolFlag{
+		Name:        "debug",
+		Usage:       "Use this flag to enable echo debug option along with logger middleware",
+		Required:    false,
+		Destination: &debug,
+		EnvVars:     []string{"DEBUG"},
+	},
 }
 
 func main() {
@@ -86,7 +94,7 @@ func main() {
 		}
 
 		service := appService.NewService(dbReader, time.Minute)
-		server := api.Init(service, allowedOrigins.Value())
+		server := api.Init(service, allowedOrigins.Value(), debug)
 
 		log.Info(fmt.Sprintf("starting server on %s", listenStringFlag))
 		server.Run(listenStringFlag)
