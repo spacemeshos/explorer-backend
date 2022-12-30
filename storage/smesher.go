@@ -20,7 +20,7 @@ func (s *Storage) InitSmeshersStorage(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error init `smeshers` collection: %w", err)
 	}
-	_, err = s.db.Collection("coinbases").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "address", Value: 1}}, Options: options.Index().SetName("addressIndex").SetUnique(true)})
+	_, err = s.db.Collection("coinbases").Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "smesherId", Value: 1}}, Options: options.Index().SetName("smesherIdIndex").SetUnique(true)})
 	if err != nil {
 		return fmt.Errorf("error init `coinbases` collection: %w", err)
 	}
@@ -56,7 +56,7 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
 func (s *Storage) GetSmesherByCoinbase(parent context.Context, coinbase string) (*model.Smesher, error) {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	cursor, err := s.db.Collection("coinbases").Find(ctx, &bson.D{{Key: "address", Value: coinbase}})
+	cursor, err := s.db.Collection("coinbases").Find(ctx, &bson.D{{Key: "coinbase", Value: coinbase}})
 	if err != nil {
 		log.Info("GetSmesherByCoinbase: %v", err)
 		return nil, err
@@ -66,7 +66,7 @@ func (s *Storage) GetSmesherByCoinbase(parent context.Context, coinbase string) 
 		return nil, errors.New("Empty result")
 	}
 	doc := cursor.Current
-	smesher := utils.GetAsString(doc.Lookup("smesher"))
+	smesher := utils.GetAsString(doc.Lookup("smesherId"))
 	if smesher == "" {
 		log.Info("GetSmesherByCoinbase: Empty result")
 		return nil, errors.New("Empty result")
@@ -119,16 +119,19 @@ func (s *Storage) GetSmeshers(parent context.Context, query *bson.D, opts ...*op
 func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("smeshers").InsertOne(ctx, bson.D{
-		{Key: "id", Value: in.Id},
-		{Key: "name", Value: in.Name},
-		{Key: "lon", Value: in.Lon},
-		{Key: "lat", Value: in.Lat},
-		{Key: "cSize", Value: in.CommitmentSize},
-		{Key: "coinbase", Value: in.Coinbase},
-		{Key: "atxcount", Value: in.AtxCount},
-		{Key: "timestamp", Value: in.Timestamp},
-	})
+	opts := options.Update().SetUpsert(true)
+	_, err := s.db.Collection("smeshers").UpdateOne(ctx, bson.D{{Key: "id", Value: in.Id}}, bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "id", Value: in.Id},
+			{Key: "name", Value: in.Name},
+			{Key: "lon", Value: in.Lon},
+			{Key: "lat", Value: in.Lat},
+			{Key: "cSize", Value: in.CommitmentSize},
+			{Key: "coinbase", Value: in.Coinbase},
+			{Key: "atxcount", Value: in.AtxCount},
+			{Key: "timestamp", Value: in.Timestamp},
+		}},
+	}, opts)
 	if err != nil {
 		return fmt.Errorf("error save smesher: %w", err)
 	}
@@ -138,10 +141,14 @@ func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
 func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase string, space uint64, timestamp uint32) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("coinbases").InsertOne(ctx, bson.D{
-		{Key: "address", Value: coinbase},
-		{Key: "smesher", Value: smesher},
-	})
+
+	opts := options.Update().SetUpsert(true)
+	filter := bson.D{{"smesherId", smesher}}
+	_, err := s.db.Collection("coinbases").UpdateOne(ctx, filter, bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "coinbase", Value: coinbase},
+		}}}, opts)
+
 	if err != nil {
 		return fmt.Errorf("error insert smesher into `coinbases`: %w", err)
 	}
