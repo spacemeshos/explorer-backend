@@ -143,7 +143,7 @@ func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase
 	defer cancel()
 
 	opts := options.Update().SetUpsert(true)
-	filter := bson.D{{"smesherId", smesher}}
+	filter := bson.D{{Key: "smesherId", Value: smesher}}
 	_, err := s.db.Collection("coinbases").UpdateOne(ctx, filter, bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "coinbase", Value: coinbase},
