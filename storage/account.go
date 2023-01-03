@@ -105,16 +105,30 @@ func (s *Storage) GetAccounts(parent context.Context, query *bson.D, opts ...*op
 func (s *Storage) AddAccount(parent context.Context, layer uint32, address string, balance uint64) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, _ = s.db.Collection("accounts").InsertOne(ctx, bson.D{
-		{Key: "address", Value: address},
-		{Key: "created", Value: layer},
-		{Key: "layer", Value: layer},
-		{Key: "balance", Value: balance},
-		{Key: "counter", Value: uint64(0)},
-	})
-	//if err != nil {
-	//        log.Info("AddAccount: %v", err)
-	//}
+
+	acc := bson.D{
+		{"$set",
+			bson.D{
+				{"address", address},
+				{"layer", layer},
+				{"balance", balance},
+				{"counter", uint64(0)},
+				{"created",
+					bson.D{{"$cond", bson.D{{"if",
+						bson.D{{"$eq", bson.A{0, "$created"}}}},
+						{"then", layer},
+						{"else", "$created"},
+					}}},
+				},
+			},
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", address}}, bson.A{acc}, opts)
+	if err != nil {
+		log.Info("AddAccount: %v", err)
+	}
 	return nil
 }
 
@@ -141,6 +155,7 @@ func (s *Storage) UpdateAccount(parent context.Context, address string, balance 
 		{Key: "$set", Value: bson.D{
 			{Key: "balance", Value: balance},
 			{Key: "counter", Value: counter},
+			{Key: "created", Value: 0},
 		}},
 	}, options.Update().SetUpsert(true))
 	if err != nil {
