@@ -3,6 +3,7 @@ package storagereader
 import (
 	"context"
 	"fmt"
+	"github.com/spacemeshos/go-spacemesh/log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -47,4 +48,17 @@ func (s *Reader) GetLayer(ctx context.Context, layerNumber int) (*model.Layer, e
 		return nil, fmt.Errorf("error decode layer `%d`: %w", layerNumber, err)
 	}
 	return layer, nil
+}
+
+func (s *Reader) GetLayerTimestamp(layer uint32) uint32 {
+	networkInfo, err := s.GetNetworkInfo(context.TODO())
+	if err != nil {
+		log.Error("getLayerTimestamp: %w", err)
+		return 0
+	}
+
+	if layer == 0 {
+		return networkInfo.GenesisTime
+	}
+	return networkInfo.GenesisTime + (layer-1)*networkInfo.LayerDuration
 }
