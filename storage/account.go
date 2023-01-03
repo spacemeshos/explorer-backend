@@ -107,17 +107,17 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
 	defer cancel()
 
 	acc := bson.D{
-		{"$set",
-			bson.D{
-				{"address", address},
-				{"layer", layer},
-				{"balance", balance},
-				{"counter", uint64(0)},
-				{"created",
-					bson.D{{"$cond", bson.D{{"if",
-						bson.D{{"$eq", bson.A{0, "$created"}}}},
-						{"then", layer},
-						{"else", "$created"},
+		{Key: "$set",
+			Value: bson.D{
+				{Key: "address", Value: address},
+				{Key: "layer", Value: layer},
+				{Key: "balance", Value: balance},
+				{Key: "counter", Value: uint64(0)},
+				{Key: "created",
+					Value: bson.D{{Key: "$cond", Value: bson.D{{Key: "if",
+						Value: bson.D{{Key: "$eq", Value: bson.A{0, "$created"}}}},
+						{Key: "then", Value: layer},
+						{Key: "else", Value: "$created"},
 					}}},
 				},
 			},
@@ -125,7 +125,7 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
 	}
 
 	opts := options.Update().SetUpsert(true)
-	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{"address", address}}, bson.A{acc}, opts)
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.A{acc}, opts)
 	if err != nil {
 		log.Info("AddAccount: %v", err)
 	}
