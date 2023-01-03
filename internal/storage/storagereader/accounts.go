@@ -3,7 +3,6 @@ package storagereader
 import (
 	"context"
 	"fmt"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -25,6 +24,22 @@ func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*option
 	var docs []*model.Account
 	if err = cursor.All(ctx, &docs); err != nil {
 		return nil, fmt.Errorf("error decode accounts: %w", err)
+	}
+
+	for _, doc := range docs {
+		summary, err := s.GetAccountSummary(ctx, doc.Address)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get account summary: %w", err)
+		}
+		if summary == nil {
+			continue
+		}
+
+		doc.Sent = summary.Sent
+		doc.Received = summary.Received
+		doc.Awards = summary.Awards
+		doc.Fees = summary.Fees
+		doc.LayerTms = int32(s.GetLayerTimestamp(uint32(doc.Created)))
 	}
 	return docs, nil
 }
