@@ -3,6 +3,7 @@ package testserver
 import (
 	"bytes"
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/collector/storage"
 	"golang.org/x/net/websocket"
 	"log"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	apiv2 "github.com/spacemeshos/explorer-backend/internal/api"
 	service2 "github.com/spacemeshos/explorer-backend/internal/service"
 	"github.com/spacemeshos/explorer-backend/internal/storage/storagereader"
-	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/test/testutils"
 )
 

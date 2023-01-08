@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/collector/storage"
 	"math/rand"
 	"strings"
 	"time"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/spacemeshos/explorer-backend/model"
 	v0 "github.com/spacemeshos/explorer-backend/pkg/transactionparser/v0"
-	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/utils"
 )
 

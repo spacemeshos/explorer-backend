@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/spacemeshos/address"
+	"github.com/spacemeshos/explorer-backend/collector/storage"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/spacemeshos/explorer-backend/collector"
-	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/urfave/cli/v2"
 )
