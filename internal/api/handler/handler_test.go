@@ -3,6 +3,7 @@ package handler_test
 import (
 	"context"
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/collector/storage"
 	"github.com/spacemeshos/explorer-backend/model"
 	"os"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/spacemeshos/explorer-backend/internal/storage/storagereader"
-	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/test/testseed"
 	"github.com/spacemeshos/explorer-backend/test/testserver"
 )

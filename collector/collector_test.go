@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spacemeshos/explorer-backend/collector"
+	"github.com/spacemeshos/explorer-backend/collector/storage"
 	"os"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/explorer-backend/test/testseed"
 	"github.com/spacemeshos/explorer-backend/test/testserver"
 )
