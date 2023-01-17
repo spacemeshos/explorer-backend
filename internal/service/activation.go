@@ -34,6 +34,10 @@ func (e *Service) getActivations(ctx context.Context, filter *bson.D, options *o
 	if err != nil {
 		return nil, 0, fmt.Errorf("error count atxs: %w", err)
 	}
+	if total == 0 {
+		return []*model.Activation{}, 0, nil
+	}
+
 	atxs, err = e.storage.GetActivations(ctx, filter, options)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error get atxs: %w", err)
