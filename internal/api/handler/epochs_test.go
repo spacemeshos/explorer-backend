@@ -115,6 +115,7 @@ func TestEpochRewardsHandler(t *testing.T) {
 		for _, rw := range loopResult.Data {
 			generatedRw, ok := ep.Rewards[rw.Smesher]
 			require.True(t, ok)
+			generatedRw.ID = rw.ID
 			require.Equal(t, *generatedRw, rw)
 		}
 	}

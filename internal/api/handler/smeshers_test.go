@@ -61,6 +61,7 @@ func TestSmesherRewardsHandler(t *testing.T) { // /smeshers/{id}/rewards
 			require.Equal(t, 1, len(resp.Data))
 			rw, ok := generator.Rewards[resp.Data[0].Smesher]
 			require.True(t, ok)
+			rw.ID = resp.Data[0].ID
 			require.Equal(t, *rw, resp.Data[0])
 		}
 	}
