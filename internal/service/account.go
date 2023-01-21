@@ -95,7 +95,9 @@ func (e *Service) GetAccountRewards(ctx context.Context, accountID string, page,
 	if err != nil {
 		return nil, 0, ErrNotFound
 	}
-	return e.getRewards(ctx, &bson.D{{Key: "coinbase", Value: addr.String()}}, e.getFindOptions("coinbase", page, perPage))
+	opts := e.getFindOptions("coinbase", page, perPage)
+	opts.SetProjection(bson.D{})
+	return e.getRewards(ctx, &bson.D{{Key: "coinbase", Value: addr.String()}}, opts)
 }
 
 func (e *Service) getAccounts(ctx context.Context, filter *bson.D, options *options.FindOptions) (accs []*model.Account, total int64, err error) {
