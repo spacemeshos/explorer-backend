@@ -69,6 +69,7 @@ func TestAccountRewards(t *testing.T) { // /accounts/{id}/rewards
 		for _, rw := range resp.Data {
 			generatedRw, ok := acc.Rewards[rw.Smesher]
 			require.True(t, ok)
+			generatedRw.ID = rw.ID
 			require.Equal(t, *generatedRw, rw)
 		}
 	}

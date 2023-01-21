@@ -106,6 +106,7 @@ func TestLayerRewards(t *testing.T) { // /layers/{id:[0-9]+}/rewards
 			for _, tx := range loopResp.Data {
 				generatedRw, ok := epoch.Rewards[tx.Smesher]
 				require.True(t, ok)
+				generatedRw.ID = tx.ID
 				require.Equal(t, generatedRw, &tx)
 			}
 		}
