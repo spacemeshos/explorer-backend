@@ -17,6 +17,7 @@ func TestRewards(t *testing.T) { //"/rewards"
 	for _, reward := range resp.Data {
 		rw, ok := insertedRewards[reward.Smesher]
 		require.True(t, ok)
+		rw.ID = ""
 		reward.ID = ""
 		require.Equal(t, rw, &reward)
 	}
@@ -53,6 +54,7 @@ func TestReward(t *testing.T) { //"/rewards/{id}"
 		require.Equal(t, 1, len(respLoop.Data))
 		rw, ok := insertedRewards[reward.Smesher]
 		require.True(t, ok)
+		rw.ID = ""
 		respLoop.Data[0].ID = "" // this id generates by mongo, reset it. // todo probably bag, reward should have db independed id
 		require.Equal(t, rw, &respLoop.Data[0])
 	}
