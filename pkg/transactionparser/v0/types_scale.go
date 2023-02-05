@@ -7,44 +7,6 @@ import (
 	"github.com/spacemeshos/go-scale"
 )
 
-func (t *Nonce) EncodeScale(enc *scale.Encoder) (total int, err error) {
-	{
-		n, err := scale.EncodeCompact64(enc, uint64(t.Counter))
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	{
-		n, err := scale.EncodeCompact8(enc, uint8(t.Bitfield))
-		if err != nil {
-			return total, err
-		}
-		total += n
-	}
-	return total, nil
-}
-
-func (t *Nonce) DecodeScale(dec *scale.Decoder) (total int, err error) {
-	{
-		field, n, err := scale.DecodeCompact64(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-		t.Counter = uint64(field)
-	}
-	{
-		field, n, err := scale.DecodeCompact8(dec)
-		if err != nil {
-			return total, err
-		}
-		total += n
-		t.Bitfield = uint8(field)
-	}
-	return total, nil
-}
-
 func (t *SpawnTransaction) EncodeScale(enc *scale.Encoder) (total int, err error) {
 	{
 		n, err := scale.EncodeCompact8(enc, uint8(t.Type))
@@ -141,7 +103,7 @@ func (t *SpawnTransaction) DecodeScale(dec *scale.Decoder) (total int, err error
 
 func (t *SpawnPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
 	{
-		n, err := t.Nonce.EncodeScale(enc)
+		n, err := scale.EncodeCompact64(enc, uint64(t.Nonce))
 		if err != nil {
 			return total, err
 		}
@@ -166,11 +128,12 @@ func (t *SpawnPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
 
 func (t *SpawnPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
 	{
-		n, err := t.Nonce.DecodeScale(dec)
+		field, n, err := scale.DecodeCompact64(dec)
 		if err != nil {
 			return total, err
 		}
 		total += n
+		t.Nonce = uint64(field)
 	}
 	{
 		field, n, err := scale.DecodeCompact64(dec)
@@ -485,7 +448,7 @@ func (t *SpendArguments) DecodeScale(dec *scale.Decoder) (total int, err error) 
 
 func (t *SpendPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
 	{
-		n, err := t.Nonce.EncodeScale(enc)
+		n, err := scale.EncodeCompact64(enc, uint64(t.Nonce))
 		if err != nil {
 			return total, err
 		}
@@ -510,11 +473,12 @@ func (t *SpendPayload) EncodeScale(enc *scale.Encoder) (total int, err error) {
 
 func (t *SpendPayload) DecodeScale(dec *scale.Decoder) (total int, err error) {
 	{
-		n, err := t.Nonce.DecodeScale(dec)
+		field, n, err := scale.DecodeCompact64(dec)
 		if err != nil {
 			return total, err
 		}
 		total += n
+		t.Nonce = uint64(field)
 	}
 	{
 		field, n, err := scale.DecodeCompact64(dec)

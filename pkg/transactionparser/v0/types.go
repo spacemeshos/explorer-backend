@@ -28,12 +28,6 @@ func init() {
 	TemplateAddress3[len(TemplateAddress3)-1] = 4
 }
 
-// Nonce returns nonce of the transaction.
-type Nonce struct {
-	Counter  uint64
-	Bitfield uint8
-}
-
 // Signature returns the signature of the transaction.
 type Signature [64]byte
 
@@ -63,7 +57,7 @@ func getMultisigTemplate(pkNum int) address.Address {
 	}
 }
 
-// ComputePrincipal address as the last 20 bytes from sha256(scale(template || args)).
+// ComputePrincipal address as the last 20 bytes from blake3(scale(template || args)).
 func ComputePrincipal(template address.Address, args scale.Encodable) address.Address {
 	hasher := hash.New()
 	encoder := scale.NewEncoder(hasher)
@@ -85,7 +79,7 @@ type SpawnTransaction struct {
 
 // SpawnPayload provides arguments for spawn transaction.
 type SpawnPayload struct {
-	Nonce     Nonce
+	Nonce     uint64
 	GasPrice  uint64
 	Arguments SpawnArguments
 }
@@ -223,7 +217,7 @@ type SpendArguments struct {
 
 // SpendPayload payload of the spend transaction.
 type SpendPayload struct {
-	Nonce     Nonce
+	Nonce     uint64
 	GasPrice  uint64
 	Arguments SpendArguments
 }
@@ -240,7 +234,7 @@ func (t *SpendTransaction) GetAmount() uint64 {
 
 // GetCounter returns the counter of the transaction.
 func (t *SpendTransaction) GetCounter() uint64 {
-	return t.Payload.Nonce.Counter
+	return t.Payload.Nonce
 }
 
 // GetReceiver returns receiver address.
