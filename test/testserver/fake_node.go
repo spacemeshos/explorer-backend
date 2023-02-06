@@ -260,10 +260,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 						Template: &pb.AccountId{
 							Address: wallet.TemplateAddress.String(),
 						},
-						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce{
-							Counter:  txContainer.Counter,
-							Bitfield: uint8(1),
-						}, sdk.WithGasPrice(txContainer.GasPrice)),
+						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, txContainer.Counter, sdk.WithGasPrice(txContainer.GasPrice)),
 					})
 				}
 				blocksRes = append(blocksRes, &pb.Block{
