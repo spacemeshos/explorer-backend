@@ -87,7 +87,7 @@ func TestSpend(t *testing.T) {
 			copy(args.PublicKey[:], signing.Public(signer.PrivateKey()))
 			accAddress := core.ComputePrincipal(wallet.TemplateAddress, &args)
 
-			decodedTx, err := transactionparser.Parse(scale.NewDecoder(bytes.NewReader(rawTx)), rawTx, 1)
+			decodedTx, err := transactionparser.Parse(scale.NewDecoder(bytes.NewReader(rawTx)), rawTx, 16)
 			require.NoError(t, err)
 
 			require.Equal(t, testCase.gasPrice, decodedTx.GetGasPrice())

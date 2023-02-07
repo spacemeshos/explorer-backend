@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	methodSpawn = iota
-	methodSend
+	methodSpawn = 0
+	methodSend  = 16
 )
 
 // ParseTransaction parses a transaction encoded in version 0.

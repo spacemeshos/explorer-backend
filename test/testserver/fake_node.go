@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	methodSend = 1
+	methodSend = 16
 )
 
 type meshServiceWrapper struct {
