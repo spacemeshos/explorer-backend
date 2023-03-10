@@ -2,30 +2,11 @@ package collector
 
 import (
 	"context"
-	"io"
-	"time"
-
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
+	"io"
 
 	"github.com/spacemeshos/go-spacemesh/log"
 )
-
-func (c *Collector) syncStart() error {
-	req := pb.SyncStartRequest{}
-
-	// set timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
-	defer cancel()
-
-	_, err := c.nodeClient.SyncStart(ctx, &req)
-	if err != nil {
-		log.Error("cannot start node sync: %v", err)
-		return err
-	}
-
-	log.Info("Started node sync")
-	return nil
-}
 
 func (c *Collector) syncStatusPump() error {
 	req := pb.StatusStreamRequest{}
@@ -41,12 +22,6 @@ func (c *Collector) syncStatusPump() error {
 	stream, err := c.nodeClient.StatusStream(context.Background(), &req)
 	if err != nil {
 		log.Error("cannot get sync status stream: %v", err)
-		return err
-	}
-
-	err = c.syncStart()
-	if err != nil {
-		log.Error("cannot start sync: %v", err)
 		return err
 	}
 
