@@ -2,8 +2,9 @@ package collector
 
 import (
 	"context"
-	"google.golang.org/grpc/credentials/insecure"
 	"time"
+
+	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"google.golang.org/grpc"
@@ -63,7 +64,8 @@ func (c *Collector) Run() {
 		log.Info("dial node %v", c.apiUrl)
 		c.connecting = true
 
-		conn, err := grpc.Dial(c.apiUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(c.apiUrl, grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithBlock(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(50*1024*1024)))
 		if err != nil {
 			log.Error("cannot dial node: %v", err)
 			time.Sleep(1 * time.Second)
