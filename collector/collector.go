@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"google.golang.org/grpc/keepalive"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
@@ -46,6 +47,7 @@ type Collector struct {
 	connecting    bool
 	online        bool
 	closing       bool
+	reconnect     bool
 
 	// Stream status changed.
 	notify chan int
@@ -60,11 +62,20 @@ func NewCollector(nodeAddress string, listener Listener) *Collector {
 }
 
 func (c *Collector) Run() {
+connection:
 	for {
 		log.Info("dial node %v", c.apiUrl)
 		c.connecting = true
+		c.reconnect = false
+
+		keepaliveOpts := keepalive.ClientParameters{
+			Time:                10 * time.Second,
+			Timeout:             time.Second,
+			PermitWithoutStream: true,
+		}
 
 		conn, err := grpc.Dial(c.apiUrl, grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithKeepaliveParams(keepaliveOpts),
 			grpc.WithBlock(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(50*1024*1024)))
 		if err != nil {
 			log.Error("cannot dial node: %v", err)
@@ -96,6 +107,7 @@ func (c *Collector) Run() {
 			err := c.syncStatusPump()
 			if err != nil {
 				log.Error("cannot start sync status pump: %v", err)
+				c.reconnect = true
 			}
 		}()
 		//        go c.errorPump()
@@ -103,16 +115,18 @@ func (c *Collector) Run() {
 			err := c.layersPump()
 			if err != nil {
 				log.Error("cannot start sync layers pump: %v", err)
+				c.reconnect = true
 			}
 		}()
 		go func() {
 			err := c.globalStatePump()
 			if err != nil {
 				log.Error("cannot start sync global state pump: %v", err)
+				c.reconnect = true
 			}
 		}()
 
-		for c.connecting || c.closing || c.online {
+		for c.connecting || c.closing || c.online || c.reconnect {
 			state := <-c.notify
 			log.Info("stream notify %v", state)
 			switch {
@@ -137,7 +151,11 @@ func (c *Collector) Run() {
 				log.Info("streams desynchronized!!!")
 				c.online = false
 				c.closing = true
-				conn.Close()
+				c.reconnect = true
+			}
+
+			if c.reconnect {
+				continue connection
 			}
 		}
 
