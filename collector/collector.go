@@ -68,9 +68,10 @@ connection:
 		c.connecting = true
 		c.reconnect = false
 
+		//TODO: move to env
 		keepaliveOpts := keepalive.ClientParameters{
-			Time:                10 * time.Second,
-			Timeout:             time.Second,
+			Time:                2 * time.Minute,
+			Timeout:             1 * time.Minute,
 			PermitWithoutStream: true,
 		}
 
