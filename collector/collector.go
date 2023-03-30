@@ -2,6 +2,8 @@ package collector
 
 import (
 	"context"
+	"errors"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/keepalive"
 	"time"
 
@@ -47,7 +49,6 @@ type Collector struct {
 	connecting    bool
 	online        bool
 	closing       bool
-	reconnect     bool
 
 	// Stream status changed.
 	notify chan int
@@ -61,73 +62,68 @@ func NewCollector(nodeAddress string, listener Listener) *Collector {
 	}
 }
 
-func (c *Collector) Run() {
-connection:
-	for {
-		log.Info("dial node %v", c.apiUrl)
-		c.connecting = true
-		c.reconnect = false
+func (c *Collector) Run() error {
+	log.Info("dial node %v", c.apiUrl)
+	c.connecting = true
 
-		//TODO: move to env
-		keepaliveOpts := keepalive.ClientParameters{
-			Time:                2 * time.Minute,
-			Timeout:             1 * time.Minute,
-			PermitWithoutStream: true,
-		}
+	//TODO: move to env
+	keepaliveOpts := keepalive.ClientParameters{
+		Time:                4 * time.Minute,
+		Timeout:             2 * time.Minute,
+		PermitWithoutStream: true,
+	}
 
-		conn, err := grpc.Dial(c.apiUrl, grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithKeepaliveParams(keepaliveOpts),
-			grpc.WithBlock(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(50*1024*1024)))
+	conn, err := grpc.Dial(c.apiUrl, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepaliveOpts),
+		grpc.WithBlock(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(50*1024*1024)))
+	if err != nil {
+		return errors.Join(errors.New("cannot dial node"), err)
+	}
+	defer conn.Close()
+
+	c.nodeClient = pb.NewNodeServiceClient(conn)
+	c.meshClient = pb.NewMeshServiceClient(conn)
+	c.globalClient = pb.NewGlobalStateServiceClient(conn)
+	c.debugClient = pb.NewDebugServiceClient(conn)
+	c.smesherClient = pb.NewSmesherServiceClient(conn)
+
+	err = c.getNetworkInfo()
+	if err != nil {
+		return errors.Join(errors.New("cannot get network info"), err)
+	}
+
+	err = c.syncMissingLayers()
+	if err != nil {
+		return errors.Join(errors.New("cannot sync missing layers"), err)
+	}
+
+	g := new(errgroup.Group)
+	g.Go(func() error {
+		err := c.syncStatusPump()
 		if err != nil {
-			log.Error("cannot dial node: %v", err)
-			time.Sleep(1 * time.Second)
-			continue
+			return errors.Join(errors.New("cannot start sync status pump"), err)
 		}
+		return nil
+	})
 
-		c.nodeClient = pb.NewNodeServiceClient(conn)
-		c.meshClient = pb.NewMeshServiceClient(conn)
-		c.globalClient = pb.NewGlobalStateServiceClient(conn)
-		c.debugClient = pb.NewDebugServiceClient(conn)
-		c.smesherClient = pb.NewSmesherServiceClient(conn)
-
-		err = c.getNetworkInfo()
+	g.Go(func() error {
+		err := c.layersPump()
 		if err != nil {
-			log.Error("cannot get network info: %v", err)
-			time.Sleep(1 * time.Second)
-			continue
+			return errors.Join(errors.New("cannot start sync layers pump"), err)
 		}
+		return nil
+	})
 
-		err = c.syncMissingLayers()
+	g.Go(func() error {
+		err := c.globalStatePump()
 		if err != nil {
-			log.Error("cannot sync missing layers: %v", err)
-			time.Sleep(1 * time.Second)
-			continue
+			return errors.Join(errors.New("cannot start sync global state pump"), err)
 		}
+		return nil
+	})
 
-		go func() {
-			err := c.syncStatusPump()
-			if err != nil {
-				log.Error("cannot start sync status pump: %v", err)
-				c.reconnect = true
-			}
-		}()
-		//        go c.errorPump()
-		go func() {
-			err := c.layersPump()
-			if err != nil {
-				log.Error("cannot start sync layers pump: %v", err)
-				c.reconnect = true
-			}
-		}()
-		go func() {
-			err := c.globalStatePump()
-			if err != nil {
-				log.Error("cannot start sync global state pump: %v", err)
-				c.reconnect = true
-			}
-		}()
-
-		for c.connecting || c.closing || c.online || c.reconnect {
+	g.Go(func() error {
+		for c.connecting || c.closing || c.online {
 			state := <-c.notify
 			log.Info("stream notify %v", state)
 			switch {
@@ -152,15 +148,14 @@ connection:
 				log.Info("streams desynchronized!!!")
 				c.online = false
 				c.closing = true
-				c.reconnect = true
-			}
-
-			if c.reconnect {
-				continue connection
 			}
 		}
+		return nil
+	})
 
-		log.Info("Wait 1 second...")
-		time.Sleep(1 * time.Second)
+	if err := g.Wait(); err != nil {
+		return err
 	}
+
+	return nil
 }

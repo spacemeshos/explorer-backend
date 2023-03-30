@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/spacemeshos/explorer-backend/collector"
 	"github.com/spacemeshos/explorer-backend/storage"
@@ -106,7 +107,16 @@ func main() {
 			os.Exit(0)
 		}()
 
-		c.Run()
+		go func() {
+			for {
+				if err := c.Run(); err != nil {
+					fmt.Println(err)
+					time.Sleep(5 * time.Second)
+				}
+			}
+		}()
+
+		select {}
 
 		os.Remove("/var/run/explorer-collector")
 		log.Info("Collector is shutdown")
