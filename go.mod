@@ -11,11 +11,12 @@ require (
 	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
 	github.com/spacemeshos/api/release/go v1.5.6
 	github.com/spacemeshos/go-scale v1.1.3
-	github.com/spacemeshos/go-spacemesh v0.0.0-20230204061310-19cc8f7eab66
+	github.com/spacemeshos/go-spacemesh v0.0.0-20220826152704-a09b57a6d7be
 	github.com/stretchr/testify v1.8.1
 	github.com/urfave/cli/v2 v2.23.7
 	go.mongodb.org/mongo-driver v1.10.1
 	golang.org/x/net v0.7.0
+	golang.org/x/sync v0.1.0
 	google.golang.org/genproto v0.0.0-20230117162540-28d6b9783ac4
 	google.golang.org/grpc v1.52.3
 )
@@ -65,12 +66,10 @@ require (
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
-	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
