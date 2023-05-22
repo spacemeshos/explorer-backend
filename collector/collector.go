@@ -35,8 +35,9 @@ type Listener interface {
 }
 
 type Collector struct {
-	apiUrl   string
-	listener Listener
+	apiPublicUrl  string
+	apiPrivateUrl string
+	listener      Listener
 
 	nodeClient    pb.NodeServiceClient
 	meshClient    pb.MeshServiceClient
@@ -54,16 +55,17 @@ type Collector struct {
 	notify chan int
 }
 
-func NewCollector(nodeAddress string, listener Listener) *Collector {
+func NewCollector(nodePublicAddress string, nodePrivateAddress string, listener Listener) *Collector {
 	return &Collector{
-		apiUrl:   nodeAddress,
-		listener: listener,
-		notify:   make(chan int),
+		apiPublicUrl:  nodePublicAddress,
+		apiPrivateUrl: nodePrivateAddress,
+		listener:      listener,
+		notify:        make(chan int),
 	}
 }
 
 func (c *Collector) Run() error {
-	log.Info("dial node %v", c.apiUrl)
+	log.Info("dial node %v and %v", c.apiPublicUrl, c.apiPrivateUrl)
 	c.connecting = true
 
 	//TODO: move to env
@@ -73,19 +75,27 @@ func (c *Collector) Run() error {
 		PermitWithoutStream: true,
 	}
 
-	conn, err := grpc.Dial(c.apiUrl, grpc.WithTransportCredentials(insecure.NewCredentials()),
+	publicConn, err := grpc.Dial(c.apiPublicUrl, grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithKeepaliveParams(keepaliveOpts),
 		grpc.WithBlock(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(50*1024*1024)))
 	if err != nil {
 		return errors.Join(errors.New("cannot dial node"), err)
 	}
-	defer conn.Close()
+	defer publicConn.Close()
 
-	c.nodeClient = pb.NewNodeServiceClient(conn)
-	c.meshClient = pb.NewMeshServiceClient(conn)
-	c.globalClient = pb.NewGlobalStateServiceClient(conn)
-	c.debugClient = pb.NewDebugServiceClient(conn)
-	c.smesherClient = pb.NewSmesherServiceClient(conn)
+	privateConn, err := grpc.Dial(c.apiPrivateUrl, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepaliveOpts),
+		grpc.WithBlock(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(50*1024*1024)))
+	if err != nil {
+		return errors.Join(errors.New("cannot dial node"), err)
+	}
+	defer privateConn.Close()
+
+	c.nodeClient = pb.NewNodeServiceClient(publicConn)
+	c.meshClient = pb.NewMeshServiceClient(publicConn)
+	c.globalClient = pb.NewGlobalStateServiceClient(publicConn)
+	c.debugClient = pb.NewDebugServiceClient(publicConn)
+	c.smesherClient = pb.NewSmesherServiceClient(privateConn)
 
 	err = c.getNetworkInfo()
 	if err != nil {

@@ -22,20 +22,29 @@ var (
 )
 
 var (
-	nodeAddressStringFlag string
-	mongoDbUrlStringFlag  string
-	mongoDbNameStringFlag string
-	testnetBoolFlag       bool
+	nodePublicAddressStringFlag  string
+	nodePrivateAddressStringFlag string
+	mongoDbUrlStringFlag         string
+	mongoDbNameStringFlag        string
+	testnetBoolFlag              bool
 )
 
 var flags = []cli.Flag{
 	&cli.StringFlag{
-		Name:        "node",
-		Usage:       "Spacemesh node API address string in format <host>:<port>",
+		Name:        "node-public",
+		Usage:       "Spacemesh public node API address string in format <host>:<port>",
 		Required:    false,
-		Destination: &nodeAddressStringFlag,
+		Destination: &nodePublicAddressStringFlag,
 		Value:       "localhost:9092",
-		EnvVars:     []string{"SPACEMESH_NODE"},
+		EnvVars:     []string{"SPACEMESH_NODE_PUBLIC"},
+	},
+	&cli.StringFlag{
+		Name:        "node-private",
+		Usage:       "Spacemesh private node API address string in format <host>:<port>",
+		Required:    false,
+		Destination: &nodePrivateAddressStringFlag,
+		Value:       "localhost:9093",
+		EnvVars:     []string{"SPACEMESH_NODE_PRIVATE"},
 	},
 	&cli.StringFlag{
 		Name:        "mongodb",
@@ -83,7 +92,7 @@ func main() {
 			return err
 		}
 
-		c := collector.NewCollector(nodeAddressStringFlag, mongoStorage)
+		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag, mongoStorage)
 		mongoStorage.AccountUpdater = c
 
 		sigs := make(chan os.Signal, 1)
