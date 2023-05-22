@@ -390,7 +390,7 @@ func (s *SeedGenerator) generateBlocks(layerNum, epochNum int32) model.Block {
 
 func (s *SeedGenerator) generateAccount(layerNum uint32) (model.Account, *signing.EdSigner) {
 	var key [32]byte
-	signer, _ := signing.NewEdSigner()
+	signer := signing.NewEdSigner()
 	copy(key[:], signer.PublicKey().Bytes())
 	return model.Account{
 		Address: v0.ComputePrincipal(v0.TemplateAddress, &v0.SpawnArguments{

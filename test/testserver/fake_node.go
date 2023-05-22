@@ -59,15 +59,14 @@ type nodeServiceWrapper struct {
 
 // FakeNode simulate spacemesh node.
 type FakeNode struct {
-	seedGen        *testseed.SeedGenerator
-	NodePort       int
-	InitDone       chan struct{}
-	server         *grpc.Server
-	nodeService    *nodeServiceWrapper
-	meshService    *meshServiceWrapper
-	globalState    *globalStateServiceWrapper
-	debugService   *debugServiceWrapper
-	smesherService *smesherServiceWrapper
+	seedGen      *testseed.SeedGenerator
+	NodePort     int
+	InitDone     chan struct{}
+	server       *grpc.Server
+	nodeService  *nodeServiceWrapper
+	meshService  *meshServiceWrapper
+	globalState  *globalStateServiceWrapper
+	debugService *debugServiceWrapper
 }
 
 var stateSynced = make(chan struct{})
@@ -79,13 +78,26 @@ func CreateFakeSMNode(startTime time.Time, seedGen *testseed.SeedGenerator, seed
 		return nil, fmt.Errorf("failed to get free port: %v", err)
 	}
 	return &FakeNode{
+		seedGen:      seedGen,
+		NodePort:     appPort,
+		InitDone:     make(chan struct{}),
+		nodeService:  &nodeServiceWrapper{seedGen, pb.UnimplementedNodeServiceServer{}},
+		meshService:  &meshServiceWrapper{startTime, seedConf, seedGen, pb.UnimplementedMeshServiceServer{}},
+		globalState:  &globalStateServiceWrapper{seedGen, pb.UnimplementedGlobalStateServiceServer{}},
+		debugService: &debugServiceWrapper{seedGen, pb.UnimplementedDebugServiceServer{}},
+	}, nil
+}
+
+func CreateFakeSMPrivateNode(startTime time.Time, seedGen *testseed.SeedGenerator, seedConf *testseed.TestServerSeed) (*FakePrivateNode, error) {
+	appPort, err := freeport.GetFreePort()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get free port: %v", err)
+	}
+
+	return &FakePrivateNode{
 		seedGen:        seedGen,
 		NodePort:       appPort,
 		InitDone:       make(chan struct{}),
-		nodeService:    &nodeServiceWrapper{seedGen, pb.UnimplementedNodeServiceServer{}},
-		meshService:    &meshServiceWrapper{startTime, seedConf, seedGen, pb.UnimplementedMeshServiceServer{}},
-		globalState:    &globalStateServiceWrapper{seedGen, pb.UnimplementedGlobalStateServiceServer{}},
-		debugService:   &debugServiceWrapper{seedGen, pb.UnimplementedDebugServiceServer{}},
 		smesherService: &smesherServiceWrapper{seedGen, seedConf, pb.UnimplementedSmesherServiceServer{}},
 	}, nil
 }
@@ -102,7 +114,6 @@ func (f *FakeNode) Start() error {
 	pb.RegisterMeshServiceServer(f.server, f.meshService)
 	pb.RegisterNodeServiceServer(f.server, f.nodeService)
 	pb.RegisterGlobalStateServiceServer(f.server, f.globalState)
-	pb.RegisterSmesherServiceServer(f.server, f.smesherService)
 	return f.server.Serve(lis)
 }
 
@@ -143,15 +154,6 @@ func (d *debugServiceWrapper) Accounts(context.Context, *empty.Empty) (*pb.Accou
 		})
 	}
 	return &pb.AccountsResponse{AccountWrapper: accs}, nil
-}
-
-func (s *smesherServiceWrapper) PostConfig(context.Context, *empty.Empty) (*pb.PostConfigResponse, error) {
-	return &pb.PostConfigResponse{
-		BitsPerLabel:  s.seed.BitsPerLabel,
-		LabelsPerUnit: s.seed.LabelsPerUnit,
-		MinNumUnits:   s.seed.MinNumUnits,
-		MaxNumUnits:   s.seed.MaxNumUnits,
-	}, nil
 }
 
 func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStreamRequest, stream pb.GlobalStateService_GlobalStateStreamServer) error {
@@ -260,7 +262,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 						Template: &pb.AccountId{
 							Address: wallet.TemplateAddress.String(),
 						},
-						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, txContainer.Counter, sdk.WithGasPrice(txContainer.GasPrice)),
+						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce{Counter: txContainer.Counter}, sdk.WithGasPrice(txContainer.GasPrice)),
 					})
 				}
 				blocksRes = append(blocksRes, &pb.Block{

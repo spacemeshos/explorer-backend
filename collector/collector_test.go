@@ -69,7 +69,21 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort), storageDB)
+	privateNode, err := testserver.CreateFakeSMPrivateNode(generator.FirstLayerTime, generator, seed)
+	if err != nil {
+		fmt.Println("failed to generate fake private node", err)
+		os.Exit(1)
+	}
+	defer privateNode.Stop()
+	go func() {
+		if err = privateNode.Start(); err != nil {
+			fmt.Println("failed to start private fake node", err)
+			os.Exit(1)
+		}
+	}()
+
+	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort),
+		fmt.Sprintf("localhost:%d", privateNode.NodePort), storageDB)
 	storageDB.AccountUpdater = collectorApp
 	defer storageDB.Close()
 	go collectorApp.Run()
