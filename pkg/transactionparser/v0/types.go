@@ -3,6 +3,7 @@ package v0
 import (
 	"github.com/spacemeshos/address"
 	"github.com/spacemeshos/go-scale"
+	"github.com/spacemeshos/go-spacemesh/genvm/core"
 	"github.com/spacemeshos/go-spacemesh/hash"
 
 	"github.com/spacemeshos/explorer-backend/pkg/transactionparser/transaction"
@@ -79,9 +80,8 @@ type SpawnTransaction struct {
 
 // SpawnPayload provides arguments for spawn transaction.
 type SpawnPayload struct {
-	Nonce     uint64
-	GasPrice  uint64
 	Arguments SpawnArguments
+	GasPrice  uint64
 }
 
 // SpawnArguments is the arguments of the spawn transaction.
@@ -217,9 +217,9 @@ type SpendArguments struct {
 
 // SpendPayload payload of the spend transaction.
 type SpendPayload struct {
-	Nonce     uint64
-	GasPrice  uint64
 	Arguments SpendArguments
+	Nonce     core.Nonce
+	GasPrice  uint64
 }
 
 // GetType returns transaction type.
@@ -234,7 +234,7 @@ func (t *SpendTransaction) GetAmount() uint64 {
 
 // GetCounter returns the counter of the transaction.
 func (t *SpendTransaction) GetCounter() uint64 {
-	return t.Payload.Nonce
+	return t.Payload.Nonce.Counter
 }
 
 // GetReceiver returns receiver address.

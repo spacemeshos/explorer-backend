@@ -36,8 +36,8 @@ func TestSpawn(t *testing.T) {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
-			signer, _ := signing.NewEdSigner()
-			rawTx := sdkWallet.SelfSpawn(signer.PrivateKey(), types.Nonce(0), testCase.opts...)
+			signer := signing.NewEdSigner()
+			rawTx := sdkWallet.SelfSpawn(signer.PrivateKey(), testCase.opts...)
 			args := wallet.SpawnArguments{}
 			copy(args.PublicKey[:], signer.PublicKey().Bytes())
 			principal := core.ComputePrincipal(wallet.TemplateAddress, &args)
@@ -64,24 +64,28 @@ func TestSpend(t *testing.T) {
 			name:     "default gas price",
 			amount:   123,
 			gasPrice: 1,
-			to:       types.GenerateAddress(generatePublicKey(t)),
+			to:       types.GenerateAddress(generatePublicKey()),
 			opts:     []sdk.Opt{},
-			nonce:    types.Nonce(0),
+			nonce: types.Nonce{
+				Counter: 0,
+			},
 		},
 		{
 			name:     "non default gasPrice",
 			amount:   723,
 			gasPrice: 2,
-			to:       types.GenerateAddress(generatePublicKey(t)),
+			to:       types.GenerateAddress(generatePublicKey()),
 			opts:     []sdk.Opt{sdk.WithGasPrice(2)},
-			nonce:    types.Nonce(0),
+			nonce: types.Nonce{
+				Counter: 0,
+			},
 		},
 	}
 	for _, tc := range table {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
-			signer, _ := signing.NewEdSigner()
+			signer := signing.NewEdSigner()
 			rawTx := sdkWallet.Spend(signer.PrivateKey(), testCase.to, testCase.amount, testCase.nonce, testCase.opts...)
 			args := wallet.SpawnArguments{}
 			copy(args.PublicKey[:], signing.Public(signer.PrivateKey()))
@@ -93,7 +97,7 @@ func TestSpend(t *testing.T) {
 			require.Equal(t, testCase.gasPrice, decodedTx.GetGasPrice())
 			require.Equal(t, testCase.to.String(), decodedTx.GetReceiver().String())
 			require.Equal(t, testCase.amount, decodedTx.GetAmount())
-			require.Equal(t, testCase.nonce, decodedTx.GetCounter())
+			require.Equal(t, testCase.nonce.Counter, decodedTx.GetCounter())
 			require.Equal(t, accAddress.String(), decodedTx.GetPrincipal().String())
 		})
 	}
@@ -230,8 +234,7 @@ func TestSpend(t *testing.T) {
 //	}
 //}
 
-func generatePublicKey(t *testing.T) []byte {
-	signer, err := signing.NewEdSigner()
-	require.NoError(t, err)
+func generatePublicKey() []byte {
+	signer := signing.NewEdSigner()
 	return signer.PublicKey().Bytes()
 }
