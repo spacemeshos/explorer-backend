@@ -25,7 +25,7 @@ const (
 )
 
 type Listener interface {
-	OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLayers uint64, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64)
+	OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLayers uint32, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64)
 	OnNodeStatus(connectedPeers uint64, isSynced bool, syncedLayer uint32, topLayer uint32, verifiedLayer uint32)
 	OnLayer(layer *pb.Layer)
 	OnAccount(account *pb.Account)

@@ -80,8 +80,9 @@ type SpawnTransaction struct {
 
 // SpawnPayload provides arguments for spawn transaction.
 type SpawnPayload struct {
-	Arguments SpawnArguments
+	Nonce     core.Nonce
 	GasPrice  uint64
+	Arguments SpawnArguments
 }
 
 // SpawnArguments is the arguments of the spawn transaction.
@@ -149,7 +150,7 @@ type SpawnMultisigPayload struct {
 
 // SpawnMultisigArguments arguments for multisig spawn transaction.
 type SpawnMultisigArguments struct {
-	PublicKeys []PublicKey
+	PublicKeys []PublicKey `scale:"max=10"`
 }
 
 // GetType returns type of the transaction.
@@ -217,9 +218,9 @@ type SpendArguments struct {
 
 // SpendPayload payload of the spend transaction.
 type SpendPayload struct {
-	Arguments SpendArguments
 	Nonce     core.Nonce
 	GasPrice  uint64
+	Arguments SpendArguments
 }
 
 // GetType returns transaction type.
@@ -234,7 +235,7 @@ func (t *SpendTransaction) GetAmount() uint64 {
 
 // GetCounter returns the counter of the transaction.
 func (t *SpendTransaction) GetCounter() uint64 {
-	return t.Payload.Nonce.Counter
+	return t.Payload.Nonce
 }
 
 // GetReceiver returns receiver address.

@@ -9,7 +9,7 @@ import (
 // TestServerSeed test network config for tests.
 type TestServerSeed struct {
 	GenesisID               []byte
-	EpochNumLayers          uint64
+	EpochNumLayers          uint32
 	LayersDuration          uint64
 	MaxTransactionPerSecond uint64
 	GenesisTime             uint64

@@ -8,15 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/phayes/freeport"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/genvm/sdk"
 	sdkWallet "github.com/spacemeshos/go-spacemesh/genvm/sdk/wallet"
 	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
-	"google.golang.org/genproto/googleapis/rpc/code"
-	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -131,7 +128,7 @@ func (m meshServiceWrapper) GenesisID(context.Context, *pb.GenesisIDRequest) (*p
 }
 
 func (m meshServiceWrapper) EpochNumLayers(context.Context, *pb.EpochNumLayersRequest) (*pb.EpochNumLayersResponse, error) {
-	return &pb.EpochNumLayersResponse{Numlayers: &pb.SimpleInt{Value: m.seed.EpochNumLayers}}, nil
+	return &pb.EpochNumLayersResponse{Numlayers: &pb.LayerNumber{Number: m.seed.EpochNumLayers}}, nil
 }
 
 func (m meshServiceWrapper) LayerDuration(context.Context, *pb.LayerDurationRequest) (*pb.LayerDurationResponse, error) {
@@ -142,7 +139,7 @@ func (m meshServiceWrapper) MaxTransactionsPerSecond(context.Context, *pb.MaxTra
 	return &pb.MaxTransactionsPerSecondResponse{MaxTxsPerSecond: &pb.SimpleInt{Value: m.seed.MaxTransactionPerSecond}}, nil
 }
 
-func (d *debugServiceWrapper) Accounts(context.Context, *empty.Empty) (*pb.AccountsResponse, error) {
+func (d *debugServiceWrapper) Accounts(context.Context, *pb.AccountsRequest) (*pb.AccountsResponse, error) {
 	accs := make([]*pb.Account, 0, len(d.seedGen.Accounts))
 	for _, acc := range d.seedGen.Accounts {
 		accs = append(accs, &pb.Account{
@@ -262,7 +259,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 						Template: &pb.AccountId{
 							Address: wallet.TemplateAddress.String(),
 						},
-						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce{Counter: txContainer.Counter}, sdk.WithGasPrice(txContainer.GasPrice)),
+						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce(txContainer.Counter), sdk.WithGasPrice(txContainer.GasPrice)),
 					})
 				}
 				blocksRes = append(blocksRes, &pb.Block{
@@ -286,10 +283,6 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 		}
 	}
 	return nil
-}
-
-func (n *nodeServiceWrapper) SyncStart(context.Context, *pb.SyncStartRequest) (*pb.SyncStartResponse, error) {
-	return &pb.SyncStartResponse{Status: &rpcstatus.Status{Code: int32(code.Code_OK)}}, nil
 }
 
 func (n *nodeServiceWrapper) StatusStream(req *pb.StatusStreamRequest, stream pb.NodeService_StatusStreamServer) error {
