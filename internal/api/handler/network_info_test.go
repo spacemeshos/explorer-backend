@@ -14,7 +14,7 @@ type networkResp struct {
 	Network struct {
 		Genesisid          string `json:"genesisid"`
 		Genesis            uint64 `json:"genesis"`
-		Layers             uint64 `json:"layers"`
+		Layers             uint32 `json:"layers"`
 		Maxtx              uint64 `json:"maxtx"`
 		Duration           uint64 `json:"duration"`
 		Lastlayer          int    `json:"lastlayer"`

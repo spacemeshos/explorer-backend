@@ -45,7 +45,7 @@ func (c *Collector) getNetworkInfo() error {
 		return err
 	}
 
-	accounts, err := c.debugClient.Accounts(ctx, &empty.Empty{})
+	accounts, err := c.debugClient.Accounts(ctx, &pb.AccountsRequest{})
 	if err != nil {
 		log.Error("cannot get accounts: %v", err)
 		return err
@@ -60,7 +60,7 @@ func (c *Collector) getNetworkInfo() error {
 	c.listener.OnNetworkInfo(
 		utils.BytesToHex(genesisId.GetGenesisId()),
 		genesisTime.GetUnixtime().GetValue(),
-		epochNumLayers.GetNumlayers().GetValue(),
+		epochNumLayers.GetNumlayers().GetNumber(),
 		maxTransactionsPerSecond.GetMaxTxsPerSecond().GetValue(),
 		layerDuration.GetDuration().GetValue(),
 		(uint64(res.BitsPerLabel)*uint64(res.LabelsPerUnit))/8,

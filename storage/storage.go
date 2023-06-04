@@ -123,7 +123,7 @@ func (s *Storage) Close() {
 	}
 }
 
-func (s *Storage) OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLayers uint64, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64) {
+func (s *Storage) OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLayers uint32, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64) {
 	s.NetworkInfo.GenesisId = genesisId
 	s.NetworkInfo.GenesisTime = uint32(genesisTime)
 	s.NetworkInfo.EpochNumLayers = uint32(epochNumLayers)

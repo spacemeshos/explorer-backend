@@ -55,7 +55,7 @@ func (s *SeedGenerator) GenerateEpoches(count int) error {
 	result := make([]*SeedEpoch, 0, count)
 	var prevEpoch *model.Epoch
 	for i := 1; i < count; i++ {
-		offset := time.Duration(int64(i)*int64(s.seed.EpochNumLayers*s.seed.LayersDuration)) * time.Second
+		offset := time.Duration(int64(i)*(int64(s.seed.EpochNumLayers)*int64(s.seed.LayersDuration))) * time.Second
 		layerStartDate := now.Add(-1 * offset)
 		layersStart := int32(i) * int32(s.seed.EpochNumLayers)
 		layersEnd := layersStart + int32(s.seed.EpochNumLayers) - 1
@@ -390,7 +390,7 @@ func (s *SeedGenerator) generateBlocks(layerNum, epochNum int32) model.Block {
 
 func (s *SeedGenerator) generateAccount(layerNum uint32) (model.Account, *signing.EdSigner) {
 	var key [32]byte
-	signer := signing.NewEdSigner()
+	signer, _ := signing.NewEdSigner()
 	copy(key[:], signer.PublicKey().Bytes())
 	return model.Account{
 		Address: v0.ComputePrincipal(v0.TemplateAddress, &v0.SpawnArguments{
