@@ -126,7 +126,7 @@ func (s *Storage) Close() {
 func (s *Storage) OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLayers uint32, maxTransactionsPerSecond uint64, layerDuration uint64, postUnitSize uint64) {
 	s.NetworkInfo.GenesisId = genesisId
 	s.NetworkInfo.GenesisTime = uint32(genesisTime)
-	s.NetworkInfo.EpochNumLayers = uint32(epochNumLayers)
+	s.NetworkInfo.EpochNumLayers = epochNumLayers
 	s.NetworkInfo.MaxTransactionsPerSecond = uint32(maxTransactionsPerSecond)
 	s.NetworkInfo.LayerDuration = uint32(layerDuration)
 	s.postUnitSize = postUnitSize
@@ -161,14 +161,14 @@ func (s *Storage) OnNodeStatus(connectedPeers uint64, isSynced bool, syncedLayer
 }
 
 func (s *Storage) GetEpochLayers(epoch int32) (uint32, uint32) {
-	start := uint32(epoch) * uint32(s.NetworkInfo.EpochNumLayers)
-	end := start + uint32(s.NetworkInfo.EpochNumLayers) - 1
+	start := uint32(epoch) * s.NetworkInfo.EpochNumLayers
+	end := start + s.NetworkInfo.EpochNumLayers - 1
 	return start, end
 }
 
 func (s *Storage) GetEpochForLayer(layer uint32) uint32 {
 	if s.NetworkInfo.EpochNumLayers > 0 {
-		return layer / uint32(s.NetworkInfo.EpochNumLayers)
+		return layer / s.NetworkInfo.EpochNumLayers
 	}
 	return 0
 }

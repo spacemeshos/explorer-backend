@@ -126,10 +126,6 @@ func main() {
 		}()
 
 		select {}
-
-		os.Remove("/var/run/explorer-collector")
-		log.Info("Collector is shutdown")
-		return nil
 	}
 
 	if err := app.Run(os.Args); err != nil {
