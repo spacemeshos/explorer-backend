@@ -245,10 +245,6 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 		epoch.LayerStart = layerStart
 		epoch.Start = s.getLayerTimestamp(layerStart)
 	}
-	lastLayer := s.GetLastLayer(context.Background())
-	if lastLayer < layerEnd {
-		layerEnd = lastLayer
-	}
 	epoch.LayerEnd = layerEnd
 	epoch.End = s.getLayerTimestamp(layerEnd) + s.NetworkInfo.LayerDuration - 1
 	epoch.Layers = epoch.LayerEnd - epoch.LayerStart + 1

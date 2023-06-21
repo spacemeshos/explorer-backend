@@ -141,29 +141,36 @@ func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ..
 func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("txs").InsertOne(ctx, bson.D{
-		{Key: "id", Value: in.Id},
-		{Key: "layer", Value: in.Layer},
-		{Key: "block", Value: in.Block},
-		{Key: "blockIndex", Value: in.BlockIndex},
-		{Key: "index", Value: in.Index},
-		{Key: "state", Value: in.State},
-		{Key: "timestamp", Value: in.Timestamp},
-		{Key: "maxGas", Value: in.MaxGas},
-		{Key: "gasPrice", Value: in.GasPrice},
-		{Key: "gasUsed", Value: in.GasUsed},
-		{Key: "fee", Value: in.Fee},
-		{Key: "amount", Value: in.Amount},
-		{Key: "counter", Value: in.Counter},
-		{Key: "type", Value: in.Type},
-		{Key: "signature", Value: in.Signature},
-		{Key: "pubKey", Value: in.PublicKey},
-		{Key: "sender", Value: in.Sender},
-		{Key: "receiver", Value: in.Receiver},
-		{Key: "svmData", Value: in.SvmData},
-	})
+	tx := bson.D{
+		{
+			Key: "$set",
+			Value: bson.D{
+				{Key: "id", Value: in.Id},
+				{Key: "layer", Value: in.Layer},
+				{Key: "block", Value: in.Block},
+				{Key: "blockIndex", Value: in.BlockIndex},
+				{Key: "index", Value: in.Index},
+				{Key: "state", Value: in.State},
+				{Key: "timestamp", Value: in.Timestamp},
+				{Key: "maxGas", Value: in.MaxGas},
+				{Key: "gasPrice", Value: in.GasPrice},
+				{Key: "gasUsed", Value: in.GasUsed},
+				{Key: "fee", Value: in.Fee},
+				{Key: "amount", Value: in.Amount},
+				{Key: "counter", Value: in.Counter},
+				{Key: "type", Value: in.Type},
+				{Key: "signature", Value: in.Signature},
+				{Key: "pubKey", Value: in.PublicKey},
+				{Key: "sender", Value: in.Sender},
+				{Key: "receiver", Value: in.Receiver},
+				{Key: "svmData", Value: in.SvmData},
+			},
+		},
+	}
+	_, err := s.db.Collection("txs").UpdateOne(ctx,
+		bson.D{{Key: "id", Value: in.Id}}, tx, options.Update().SetUpsert(true))
 	if err != nil {
-		log.Info("SaveTransaction: %v", err)
+		log.Info("SaveTransaction: %v obj: %+v", err, tx)
 	}
 	return err
 }
