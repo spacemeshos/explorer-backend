@@ -13,7 +13,7 @@ import (
 
 // GetActivations returns atxs by filter.
 func (e *Service) GetActivations(ctx context.Context, page, perPage int64) (atxs []*model.Activation, total int64, err error) {
-	return e.getActivations(ctx, &bson.D{}, e.getFindOptions("id", page, perPage))
+	return e.getActivations(ctx, &bson.D{}, e.getFindOptions("layer", page, perPage))
 }
 
 // GetActivation returns atx by id.
