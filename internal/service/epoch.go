@@ -104,7 +104,7 @@ func (e *Service) GetEpochSmeshers(ctx context.Context, epochNum int, page, perP
 func (e *Service) GetEpochRewards(ctx context.Context, epochNum int, page, perPage int64) (rewards []*model.Reward, total int64, err error) {
 	layerStart, layerEnd := e.getEpochLayers(epochNum)
 	filter := &bson.D{{Key: "layer", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
-	opts := e.getFindOptions("smesher", page, perPage)
+	opts := e.getFindOptions("layer", page, perPage)
 	opts.SetProjection(bson.D{})
 	return e.getRewards(ctx, filter, opts)
 }

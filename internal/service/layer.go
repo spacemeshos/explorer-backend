@@ -91,7 +91,7 @@ func (e *Service) GetLayerSmeshers(ctx context.Context, layerNum int, page, perP
 
 // GetLayerRewards returns rewards for layer.
 func (e *Service) GetLayerRewards(ctx context.Context, layerNum int, page, perPage int64) (rewards []*model.Reward, total int64, err error) {
-	opts := e.getFindOptions("smesher", page, perPage)
+	opts := e.getFindOptions("layer", page, perPage)
 	opts.SetProjection(bson.D{})
 	return e.getRewards(ctx, &bson.D{{Key: "layer", Value: layerNum}}, opts)
 }
