@@ -260,27 +260,24 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 	if atxs != nil {
 		smeshers := make(map[string]int64)
 		for _, atx := range atxs {
-			var cSize int64
+			var commitmentSize int64
 			var smesher string
 			for _, e := range atx {
 				if e.Key == "smesher" {
 					smesher, _ = e.Value.(string)
 					continue
 				}
-				if e.Key == "cSize" {
+				if e.Key == "commitmentSize" {
 					if value, ok := e.Value.(int64); ok {
-						cSize = value
+						commitmentSize = value
 					} else if value, ok := e.Value.(int32); ok {
-						cSize = int64(value)
+						commitmentSize = int64(value)
 					}
 				}
 			}
 			if smesher != "" {
-				// todo cSize always 0, because activations does not keep info about smesher czise
-				// it contains numunits, which should be multiplied to postUnitsSize
-				// postUnitsSize = BitsPerLabel * LabelsPerUnit / 8
-				smeshers[smesher] += cSize
-				epoch.Stats.Current.Security += cSize
+				smeshers[smesher] += commitmentSize
+				epoch.Stats.Current.Security += commitmentSize
 			}
 		}
 		epoch.Stats.Current.Smeshers = int64(len(smeshers))

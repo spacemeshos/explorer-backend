@@ -5,7 +5,7 @@ func CalculateLayerStartEndDate(genesisTime, layerNum, layerDuration uint32) (la
 	if layerNum == 0 {
 		layerStartDate = genesisTime
 	} else {
-		layerStartDate = genesisTime + (layerNum-1)*layerDuration
+		layerStartDate = genesisTime + layerNum*layerDuration
 	}
 	layerEndDate = layerStartDate + layerDuration - 1
 	return layerStartDate, layerEndDate

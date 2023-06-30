@@ -47,7 +47,7 @@ func NewLayer(in *pb.Layer, networkInfo *NetworkInfo) (*Layer, []*Block, []*Acti
 	if layer.Number == 0 {
 		layer.Start = networkInfo.GenesisTime
 	} else {
-		layer.Start = networkInfo.GenesisTime + (layer.Number-1)*networkInfo.LayerDuration
+		layer.Start = networkInfo.GenesisTime + layer.Number*networkInfo.LayerDuration
 	}
 	layer.End = layer.Start + networkInfo.LayerDuration - 1
 

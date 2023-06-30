@@ -36,17 +36,18 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 	}
 	if !cursor.Next(ctx) {
 		log.Info("GetActivation: Empty result")
-		return nil, errors.New("Empty result")
+		return nil, errors.New("empty result")
 	}
 	doc := cursor.Current
 	account := &model.Activation{
-		Id:        utils.GetAsString(doc.Lookup("id")),
-		Layer:     utils.GetAsUInt32(doc.Lookup("layer")),
-		SmesherId: utils.GetAsString(doc.Lookup("smesher")),
-		Coinbase:  utils.GetAsString(doc.Lookup("coinbase")),
-		PrevAtx:   utils.GetAsString(doc.Lookup("prevAtx")),
-		NumUnits:  utils.GetAsUInt32((doc.Lookup("numunits"))),
-		Timestamp: utils.GetAsUInt32((doc.Lookup("timestamp"))),
+		Id:             utils.GetAsString(doc.Lookup("id")),
+		Layer:          utils.GetAsUInt32(doc.Lookup("layer")),
+		SmesherId:      utils.GetAsString(doc.Lookup("smesher")),
+		Coinbase:       utils.GetAsString(doc.Lookup("coinbase")),
+		PrevAtx:        utils.GetAsString(doc.Lookup("prevAtx")),
+		NumUnits:       utils.GetAsUInt32(doc.Lookup("numunits")),
+		CommitmentSize: utils.GetAsUInt64(doc.Lookup("commitmentSize")),
+		Timestamp:      utils.GetAsUInt32(doc.Lookup("timestamp")),
 	}
 	return account, nil
 }
@@ -93,6 +94,7 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
 		{Key: "coinbase", Value: in.Coinbase},
 		{Key: "prevAtx", Value: in.PrevAtx},
 		{Key: "numunits", Value: in.NumUnits},
+		{Key: "commitmentSize", Value: int64(in.NumUnits) * int64(s.postUnitSize)},
 		{Key: "timestamp", Value: in.Timestamp},
 	})
 	if err != nil {
@@ -112,6 +114,7 @@ func (s *Storage) SaveActivations(parent context.Context, in []*model.Activation
 			{Key: "coinbase", Value: atx.Coinbase},
 			{Key: "prevAtx", Value: atx.PrevAtx},
 			{Key: "numunits", Value: atx.NumUnits},
+			{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
 			{Key: "timestamp", Value: atx.Timestamp},
 		})
 		if err != nil {
@@ -134,6 +137,7 @@ func (s *Storage) SaveOrUpdateActivations(parent context.Context, in []*model.Ac
 				{Key: "coinbase", Value: atx.Coinbase},
 				{Key: "prevAtx", Value: atx.PrevAtx},
 				{Key: "numunits", Value: atx.NumUnits},
+				{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
 				{Key: "timestamp", Value: atx.Timestamp},
 			}},
 		}, options.Update().SetUpsert(true))
