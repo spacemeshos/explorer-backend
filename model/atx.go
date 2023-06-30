@@ -10,13 +10,14 @@ import (
 )
 
 type Activation struct {
-	Id        string `json:"id" bson:"id"`             //nolint will fix it later.
-	Layer     uint32 `json:"layer" bson:"layer"`       // the layer that this activation is part of
-	SmesherId string `json:"smesher" bson:"smesher"`   //nolint will fix it later // id of smesher who created the ATX
-	Coinbase  string `json:"coinbase" bson:"coinbase"` // coinbase account id
-	PrevAtx   string `json:"prevAtx" bson:"prevAtx"`   // previous ATX pointed to
-	NumUnits  uint32 `json:"numunits" bson:"numunits"` // number of PoST data commitment units
-	Timestamp uint32 `json:"timestamp" bson:"timestamp"`
+	Id             string `json:"id" bson:"id"`             //nolint will fix it later.
+	Layer          uint32 `json:"layer" bson:"layer"`       // the layer that this activation is part of
+	SmesherId      string `json:"smesher" bson:"smesher"`   //nolint will fix it later // id of smesher who created the ATX
+	Coinbase       string `json:"coinbase" bson:"coinbase"` // coinbase account id
+	PrevAtx        string `json:"prevAtx" bson:"prevAtx"`   // previous ATX pointed to
+	NumUnits       uint32 `json:"numunits" bson:"numunits"` // number of PoST data commitment units
+	CommitmentSize uint64 `json:"commitmentSize" bson:"commitmentSize"`
+	Timestamp      uint32 `json:"timestamp" bson:"timestamp"`
 }
 
 type ActivationService interface {
