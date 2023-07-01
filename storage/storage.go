@@ -513,7 +513,7 @@ func (s *Storage) getLayerTimestamp(layer uint32) uint32 {
 	if layer == 0 {
 		return s.NetworkInfo.GenesisTime
 	}
-	return s.NetworkInfo.GenesisTime + (layer-1)*s.NetworkInfo.LayerDuration
+	return s.NetworkInfo.GenesisTime + layer*s.NetworkInfo.LayerDuration
 }
 
 func (s *Storage) Ping() error {
