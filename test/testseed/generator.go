@@ -257,7 +257,7 @@ func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, 
 	return model.Activation{
 		Id:             strings.ToLower(utils.BytesToHex(randomBytes(30))),
 		Layer:          layerNum,
-		SmesherId:      strings.ToLower(smesher.Id),
+		SmesherId:      smesher.Id,
 		Coinbase:       smesher.Coinbase,
 		PrevAtx:        strings.ToLower(utils.BytesToHex(randomBytes(30))),
 		NumUnits:       atxNumUnits,
@@ -355,7 +355,7 @@ func generateTransaction(index int, layer *model.Layer, senderSigner *signing.Ed
 func (s *SeedGenerator) generateSmesher(layerNum uint32, coinbase string, commitmentSize uint64) model.Smesher {
 	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Smesher{
-		Id:             address.GenerateAddress(randomBytes(20)).String(),
+		Id:             utils.BytesToHex(address.GenerateAddress(randomBytes(20)).Bytes()),
 		CommitmentSize: commitmentSize,
 		Coinbase:       coinbase,
 		AtxCount:       1,
@@ -371,7 +371,7 @@ func (s *SeedGenerator) generateReward(layerNum uint32, smesher *model.Smesher) 
 		LayerReward:   uint64(rand.Intn(1000)),
 		LayerComputed: 0,
 		Coinbase:      smesher.Coinbase,
-		Smesher:       strings.ToLower(smesher.Id),
+		Smesher:       smesher.Id,
 		Space:         smesher.CommitmentSize,
 		Timestamp:     tx,
 	}
