@@ -23,10 +23,8 @@ func TestAtxs(t *testing.T) {
 		require.NoError(t, err)
 		var tmpAtx model.Activation
 		require.NoError(t, json.Unmarshal(atxEncoded, &tmpAtx))
-		tmpAtx.SmesherId = strings.ToLower(tmpAtx.SmesherId)
 		atxGen, ok := generator.Activations[tmpAtx.Id]
 		require.True(t, ok)
-		atxGen.SmesherId = strings.ToLower(atxGen.SmesherId)
 		tmpAtx.Coinbase = strings.ToLower(tmpAtx.Coinbase)
 		atxGen.Coinbase = strings.ToLower(atxGen.Coinbase)
 		require.Equal(t, *atxGen, tmpAtx)

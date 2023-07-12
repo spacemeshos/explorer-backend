@@ -158,6 +158,7 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 	println("global state stream started")
 	for _, epoch := range g.seedGen.Epochs {
 		for _, reward := range epoch.Rewards {
+			smesher, _ := utils.StringToBytes(reward.Smesher)
 			resp := &pb.GlobalStateStreamResponse{Datum: &pb.GlobalStateData{Datum: &pb.GlobalStateData_Reward{
 				Reward: &pb.Reward{
 					LayerComputed: &pb.LayerNumber{Number: reward.LayerComputed},
@@ -165,7 +166,7 @@ func (g *globalStateServiceWrapper) GlobalStateStream(request *pb.GlobalStateStr
 					Total:         &pb.Amount{Value: reward.Total},
 					LayerReward:   &pb.Amount{Value: reward.LayerReward},
 					Coinbase:      &pb.AccountId{Address: reward.Coinbase},
-					Smesher:       &pb.SmesherId{Id: addressToBytes(reward.Smesher)},
+					Smesher:       &pb.SmesherId{Id: smesher},
 				},
 			}}}
 			if err := stream.Send(resp); err != nil {
@@ -227,10 +228,11 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 		for _, layerContainer := range epoch.Layers {
 			atx := make([]*pb.Activation, 0, len(layerContainer.Activations))
 			for _, atxGenerated := range layerContainer.Activations {
+				smesherId, _ := utils.StringToBytes(atxGenerated.SmesherId)
 				atx = append(atx, &pb.Activation{
 					Id:        &pb.ActivationId{Id: mustParse(atxGenerated.Id)},
 					Layer:     &pb.LayerNumber{Number: atxGenerated.Layer},
-					SmesherId: &pb.SmesherId{Id: addressToBytes(atxGenerated.SmesherId)},
+					SmesherId: &pb.SmesherId{Id: smesherId},
 					Coinbase:  &pb.AccountId{Address: atxGenerated.Coinbase},
 					PrevAtx:   &pb.ActivationId{Id: mustParse(atxGenerated.PrevAtx)},
 					NumUnits:  atxGenerated.NumUnits,
@@ -262,11 +264,12 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 						Raw: sdkWallet.Spend(signer.PrivateKey(), receiver, txContainer.Amount, types.Nonce(txContainer.Counter), sdk.WithGasPrice(txContainer.GasPrice)),
 					})
 				}
+				smesherId, _ := utils.StringToBytes(blockContainer.SmesherID)
 				blocksRes = append(blocksRes, &pb.Block{
 					Id:           mustParse(blockContainer.Block.Id),
 					Transactions: tx,
 					SmesherId: &pb.SmesherId{
-						Id: addressToBytes(blockContainer.SmesherID),
+						Id: smesherId,
 					},
 				})
 			}
