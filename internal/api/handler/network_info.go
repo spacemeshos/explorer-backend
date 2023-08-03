@@ -53,7 +53,7 @@ func NetworkInfo(c echo.Context) error {
 func NetworkInfoWS(c echo.Context) error {
 	ws, err := Upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		log.Error("NetworkInfoWS: upgrade error: %w\n", err)
+		log.Err(fmt.Errorf("NetworkInfoWS: upgrade error: %w\n", err))
 		return nil
 	}
 	defer ws.Close()
@@ -64,7 +64,7 @@ func NetworkInfoWS(c echo.Context) error {
 	for ; true; <-ticker.C {
 		if err := serveNetworkInfo(c, ws); err != nil {
 			if !errors.Is(err, syscall.EPIPE) {
-				log.Error("NetworkInfoWS: serve network info: %s", err)
+				log.Err(fmt.Errorf("NetworkInfoWS: serve network info: %s", err))
 				return nil
 			}
 		}

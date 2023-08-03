@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"fmt"
 	"github.com/spacemeshos/explorer-backend/utils"
 	"io"
 	"time"
@@ -18,42 +19,42 @@ func (c *Collector) getNetworkInfo() error {
 
 	genesisTime, err := c.meshClient.GenesisTime(ctx, &pb.GenesisTimeRequest{})
 	if err != nil {
-		log.Error("cannot get GenesisTime: %v", err)
+		log.Err(fmt.Errorf("cannot get GenesisTime: %v", err))
 		return err
 	}
 
 	genesisId, err := c.meshClient.GenesisID(ctx, &pb.GenesisIDRequest{})
 	if err != nil {
-		log.Error("cannot get NetId: %v", err)
+		log.Err(fmt.Errorf("cannot get NetId: %v", err))
 	}
 
 	epochNumLayers, err := c.meshClient.EpochNumLayers(ctx, &pb.EpochNumLayersRequest{})
 	if err != nil {
-		log.Error("cannot get EpochNumLayers: %v", err)
+		log.Err(fmt.Errorf("cannot get EpochNumLayers: %v", err))
 		return err
 	}
 
 	maxTransactionsPerSecond, err := c.meshClient.MaxTransactionsPerSecond(ctx, &pb.MaxTransactionsPerSecondRequest{})
 	if err != nil {
-		log.Error("cannot get MaxTransactionsPerSecond: %v", err)
+		log.Err(fmt.Errorf("cannot get MaxTransactionsPerSecond: %v", err))
 		return err
 	}
 
 	layerDuration, err := c.meshClient.LayerDuration(ctx, &pb.LayerDurationRequest{})
 	if err != nil {
-		log.Error("cannot get LayerDuration: %v", err)
+		log.Err(fmt.Errorf("cannot get LayerDuration: %v", err))
 		return err
 	}
 
 	accounts, err := c.debugClient.Accounts(ctx, &pb.AccountsRequest{})
 	if err != nil {
-		log.Error("cannot get accounts: %v", err)
+		log.Err(fmt.Errorf("cannot get accounts: %v", err))
 		return err
 	}
 
 	res, err := c.smesherClient.PostConfig(ctx, &empty.Empty{})
 	if err != nil {
-		log.Error("cannot get POST config: %v", err)
+		log.Err(fmt.Errorf("cannot get POST config: %v", err))
 		return err
 	}
 
@@ -86,7 +87,7 @@ func (c *Collector) layersPump() error {
 
 	stream, err := c.meshClient.LayerStream(context.Background(), &req)
 	if err != nil {
-		log.Error("cannot get layer stream: %v", err)
+		log.Err(fmt.Errorf("cannot get layer stream: %v", err))
 		return err
 	}
 
@@ -96,7 +97,7 @@ func (c *Collector) layersPump() error {
 			return err
 		}
 		if err != nil {
-			log.Error("cannot receive layer: %v", err)
+			log.Err(fmt.Errorf("cannot receive layer: %v", err))
 			return err
 		}
 		layer := response.GetLayer()
@@ -107,7 +108,7 @@ func (c *Collector) layersPump() error {
 func (c *Collector) syncMissingLayers() error {
 	status, err := c.nodeClient.Status(context.Background(), &pb.StatusRequest{})
 	if err != nil {
-		log.Error("cannot receive node status: %v", err)
+		log.Err(fmt.Errorf("cannot receive node status: %v", err))
 		return err
 	}
 	syncedLayerNum := status.Status.SyncedLayer.Number

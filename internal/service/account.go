@@ -16,7 +16,7 @@ import (
 func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Account, error) {
 	addr, err := address.StringToAddress(accountID)
 	if err != nil {
-		log.Error("GetAccount error: %v", err)
+		log.Err(fmt.Errorf("GetAccount error: %v", err))
 		return nil, ErrNotFound
 	}
 

@@ -53,7 +53,7 @@ func (s *Reader) GetLayer(ctx context.Context, layerNumber int) (*model.Layer, e
 func (s *Reader) GetLayerTimestamp(layer uint32) uint32 {
 	networkInfo, err := s.GetNetworkInfo(context.TODO())
 	if err != nil {
-		log.Error("getLayerTimestamp: %w", err)
+		log.Err(fmt.Errorf("getLayerTimestamp: %w", err))
 		return 0
 	}
 

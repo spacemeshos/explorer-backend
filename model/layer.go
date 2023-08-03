@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"github.com/spacemeshos/go-spacemesh/log"
 
@@ -67,7 +68,7 @@ func NewLayer(in *pb.Layer, networkInfo *NetworkInfo) (*Layer, []*Block, []*Acti
 		for j, t := range b.Transactions {
 			tx, err := NewTransaction(t, layer.Number, blocks[i].Id, layer.Start, uint32(j))
 			if err != nil {
-				log.Error("cannot create transaction: %v", err)
+				log.Err(fmt.Errorf("cannot create transaction: %v", err))
 				continue
 			}
 			txs[tx.Id] = tx
