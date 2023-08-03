@@ -3,6 +3,7 @@ package collector
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
@@ -19,7 +20,7 @@ func (c *Collector) GetAccountState(address string) (uint64, uint64, error) {
 
 	res, err := c.globalClient.Account(ctx, req)
 	if err != nil {
-		log.Error("cannot get account info: %v", err)
+		log.Err(fmt.Errorf("cannot get account info: %v", err))
 		return 0, 0, err
 	}
 
@@ -45,7 +46,7 @@ func (c *Collector) globalStatePump() error {
 
 	stream, err := c.globalClient.GlobalStateStream(context.Background(), &req)
 	if err != nil {
-		log.Error("cannot get global state account stream: %v", err)
+		log.Err(fmt.Errorf("cannot get global state account stream: %v", err))
 		return err
 	}
 
@@ -55,7 +56,7 @@ func (c *Collector) globalStatePump() error {
 			return err
 		}
 		if err != nil {
-			log.Error("cannot receive Global state data: %v", err)
+			log.Err(fmt.Errorf("cannot receive Global state data: %v", err))
 			return err
 		}
 		item := response.GetDatum()

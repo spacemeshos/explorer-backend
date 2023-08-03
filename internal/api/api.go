@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spacemeshos/explorer-backend/internal/api/handler"
@@ -70,7 +71,7 @@ func Init(appService service.AppService, allowedOrigins []string, debug bool) *A
 func (a *Api) Run(address string) {
 	log.Info("server is running. For exit <CTRL-c>")
 	if err := a.Echo.Start(address); err != nil {
-		log.Error("server stopped: %s", err)
+		log.Err(fmt.Errorf("server stopped: %s", err))
 	}
 
 	sysSignal := make(chan os.Signal, 1)
@@ -79,7 +80,7 @@ func (a *Api) Run(address string) {
 	s := <-sysSignal
 	log.Info("exiting, got signal %v", s)
 	if err := a.Shutdown(); err != nil {
-		log.Error("error on shutdown: %v", err)
+		log.Err(fmt.Errorf("error on shutdown: %v", err))
 	}
 }
 

@@ -17,7 +17,7 @@ func Smeshers(c echo.Context) error {
 	pageNum, pageSize := GetPagination(c)
 	smeshersList, total, err := cc.Service.GetSmeshers(context.TODO(), pageNum, pageSize)
 	if err != nil {
-		log.Error("failed to get smeshers list: %s", err)
+		log.Err(fmt.Errorf("failed to get smeshers list: %s", err))
 		return err
 	}
 
@@ -54,7 +54,7 @@ func SmesherDetails(c echo.Context) error {
 		return fiber.NewError(fiber.StatusNotFound, "entity not found")
 	}
 	if err != nil {
-		log.Error("failed to get smesher entity `%s` details: %s", c.Param("entity"), err)
+		log.Err(fmt.Errorf("failed to get smesher entity `%s` details: %s", c.Param("entity"), err))
 		return err
 	}
 

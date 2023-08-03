@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/spacemeshos/explorer-backend/utils"
 	"sync"
 	"time"
@@ -118,7 +119,7 @@ func (s *Storage) Close() {
 		s.db = nil
 		err := s.client.Disconnect(ctx)
 		if err != nil {
-			log.Error("error while disconnecting from database: %v", err)
+			log.Err(fmt.Errorf("error while disconnecting from database: %v", err))
 		}
 	}
 }
@@ -134,7 +135,7 @@ func (s *Storage) OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLa
 	err := s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("OnNetworkInfo: error %v", err)
+		log.Err(fmt.Errorf("OnNetworkInfo: error %v", err))
 	}
 
 	log.Info("Network Info: id: %s, genesis: %v, epoch layers: %v, max tx: %v, duration: %v",
@@ -156,7 +157,7 @@ func (s *Storage) OnNodeStatus(connectedPeers uint64, isSynced bool, syncedLayer
 	err := s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("OnNodeStatus: error %v", err)
+		log.Err(fmt.Errorf("OnNodeStatus: error %v", err))
 	}
 }
 
@@ -186,7 +187,7 @@ func (s *Storage) OnAccount(in *pb.Account) {
 	err := s.UpdateAccount(context.Background(), account.Address, account.Balance, account.Counter)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("OnAccount: error %v", err)
+		log.Err(fmt.Errorf("OnAccount: error %v", err))
 	}
 }
 
@@ -206,20 +207,20 @@ func (s *Storage) OnReward(in *pb.Reward) {
 	err = s.SaveReward(context.Background(), reward)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("OnReward save: error %v", err)
+		log.Err(fmt.Errorf("OnReward save: error %v", err))
 	}
 
 	err = s.AddAccount(context.Background(), reward.Layer, reward.Coinbase, 0)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("OnReward add account: error %v", err)
+		log.Err(fmt.Errorf("OnReward add account: error %v", err))
 	}
 
 	//    s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.LayerReward, reward.Total - reward.LayerReward)
 	err = s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.Total, reward.LayerReward)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("OnReward add account reward: error %v", err)
+		log.Err(fmt.Errorf("OnReward add account reward: error %v", err))
 	}
 
 	s.requestBalanceUpdate(reward.Layer, reward.Coinbase)
@@ -232,7 +233,7 @@ func (s *Storage) OnTransactionReceipt(in *pb.TransactionReceipt) {
 	err := s.UpdateTransaction(context.Background(), model.NewTransactionReceipt(in))
 	//TODO: better error handling
 	if err != nil {
-		log.Error("OnTransactionReceipt: error %v", err)
+		log.Err(fmt.Errorf("OnTransactionReceipt: error %v", err))
 	}
 }
 
@@ -311,7 +312,7 @@ func (s *Storage) updateLayer(in *pb.Layer) {
 	err := s.SaveOrUpdateBlocks(context.Background(), blocks)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("updateLayer: error %v", err)
+		log.Err(fmt.Errorf("updateLayer: error %v", err))
 	}
 
 	s.updateActivations(layer, atxs)
@@ -321,7 +322,7 @@ func (s *Storage) updateLayer(in *pb.Layer) {
 	err = s.SaveOrUpdateLayer(context.Background(), layer)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("updateLayer: error %v", err)
+		log.Err(fmt.Errorf("updateLayer: error %v", err))
 	}
 
 	s.setChangedEpoch(layer.Number)
@@ -341,7 +342,7 @@ func (s *Storage) updateNetworkStatus(layer *model.Layer) {
 	err := s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("updateNetworkStatus: error %v", err)
+		log.Err(fmt.Errorf("updateNetworkStatus: error %v", err))
 	}
 }
 
@@ -350,26 +351,26 @@ func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation
 	err := s.SaveOrUpdateActivations(context.Background(), atxs)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("updateActivations: error %v", err)
+		log.Err(fmt.Errorf("updateActivations: error %v", err))
 	}
 
 	for _, atx := range atxs {
 		err := s.SaveSmesher(context.Background(), atx.GetSmesher(s.postUnitSize))
 		//TODO: better error handling
 		if err != nil {
-			log.Error("updateActivations: error %v", err)
+			log.Err(fmt.Errorf("updateActivations: error %v", err))
 		}
 
 		err = s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
 		//TODO: better error handling
 		if err != nil {
-			log.Error("updateActivations: error %v", err)
+			log.Err(fmt.Errorf("updateActivations: error %v", err))
 		}
 
 		err = s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
 		//TODO: better error handling
 		if err != nil {
-			log.Error("updateActivations: error %v", err)
+			log.Err(fmt.Errorf("updateActivations: error %v", err))
 		}
 	}
 }
@@ -386,13 +387,13 @@ func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.T
 			err := s.AddAccount(context.Background(), layer.Number, tx.Sender, 0)
 			//TODO: better error handling
 			if err != nil {
-				log.Error("updateTransactions: error %v", err)
+				log.Err(fmt.Errorf("updateTransactions: error %v", err))
 			}
 
 			err = s.AddAccountSent(context.Background(), layer.Number, tx.Sender, tx.Amount)
 			//TODO: better error handling
 			if err != nil {
-				log.Error("updateTransactions: error %v", err)
+				log.Err(fmt.Errorf("updateTransactions: error %v", err))
 			}
 
 			s.requestBalanceUpdate(layer.Number, tx.Sender)
@@ -401,13 +402,13 @@ func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.T
 			err := s.AddAccount(context.Background(), layer.Number, tx.Receiver, 0)
 			//TODO: better error handling
 			if err != nil {
-				log.Error("updateTransactions: error %v", err)
+				log.Err(fmt.Errorf("updateTransactions: error %v", err))
 			}
 
 			err = s.AddAccountReceived(context.Background(), layer.Number, tx.Receiver, tx.Amount)
 			//TODO: better error handling
 			if err != nil {
-				log.Error("updateTransactions: error %v", err)
+				log.Err(fmt.Errorf("updateTransactions: error %v", err))
 			}
 			s.requestBalanceUpdate(layer.Number, tx.Receiver)
 		}
@@ -444,7 +445,7 @@ func (s *Storage) updateEpoch(epochNumber int32, prev *model.Epoch) *model.Epoch
 	err := s.SaveOrUpdateEpoch(context.Background(), epoch)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("updateEpoch: error %v", err)
+		log.Err(fmt.Errorf("updateEpoch: error %v", err))
 	}
 
 	return epoch
@@ -473,7 +474,7 @@ func (s *Storage) updateAccount(address string) {
 	err = s.UpdateAccount(context.Background(), address, balance, counter)
 	//TODO: better error handling
 	if err != nil {
-		log.Error("updateEpoch: error %v", err)
+		log.Err(fmt.Errorf("updateEpoch: error %v", err))
 	}
 }
 

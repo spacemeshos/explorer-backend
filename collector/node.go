@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"fmt"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"io"
 
@@ -21,7 +22,7 @@ func (c *Collector) syncStatusPump() error {
 
 	stream, err := c.nodeClient.StatusStream(context.Background(), &req)
 	if err != nil {
-		log.Error("cannot get sync status stream: %v", err)
+		log.Err(fmt.Errorf("cannot get sync status stream: %v", err))
 		return err
 	}
 
@@ -32,7 +33,7 @@ func (c *Collector) syncStatusPump() error {
 			return err
 		}
 		if err != nil {
-			log.Error("cannot receive sync status: %v", err)
+			log.Err(fmt.Errorf("cannot receive sync status: %v", err))
 			return err
 		}
 

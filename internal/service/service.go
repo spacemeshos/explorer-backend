@@ -43,7 +43,7 @@ func NewService(reader storagereader.StorageReader, cacheTTL time.Duration) *Ser
 	}
 
 	if _, err := service.GetNetworkInfo(context.Background()); err != nil {
-		log.Error("error load network info: %w", err)
+		log.Err(fmt.Errorf("error load network info: %w", err))
 	}
 	return service
 }
