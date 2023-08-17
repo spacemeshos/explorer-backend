@@ -39,12 +39,12 @@ func (s *Reader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*option
 func (s *Reader) GetSmesher(ctx context.Context, smesherID string) (*model.Smesher, error) {
 	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "id", Value: smesherID}}}}
 	lookupStage := bson.D{
-		{"$lookup",
-			bson.D{
-				{"from", "malfeasance_proofs"},
-				{"localField", "id"},
-				{"foreignField", "smesher"},
-				{"as", "proofs"},
+		{Key: "$lookup",
+			Value: bson.D{
+				{Key: "from", Value: "malfeasance_proofs"},
+				{Key: "localField", Value: "id"},
+				{Key: "foreignField", Value: "smesher"},
+				{Key: "as", Value: "proofs"},
 			},
 		},
 	}
