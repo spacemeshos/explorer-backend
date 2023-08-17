@@ -16,12 +16,13 @@ import (
 )
 
 const (
-	streamType_node_SyncStatus int = 1
-	streamType_mesh_Layer      int = 2
-	streamType_globalState     int = 3
-	streamType_node_Error      int = 4
+	streamType_node_SyncStatus  int = 1
+	streamType_mesh_Layer       int = 2
+	streamType_globalState      int = 3
+	streamType_node_Error       int = 4
+	streamType_mesh_Malfeasance int = 5
 
-	streamType_count int = 3
+	streamType_count int = 5
 )
 
 type Listener interface {
@@ -30,6 +31,7 @@ type Listener interface {
 	OnLayer(layer *pb.Layer)
 	OnAccount(account *pb.Account)
 	OnReward(reward *pb.Reward)
+	OnMalfeasanceProof(proof *pb.MalfeasanceProof)
 	OnTransactionReceipt(receipt *pb.TransactionReceipt)
 	GetLastLayer(parent context.Context) uint32
 }
@@ -128,6 +130,14 @@ func (c *Collector) Run() error {
 		err := c.globalStatePump()
 		if err != nil {
 			return errors.Join(errors.New("cannot start sync global state pump"), err)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		err := c.malfeasancePump()
+		if err != nil {
+			return errors.Join(errors.New("cannot start sync malfeasance pump"), err)
 		}
 		return nil
 	})

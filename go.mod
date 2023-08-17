@@ -9,9 +9,9 @@ require (
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
-	github.com/spacemeshos/api/release/go v1.17.0
+	github.com/spacemeshos/api/release/go v1.19.0
 	github.com/spacemeshos/go-scale v1.1.10
-	github.com/spacemeshos/go-spacemesh v1.0.8
+	github.com/spacemeshos/go-spacemesh v1.0.12-0.20230817164928-9b10e8e7b1b1
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.23.7
 	go.mongodb.org/mongo-driver v1.10.1
@@ -57,8 +57,8 @@ require (
 	github.com/savsgio/dictpool v0.0.0-20221023140959-7bf2e61cea94 // indirect
 	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/spacemeshos/merkle-tree v0.2.2 // indirect
-	github.com/spacemeshos/poet v0.8.7 // indirect
-	github.com/spacemeshos/post v0.8.11 // indirect
+	github.com/spacemeshos/poet v0.8.9 // indirect
+	github.com/spacemeshos/post v0.9.0 // indirect
 	github.com/spacemeshos/sha256-simd v0.1.0 // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -74,8 +74,8 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
-	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/exp v0.0.0-20230725012225-302865e7556b // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e // indirect
