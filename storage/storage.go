@@ -178,6 +178,10 @@ func (s *Storage) OnLayer(in *pb.Layer) {
 	s.pushLayer(in)
 }
 
+func (s *Storage) OnMalfeasanceProof(in *pb.MalfeasanceProof) {
+	s.updateMalfeasanceProof(in)
+}
+
 func (s *Storage) OnAccount(in *pb.Account) {
 	log.Info("OnAccount(%+v)", in)
 	account := model.NewAccount(in)
@@ -502,6 +506,19 @@ func (s *Storage) updateAccounts() {
 				s.updateAccount(address)
 			}
 		}
+	}
+}
+
+func (s *Storage) updateMalfeasanceProof(in *pb.MalfeasanceProof) {
+	log.Info("updateMalfeasanceProof(%v) -> %v, %v, %v, %v", in, in.Layer, in.DebugInfo, in.SmesherId, in.Kind)
+	proof := model.NewMalfeasanceProof(in)
+	if proof == nil {
+		return
+	}
+
+	err := s.SaveMalfeasanceProof(context.Background(), proof)
+	if err != nil {
+		log.Err(fmt.Errorf("updateMalfeasanceProof: %v", err))
 	}
 }
 

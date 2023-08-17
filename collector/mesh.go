@@ -133,3 +133,34 @@ func (c *Collector) syncMissingLayers() error {
 
 	return nil
 }
+
+func (c *Collector) malfeasancePump() error {
+	var req = pb.MalfeasanceStreamRequest{}
+
+	log.Info("Start mesh malfeasance pump")
+	defer func() {
+		c.notify <- -streamType_mesh_Malfeasance
+		log.Info("Stop mesh malfeasance pump")
+	}()
+
+	c.notify <- +streamType_mesh_Malfeasance
+
+	stream, err := c.meshClient.MalfeasanceStream(context.Background(), &req)
+	if err != nil {
+		log.Err(fmt.Errorf("cannot get malfeasance stream: %v", err))
+		return err
+	}
+
+	for {
+		response, err := stream.Recv()
+		if err == io.EOF {
+			return err
+		}
+		if err != nil {
+			log.Err(fmt.Errorf("cannot receive malfeasance proof: %v", err))
+			return err
+		}
+		proof := response.GetProof()
+		c.listener.OnMalfeasanceProof(proof)
+	}
+}

@@ -37,18 +37,34 @@ func (s *Reader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*option
 
 // GetSmesher returns the smesher matching the query.
 func (s *Reader) GetSmesher(ctx context.Context, smesherID string) (*model.Smesher, error) {
-	cursor, err := s.db.Collection("smeshers").Find(ctx, &bson.D{{Key: "id", Value: smesherID}})
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "id", Value: smesherID}}}}
+	lookupStage := bson.D{
+		{"$lookup",
+			bson.D{
+				{"from", "malfeasance_proofs"},
+				{"localField", "id"},
+				{"foreignField", "smesher"},
+				{"as", "proofs"},
+			},
+		},
+	}
+	cursor, err := s.db.Collection("smeshers").Aggregate(ctx, mongo.Pipeline{
+		matchStage,
+		lookupStage,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error get smesher `%s`: %w", smesherID, err)
 	}
 	if !cursor.Next(ctx) {
 		return nil, nil
 	}
-	var layer *model.Smesher
-	if err = cursor.Decode(&layer); err != nil {
+
+	var smesher *model.Smesher
+	if err = cursor.Decode(&smesher); err != nil {
 		return nil, fmt.Errorf("error decode smesher `%s`: %w", smesherID, err)
 	}
-	return layer, nil
+
+	return smesher, nil
 }
 
 // CountSmesherRewards returns the number of smesher rewards matching the query.
