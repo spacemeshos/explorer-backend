@@ -118,17 +118,19 @@ func (c *Collector) syncMissingLayers() error {
 		return nil
 	}
 
-	layers, err := c.meshClient.LayersQuery(context.Background(), &pb.LayersQueryRequest{
-		StartLayer: &pb.LayerNumber{Number: lastLayer + 1},
-		EndLayer:   &pb.LayerNumber{Number: syncedLayerNum},
-	})
-	if err != nil {
-		return err
-	}
+	for i := lastLayer + 1; i <= syncedLayerNum; i++ {
+		layers, err := c.meshClient.LayersQuery(context.Background(), &pb.LayersQueryRequest{
+			StartLayer: &pb.LayerNumber{Number: i},
+			EndLayer:   &pb.LayerNumber{Number: i},
+		})
+		if err != nil {
+			return err
+		}
 
-	for _, layer := range layers.GetLayer() {
-		log.Info("syncing missing layer: %d", layer.Number.Number)
-		c.listener.OnLayer(layer)
+		for _, layer := range layers.GetLayer() {
+			log.Info("syncing missing layer: %d", layer.Number.Number)
+			c.listener.OnLayer(layer)
+		}
 	}
 
 	return nil

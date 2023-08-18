@@ -8,13 +8,13 @@ import (
 type MalfeasanceProof struct {
 	Smesher string `json:"smesher" bson:"smesher"`
 	Layer   uint32 `json:"layer" bson:"layer"`
-	Type    string `json:"type" bson:"type"`
+	Kind    string `json:"kind" bson:"kind"`
 }
 
 func NewMalfeasanceProof(in *pb.MalfeasanceProof) *MalfeasanceProof {
 	return &MalfeasanceProof{
 		Smesher: utils.BytesToHex(in.GetSmesherId().GetId()),
 		Layer:   in.Layer.GetNumber(),
-		Type:    in.Kind.String(),
+		Kind:    in.Kind.String(),
 	}
 }
