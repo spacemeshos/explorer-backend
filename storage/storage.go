@@ -510,11 +510,12 @@ func (s *Storage) updateAccounts() {
 }
 
 func (s *Storage) updateMalfeasanceProof(in *pb.MalfeasanceProof) {
-	log.Info("updateMalfeasanceProof(%v) -> %v, %v, %v, %v", in, in.Layer, in.DebugInfo, in.SmesherId, in.Kind)
 	proof := model.NewMalfeasanceProof(in)
 	if proof == nil {
 		return
 	}
+
+	log.Info("updateMalfeasanceProof -> %v, %v, %v", proof.Layer, proof.Smesher, proof.Kind)
 
 	err := s.SaveMalfeasanceProof(context.Background(), proof)
 	if err != nil {
