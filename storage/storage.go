@@ -358,25 +358,33 @@ func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation
 		log.Err(fmt.Errorf("updateActivations: error %v", err))
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(len(atxs))
+
 	for _, atx := range atxs {
-		err := s.SaveSmesher(context.Background(), atx.GetSmesher(s.postUnitSize))
-		//TODO: better error handling
-		if err != nil {
-			log.Err(fmt.Errorf("updateActivations: error %v", err))
-		}
+		go func(atx *model.Activation) {
+			defer wg.Done()
+			err := s.SaveSmesher(context.Background(), atx.GetSmesher(s.postUnitSize))
+			//TODO: better error handling
+			if err != nil {
+				log.Err(fmt.Errorf("updateActivations: error %v", err))
+			}
 
-		err = s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
-		//TODO: better error handling
-		if err != nil {
-			log.Err(fmt.Errorf("updateActivations: error %v", err))
-		}
+			err = s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
+			//TODO: better error handling
+			if err != nil {
+				log.Err(fmt.Errorf("updateActivations: error %v", err))
+			}
 
-		err = s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
-		//TODO: better error handling
-		if err != nil {
-			log.Err(fmt.Errorf("updateActivations: error %v", err))
-		}
+			err = s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
+			//TODO: better error handling
+			if err != nil {
+				log.Err(fmt.Errorf("updateActivations: error %v", err))
+			}
+		}(atx)
 	}
+
+	wg.Wait()
 }
 
 func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.Transaction) {

@@ -21,6 +21,7 @@ func (s *Storage) InitRewardsStorage(ctx context.Context) error {
 		{Keys: bson.D{{Key: "smesher", Value: 1}}, Options: options.Index().SetName("smesherIndex").SetUnique(false)},
 		{Keys: bson.D{{Key: "coinbase", Value: 1}}, Options: options.Index().SetName("coinbaseIndex").SetUnique(false)},
 		{Keys: bson.D{{Key: "layer", Value: 1}, {Key: "smesher", Value: 1}, {Key: "coinbase", Value: 1}}, Options: options.Index().SetName("rewardIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "layer", Value: 1}, {Key: "total", Value: 1}, {Key: "layerReward", Value: 1}}, Options: options.Index().SetName("layerRewards").SetUnique(false)},
 	}
 	_, err := s.db.Collection("rewards").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(20*time.Second))
 	return err
@@ -162,16 +163,26 @@ func (s *Storage) GetRewards(parent context.Context, query *bson.D, opts ...*opt
 func (s *Storage) SaveReward(parent context.Context, in *model.Reward) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("rewards").InsertOne(ctx, bson.D{
+	rwd := bson.D{
+		{Key: "$set",
+			Value: bson.D{{Key: "layer", Value: in.Layer},
+				{Key: "total", Value: in.Total},
+				{Key: "layerReward", Value: in.LayerReward},
+				{Key: "layerComputed", Value: in.LayerComputed},
+				{Key: "coinbase", Value: in.Coinbase},
+				{Key: "smesher", Value: in.Smesher},
+				{Key: "space", Value: in.Space},
+				{Key: "timestamp", Value: in.Timestamp},
+			},
+		},
+	}
+
+	_, err := s.db.Collection("rewards").UpdateOne(ctx, bson.D{
 		{Key: "layer", Value: in.Layer},
-		{Key: "total", Value: in.Total},
-		{Key: "layerReward", Value: in.LayerReward},
-		{Key: "layerComputed", Value: in.LayerComputed},
-		{Key: "coinbase", Value: in.Coinbase},
 		{Key: "smesher", Value: in.Smesher},
-		{Key: "space", Value: in.Space},
-		{Key: "timestamp", Value: in.Timestamp},
-	})
+		{Key: "coinbase", Value: in.Coinbase},
+	}, rwd,
+		options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveReward: %v", err)
 	}
