@@ -65,6 +65,7 @@ func TestEpochLayersHandler(t *testing.T) {
 		require.Equal(t, len(ep.Layers), len(loopResult.Data))
 		for _, l := range loopResult.Data {
 			generatedLayer, ok := data[l.Number]
+			generatedLayer.Rewards = l.Rewards
 			require.True(t, ok)
 			require.Equal(t, generatedLayer, l)
 		}

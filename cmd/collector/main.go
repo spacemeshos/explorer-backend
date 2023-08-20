@@ -27,6 +27,8 @@ var (
 	mongoDbUrlStringFlag         string
 	mongoDbNameStringFlag        string
 	testnetBoolFlag              bool
+	syncFromLayerFlag            int
+	syncMissingLayersBoolFlag    bool
 )
 
 var flags = []cli.Flag{
@@ -69,6 +71,22 @@ var flags = []cli.Flag{
 		Destination: &testnetBoolFlag,
 		EnvVars:     []string{"SPACEMESH_TESTNET"},
 	},
+	&cli.IntFlag{
+		Name:        "syncFromLayer",
+		Usage:       ``,
+		Required:    false,
+		Value:       0,
+		Destination: &syncFromLayerFlag,
+		EnvVars:     []string{"SPACEMESH_SYNC_FROM_LAYER"},
+	},
+	&cli.BoolFlag{
+		Name:        "syncMissingLayers",
+		Usage:       `Use this flag to disable missing layers sync`,
+		Required:    false,
+		Destination: &syncMissingLayersBoolFlag,
+		Value:       true,
+		EnvVars:     []string{"SPACEMESH_SYNC_MISSING_LAYERS"},
+	},
 }
 
 func main() {
@@ -92,7 +110,8 @@ func main() {
 			return err
 		}
 
-		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag, mongoStorage)
+		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag,
+			syncMissingLayersBoolFlag, syncFromLayerFlag, mongoStorage)
 		mongoStorage.AccountUpdater = c
 
 		sigs := make(chan os.Signal, 1)
