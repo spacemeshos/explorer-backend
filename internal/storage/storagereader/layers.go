@@ -69,7 +69,7 @@ func (s *Reader) GetLayers(ctx context.Context, query *bson.D, opts ...*options.
 							{Key: "$mergeObjects",
 								Value: bson.A{
 									"$layerData",
-									bson.D{{"rewards", "$rewards"}},
+									bson.D{{Key: "rewards", Value: "$rewards"}},
 								},
 							},
 						},
