@@ -145,7 +145,7 @@ func (s *Reader) GetLayer(ctx context.Context, layerNumber int) (*model.Layer, e
 							{Key: "$mergeObjects",
 								Value: bson.A{
 									"$layerData",
-									bson.D{{"rewards", "$rewards"}},
+									bson.D{{Key: "rewards", Value: "$rewards"}},
 								},
 							},
 						},
