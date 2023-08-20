@@ -32,6 +32,10 @@ func TestEpochsHandler(t *testing.T) {
 	})
 	inserted := make([]model.Epoch, 0, len(generator.Epochs))
 	for i := range generator.Epochs {
+		generator.Epochs[i].Epoch.Stats.Current.Rewards = responseEpochs[i].Stats.Current.Rewards
+		generator.Epochs[i].Epoch.Stats.Cumulative.Rewards = responseEpochs[i].Stats.Cumulative.Rewards
+		generator.Epochs[i].Epoch.Stats.Current.RewardsNumber = responseEpochs[i].Stats.Current.RewardsNumber
+		generator.Epochs[i].Epoch.Stats.Cumulative.RewardsNumber = responseEpochs[i].Stats.Cumulative.RewardsNumber
 		inserted = append(inserted, generator.Epochs[i].Epoch)
 	}
 	require.Equal(t, responseEpochs, inserted)

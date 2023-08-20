@@ -131,7 +131,7 @@ func (s *Reader) GetEpochs(ctx context.Context, query *bson.D, opts ...*options.
 				},
 			},
 		},
-		bson.D{{Key: "$replaceRoot", Value: bson.D{{"newRoot", "$epochData"}}}},
+		bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$epochData"}}}},
 		bson.D{{Key: "$sort", Value: bson.D{{Key: "number", Value: -1}}}},
 	}
 
@@ -256,7 +256,7 @@ func (s *Reader) GetEpoch(ctx context.Context, epochNumber int) (*model.Epoch, e
 				},
 			},
 		},
-		bson.D{{Key: "$replaceRoot", Value: bson.D{{"newRoot", "$epochData"}}}},
+		bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$epochData"}}}},
 	}
 	cursor, err := s.db.Collection("epochs").Aggregate(ctx, pipeline)
 	if err != nil {
