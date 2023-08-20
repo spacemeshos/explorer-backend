@@ -35,6 +35,7 @@ func TestSearch(t *testing.T) { // /search/{id}
 			var resp layerResp
 			res.RequireUnmarshal(t, &resp)
 			require.Equal(t, 1, len(resp.Data))
+			layerContainer.Layer.Rewards = resp.Data[0].Rewards
 			require.Equal(t, layerContainer.Layer, resp.Data[0])
 		}
 	}

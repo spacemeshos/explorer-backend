@@ -321,7 +321,6 @@ func (s *Storage) updateLayer(in *pb.Layer) {
 
 	s.updateActivations(layer, atxs)
 	s.updateTransactions(layer, txs)
-	s.updateLayerRewards(layer)
 
 	err = s.SaveOrUpdateLayer(context.Background(), layer)
 	//TODO: better error handling
@@ -425,12 +424,6 @@ func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.T
 			s.requestBalanceUpdate(layer.Number, tx.Receiver)
 		}
 	}
-}
-
-func (s *Storage) updateLayerRewards(layer *model.Layer) {
-	log.Info("updateLayerRewards")
-	rewards, _ := s.GetLayersRewards(context.Background(), layer.Number, layer.Number)
-	layer.Rewards = uint64(rewards)
 }
 
 func (s *Storage) updateEpoch(epochNumber int32, prev *model.Epoch) *model.Epoch {

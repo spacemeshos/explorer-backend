@@ -63,9 +63,13 @@ func (c *Collector) globalStatePump() error {
 		if account := item.GetAccountWrapper(); account != nil {
 			c.listener.OnAccount(account)
 		} else if reward := item.GetReward(); reward != nil {
-			c.listener.OnReward(reward)
+			if reward.Layer.Number > c.syncFromLayerFlag {
+				c.listener.OnReward(reward)
+			}
 		} else if receipt := item.GetReceipt(); receipt != nil {
-			c.listener.OnTransactionReceipt(receipt)
+			if receipt.Layer.Number > c.syncFromLayerFlag {
+				c.listener.OnTransactionReceipt(receipt)
+			}
 		}
 	}
 }

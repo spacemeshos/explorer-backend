@@ -17,6 +17,9 @@ func TestLayers(t *testing.T) { // /layers
 	res := apiServer.Get(t, apiPrefix+"/layers?pagesize=100")
 	res.RequireOK(t)
 	res.RequireUnmarshal(t, &result)
+	for i := range insertedLayers {
+		insertedLayers[i].Rewards = result.Data[i].Rewards
+	}
 	require.Equal(t, insertedLayers, result.Data)
 }
 

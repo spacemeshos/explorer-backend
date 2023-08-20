@@ -287,6 +287,6 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 		epoch.Stats.Current.Decentral = int64(100.0 * (0.5*(a*a)/1e8 + 0.5*(1.0-utils.Gini(smeshers))))
 	}
 	epoch.Stats.Current.Accounts = s.GetAccountsCount(context.Background(), &bson.D{{Key: "created", Value: bson.D{{Key: "$lte", Value: layerEnd}}}})
-	epoch.Stats.Cumulative.Circulation, _ = s.GetLayersRewards(context.Background(), 0, layerEnd)
-	epoch.Stats.Current.Rewards, epoch.Stats.Current.RewardsNumber = s.GetLayersRewards(context.Background(), layerStart, layerEnd)
+	//epoch.Stats.Cumulative.Circulation, _ = s.GetLayersRewards(context.Background(), 0, layerEnd)
+	//epoch.Stats.Current.Rewards, epoch.Stats.Current.RewardsNumber = s.GetLayersRewards(context.Background(), layerStart, layerEnd)
 }

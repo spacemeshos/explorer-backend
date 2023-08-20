@@ -83,7 +83,7 @@ func TestMain(m *testing.M) {
 	}()
 
 	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort),
-		fmt.Sprintf("localhost:%d", privateNode.NodePort), storageDB)
+		fmt.Sprintf("localhost:%d", privateNode.NodePort), false, 0, storageDB)
 	storageDB.AccountUpdater = collectorApp
 	defer storageDB.Close()
 	go collectorApp.Run()

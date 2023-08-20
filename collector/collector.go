@@ -36,9 +36,12 @@ type Listener interface {
 }
 
 type Collector struct {
-	apiPublicUrl  string
-	apiPrivateUrl string
-	listener      Listener
+	apiPublicUrl          string
+	apiPrivateUrl         string
+	syncMissingLayersFlag bool
+	syncFromLayerFlag     uint32
+
+	listener Listener
 
 	nodeClient    pb.NodeServiceClient
 	meshClient    pb.MeshServiceClient
@@ -56,12 +59,15 @@ type Collector struct {
 	notify chan int
 }
 
-func NewCollector(nodePublicAddress string, nodePrivateAddress string, listener Listener) *Collector {
+func NewCollector(nodePublicAddress string, nodePrivateAddress string,
+	syncMissingLayersFlag bool, syncFromLayerFlag int, listener Listener) *Collector {
 	return &Collector{
-		apiPublicUrl:  nodePublicAddress,
-		apiPrivateUrl: nodePrivateAddress,
-		listener:      listener,
-		notify:        make(chan int),
+		apiPublicUrl:          nodePublicAddress,
+		apiPrivateUrl:         nodePrivateAddress,
+		syncMissingLayersFlag: syncMissingLayersFlag,
+		syncFromLayerFlag:     uint32(syncFromLayerFlag),
+		listener:              listener,
+		notify:                make(chan int),
 	}
 }
 
@@ -103,9 +109,11 @@ func (c *Collector) Run() error {
 		return errors.Join(errors.New("cannot get network info"), err)
 	}
 
-	err = c.syncMissingLayers()
-	if err != nil {
-		return errors.Join(errors.New("cannot sync missing layers"), err)
+	if c.syncMissingLayersFlag {
+		err = c.syncMissingLayers()
+		if err != nil {
+			return errors.Join(errors.New("cannot sync missing layers"), err)
+		}
 	}
 
 	g := new(errgroup.Group)

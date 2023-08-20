@@ -186,5 +186,6 @@ func (s *Storage) SaveReward(parent context.Context, in *model.Reward) error {
 	if err != nil {
 		log.Info("SaveReward: %v", err)
 	}
+
 	return err
 }

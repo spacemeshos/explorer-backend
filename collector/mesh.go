@@ -101,6 +101,11 @@ func (c *Collector) layersPump() error {
 			return err
 		}
 		layer := response.GetLayer()
+
+		if layer.Number.Number < c.syncFromLayerFlag {
+			continue
+		}
+
 		c.listener.OnLayer(layer)
 	}
 }
