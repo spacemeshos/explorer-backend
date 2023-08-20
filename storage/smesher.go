@@ -138,6 +138,29 @@ func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
 	return nil
 }
 
+func (s *Storage) SaveSmesherQuery(in *model.Smesher) *mongo.UpdateOneModel {
+	filter := bson.D{{Key: "id", Value: in.Id}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "id", Value: in.Id},
+			{Key: "name", Value: in.Name},
+			{Key: "lon", Value: in.Lon},
+			{Key: "lat", Value: in.Lat},
+			{Key: "cSize", Value: in.CommitmentSize},
+			{Key: "coinbase", Value: in.Coinbase},
+			{Key: "atxcount", Value: in.AtxCount},
+			{Key: "timestamp", Value: in.Timestamp},
+		}},
+	}
+
+	updateModel := mongo.NewUpdateOneModel()
+	updateModel.Filter = filter
+	updateModel.Update = update
+	updateModel.SetUpsert(true)
+
+	return updateModel
+}
+
 func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase string, space uint64, timestamp uint32) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
@@ -168,4 +191,37 @@ func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase
 		log.Info("UpdateSmesher: %v", err)
 	}
 	return err
+}
+
+func (s *Storage) UpdateSmesherQuery(smesher string, coinbase string, space uint64, timestamp uint32) (*mongo.UpdateOneModel, *mongo.UpdateOneModel) {
+	coinbaseFilter := bson.D{{Key: "smesherId", Value: smesher}}
+	coinbaseUpdate := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "coinbase", Value: coinbase},
+		}}}
+	coinbaseModel := mongo.NewUpdateOneModel()
+	coinbaseModel.SetFilter(coinbaseFilter)
+	coinbaseModel.SetUpdate(coinbaseUpdate)
+	coinbaseModel.SetUpsert(true)
+
+	atxCount, err := s.db.Collection("activations").CountDocuments(context.TODO(), &bson.D{{Key: "smesher", Value: smesher}})
+	if err != nil {
+		log.Info("UpdateSmesher: GetActivationsCount: %v", err)
+	}
+
+	smesherFilter := bson.D{{Key: "id", Value: smesher}}
+	smesherUpdate := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "cSize", Value: space},
+			{Key: "coinbase", Value: coinbase},
+			{Key: "atxcount", Value: atxCount},
+			{Key: "timestamp", Value: timestamp},
+		}},
+	}
+
+	smesherModel := mongo.NewUpdateOneModel()
+	smesherModel.SetFilter(smesherFilter)
+	smesherModel.SetUpdate(smesherUpdate)
+
+	return coinbaseModel, smesherModel
 }

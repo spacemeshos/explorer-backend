@@ -126,10 +126,11 @@ func (s *Storage) SaveActivations(parent context.Context, in []*model.Activation
 }
 
 func (s *Storage) SaveOrUpdateActivations(parent context.Context, in []*model.Activation) error {
-	ctx, cancel := context.WithTimeout(parent, 10*time.Second)
-	defer cancel()
+	var atxsUpdateOps []mongo.WriteModel
+
 	for _, atx := range in {
-		_, err := s.db.Collection("activations").UpdateOne(ctx, bson.D{{Key: "id", Value: atx.Id}}, bson.D{
+		filter := bson.D{{Key: "id", Value: atx.Id}}
+		update := bson.D{
 			{Key: "$set", Value: bson.D{
 				{Key: "id", Value: atx.Id},
 				{Key: "layer", Value: atx.Layer},
@@ -140,11 +141,25 @@ func (s *Storage) SaveOrUpdateActivations(parent context.Context, in []*model.Ac
 				{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
 				{Key: "timestamp", Value: atx.Timestamp},
 			}},
-		}, options.Update().SetUpsert(true))
-		if err != nil {
-			log.Info("SaveOrUpdateActivations: %v", err)
-			return err
 		}
+
+		updateModel := mongo.NewUpdateOneModel()
+		updateModel.Filter = filter
+		updateModel.Update = update
+		updateModel.SetUpsert(true)
+
+		atxsUpdateOps = append(atxsUpdateOps, updateModel)
 	}
+
+	if len(atxsUpdateOps) == 0 {
+		return nil
+	}
+
+	_, err := s.db.Collection("activations").BulkWrite(parent, atxsUpdateOps)
+	if err != nil {
+		log.Info("SaveOrUpdateActivations: %v", err)
+		return err
+	}
+
 	return nil
 }
