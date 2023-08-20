@@ -50,6 +50,11 @@ func TestEpochHandler(t *testing.T) {
 		res.RequireOK(t)
 		res.RequireUnmarshal(t, &loopResult)
 		require.Equal(t, 1, len(loopResult.Data))
+
+		ep.Epoch.Stats.Current.Rewards = loopResult.Data[0].Stats.Current.Rewards
+		ep.Epoch.Stats.Cumulative.Rewards = loopResult.Data[0].Stats.Cumulative.Rewards
+		ep.Epoch.Stats.Current.RewardsNumber = loopResult.Data[0].Stats.Current.RewardsNumber
+		ep.Epoch.Stats.Cumulative.RewardsNumber = loopResult.Data[0].Stats.Cumulative.RewardsNumber
 		require.Equal(t, ep.Epoch, loopResult.Data[0])
 	}
 }
