@@ -164,13 +164,14 @@ func (s *Storage) UpdateAccount(parent context.Context, address string, balance 
 	return nil
 }
 
-func (s *Storage) AddAccountSent(parent context.Context, layer uint32, address string, amount uint64) error {
+func (s *Storage) AddAccountSent(parent context.Context, layer uint32, address string, amount uint64, fee uint64) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	_, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
 		{Key: "address", Value: address},
 		{Key: "layer", Value: layer},
 		{Key: "sent", Value: amount},
+		{Key: "sentTxFee", Value: fee},
 	})
 	if err != nil {
 		log.Info("AddAccountSent: %v", err)
@@ -252,7 +253,7 @@ func (s *Storage) GetAccountSummary(parent context.Context, address string) (uin
 				{Key: "$sum", Value: "$reward"},
 			}},
 			{Key: "fees", Value: bson.D{
-				{Key: "$sum", Value: "$fee"},
+				{Key: "$sum", Value: "$sentTxFee"},
 			}},
 			{Key: "layer", Value: bson.D{
 				{Key: "$max", Value: "$layer"},

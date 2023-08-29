@@ -5,9 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/spacemeshos/explorer-backend/utils"
 	"sync"
 	"time"
+
+	"github.com/spacemeshos/explorer-backend/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -414,7 +415,7 @@ func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.T
 				log.Err(fmt.Errorf("updateTransactions: error %v", err))
 			}
 
-			err = s.AddAccountSent(context.Background(), layer.Number, tx.Sender, tx.Amount)
+			err = s.AddAccountSent(context.Background(), layer.Number, tx.Sender, tx.Amount, tx.Fee)
 			//TODO: better error handling
 			if err != nil {
 				log.Err(fmt.Errorf("updateTransactions: error %v", err))
