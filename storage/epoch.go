@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"math"
 	"time"
 
@@ -73,48 +75,132 @@ func (s *Storage) GetEpoch(parent context.Context, query *bson.D) (*model.Epoch,
 }
 
 func (s *Storage) GetEpochsData(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Epoch, error) {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
-	defer cancel()
-	cursor, err := s.db.Collection("epochs").Find(ctx, query, opts...)
-	if err != nil {
-		log.Info("GetEpoch: %v", err)
-		return nil, err
+	skip := int64(0)
+	if opts[0].Skip != nil {
+		skip = *opts[0].Skip
 	}
-	epochs := make([]*model.Epoch, 0)
-	for cursor.Next(ctx) {
-		doc := cursor.Current
-		epoch := &model.Epoch{
-			Number:     utils.GetAsInt32(doc.Lookup("number")),
-			Start:      utils.GetAsUInt32(doc.Lookup("start")),
-			End:        utils.GetAsUInt32(doc.Lookup("end")),
-			LayerStart: utils.GetAsUInt32(doc.Lookup("layerstart")),
-			LayerEnd:   utils.GetAsUInt32(doc.Lookup("layerend")),
-			Layers:     utils.GetAsUInt32(doc.Lookup("layers")),
-		}
-		stats := doc.Lookup("stats").Document()
-		current := stats.Lookup("current").Document()
-		epoch.Stats.Current.Capacity = utils.GetAsInt64(current.Lookup("capacity"))
-		epoch.Stats.Current.Decentral = utils.GetAsInt64(current.Lookup("decentral"))
-		epoch.Stats.Current.Smeshers = utils.GetAsInt64(current.Lookup("smeshers"))
-		epoch.Stats.Current.Transactions = utils.GetAsInt64(current.Lookup("transactions"))
-		epoch.Stats.Current.Accounts = utils.GetAsInt64(current.Lookup("accounts"))
-		epoch.Stats.Current.Circulation = utils.GetAsInt64(current.Lookup("circulation"))
-		epoch.Stats.Current.Rewards = utils.GetAsInt64(current.Lookup("rewards"))
-		epoch.Stats.Current.RewardsNumber = utils.GetAsInt64(current.Lookup("rewardsnumber"))
-		epoch.Stats.Current.Security = utils.GetAsInt64(current.Lookup("security"))
-		epoch.Stats.Current.TxsAmount = utils.GetAsInt64(current.Lookup("txsamount"))
-		cumulative := stats.Lookup("cumulative").Document()
-		epoch.Stats.Cumulative.Capacity = utils.GetAsInt64(cumulative.Lookup("capacity"))
-		epoch.Stats.Cumulative.Decentral = utils.GetAsInt64(cumulative.Lookup("decentral"))
-		epoch.Stats.Cumulative.Smeshers = utils.GetAsInt64(cumulative.Lookup("smeshers"))
-		epoch.Stats.Cumulative.Transactions = utils.GetAsInt64(cumulative.Lookup("transactions"))
-		epoch.Stats.Cumulative.Accounts = utils.GetAsInt64(cumulative.Lookup("accounts"))
-		epoch.Stats.Cumulative.Circulation = utils.GetAsInt64(cumulative.Lookup("circulation"))
-		epoch.Stats.Cumulative.Rewards = utils.GetAsInt64(cumulative.Lookup("rewards"))
-		epoch.Stats.Cumulative.RewardsNumber = utils.GetAsInt64(cumulative.Lookup("rewardsnumber"))
-		epoch.Stats.Cumulative.Security = utils.GetAsInt64(cumulative.Lookup("security"))
-		epoch.Stats.Cumulative.TxsAmount = utils.GetAsInt64(cumulative.Lookup("txsamount"))
-		epochs = append(epochs, epoch)
+
+	pipeline := bson.A{
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "number", Value: -1}}}},
+		bson.D{{Key: "$skip", Value: skip}},
+		bson.D{{Key: "$limit", Value: *opts[0].Limit}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "rewards"},
+					{Key: "let",
+						Value: bson.D{
+							{Key: "start", Value: "$layerstart"},
+							{Key: "end", Value: "$layerend"},
+						},
+					},
+					{Key: "pipeline",
+						Value: bson.A{
+							bson.D{
+								{Key: "$match",
+									Value: bson.D{
+										{Key: "$expr",
+											Value: bson.D{
+												{Key: "$and",
+													Value: bson.A{
+														bson.D{
+															{Key: "$gte",
+																Value: bson.A{
+																	"$layer",
+																	"$$start",
+																},
+															},
+														},
+														bson.D{
+															{Key: "$lte",
+																Value: bson.A{
+																	"$layer",
+																	"$$end",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					{Key: "as", Value: "rewardsData"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$rewardsData"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$group",
+				Value: bson.D{
+					{Key: "_id", Value: "$_id"},
+					{Key: "epochData", Value: bson.D{{Key: "$first", Value: "$$ROOT"}}},
+					{Key: "totalRewards", Value: bson.D{{Key: "$sum", Value: "$rewardsData.total"}}},
+					{Key: "totalRewardsCount",
+						Value: bson.D{
+							{Key: "$sum",
+								Value: bson.D{
+									{Key: "$cond",
+										Value: bson.A{
+											bson.D{
+												{Key: "$gt",
+													Value: bson.A{
+														"$rewardsData",
+														primitive.Null{},
+													},
+												},
+											},
+											1,
+											0,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		bson.D{{Key: "$project", Value: bson.D{{Key: "epochData.rewardsData", Value: 0}}}},
+		bson.D{
+			{Key: "$addFields",
+				Value: bson.D{
+					{Key: "epochData.stats.current.rewards", Value: "$totalRewards"},
+					{Key: "epochData.stats.current.rewardsnumber", Value: "$totalRewardsCount"},
+					{Key: "epochData.stats.cumulative.rewards", Value: "$totalRewards"},
+					{Key: "epochData.stats.cumulative.rewardsnumber", Value: "$totalRewardsCount"},
+					{Key: "totalRewards", Value: "$$REMOVE"},
+					{Key: "totalRewardsCount", Value: "$$REMOVE"},
+				},
+			},
+		},
+		bson.D{{Key: "$replaceRoot", Value: bson.D{{Key: "newRoot", Value: "$epochData"}}}},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "number", Value: -1}}}},
+	}
+
+	if query != nil {
+		pipeline = append(bson.A{
+			bson.D{{Key: "$match", Value: *query}},
+		}, pipeline...)
+	}
+
+	cursor, err := s.db.Collection("epochs").Aggregate(parent, pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("error get epochs: %w", err)
+	}
+	var epochs []*model.Epoch
+	if err = cursor.All(parent, &epochs); err != nil {
+		return nil, err
 	}
 	return epochs, nil
 }
