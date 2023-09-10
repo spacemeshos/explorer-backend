@@ -3,8 +3,7 @@ package storagereader
 import (
 	"context"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	bson "go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/spacemeshos/explorer-backend/model"
@@ -35,7 +34,7 @@ func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*option
 			continue
 		}
 
-		doc.Balance = summary.Awards + summary.Received - summary.Sent - summary.Fees
+		doc.Balance = summary.Balance
 		doc.Sent = summary.Sent
 		doc.Received = summary.Received
 		doc.Awards = summary.Awards
@@ -47,29 +46,152 @@ func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*option
 
 // GetAccountSummary returns the summary of the accounts matching the query. Not all accounts from api have filled this data.
 func (s *Reader) GetAccountSummary(ctx context.Context, address string) (*model.AccountSummary, error) {
-	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "address", Value: address}}}}
-	groupStage := bson.D{
-		{Key: "$group", Value: bson.D{
-			{Key: "_id", Value: ""},
-			{Key: "sent", Value: bson.D{
-				{Key: "$sum", Value: "$sent"},
-			}},
-			{Key: "received", Value: bson.D{
-				{Key: "$sum", Value: "$received"},
-			}},
-			{Key: "awards", Value: bson.D{
-				{Key: "$sum", Value: "$reward"},
-			}},
-			{Key: "fees", Value: bson.D{
-				{Key: "$sum", Value: "$fee"},
-			}},
-			{Key: "layer", Value: bson.D{
-				{Key: "$max", Value: "$layer"},
-			}},
-		}},
+	pipeline := bson.A{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "address", Value: address}}}},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "txs"},
+					{Key: "localField", Value: "address"},
+					{Key: "foreignField", Value: "receiver"},
+					{Key: "as", Value: "txs_received"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$txs_received"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$group",
+				Value: bson.D{
+					{Key: "_id", Value: "$_id"},
+					{Key: "received", Value: bson.D{{Key: "$sum", Value: "$txs_received.amount"}}},
+					{Key: "address", Value: bson.D{{Key: "$first", Value: "$$ROOT.address"}}},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "txs"},
+					{Key: "localField", Value: "address"},
+					{Key: "foreignField", Value: "sender"},
+					{Key: "as", Value: "txs_sent"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$txs_sent"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$group",
+				Value: bson.D{
+					{Key: "_id", Value: "$_id"},
+					{Key: "address", Value: bson.D{{Key: "$first", Value: "$$ROOT.address"}}},
+					{Key: "received", Value: bson.D{{Key: "$first", Value: "$$ROOT.received"}}},
+					{Key: "sent", Value: bson.D{{Key: "$sum", Value: "$txs_sent.amount"}}},
+					{Key: "fees", Value: bson.D{{Key: "$sum", Value: "$txs_sent.fee"}}},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$lookup",
+				Value: bson.D{
+					{Key: "from", Value: "rewards"},
+					{Key: "localField", Value: "address"},
+					{Key: "foreignField", Value: "coinbase"},
+					{Key: "as", Value: "rewards"},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$unwind",
+				Value: bson.D{
+					{Key: "path", Value: "$rewards"},
+					{Key: "preserveNullAndEmptyArrays", Value: true},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$group",
+				Value: bson.D{
+					{Key: "_id", Value: ""},
+					{Key: "sent", Value: bson.D{{Key: "$first", Value: "$$ROOT.sent"}}},
+					{Key: "received", Value: bson.D{{Key: "$first", Value: "$$ROOT.received"}}},
+					{Key: "fees", Value: bson.D{{Key: "$first", Value: "$$ROOT.fees"}}},
+					{Key: "awards", Value: bson.D{{Key: "$sum", Value: "$rewards.total"}}},
+					{Key: "layer", Value: bson.D{{Key: "$max", Value: "$rewards.layer"}}},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$addFields",
+				Value: bson.D{
+					{Key: "balance",
+						Value: bson.D{
+							{Key: "$add",
+								Value: bson.A{
+									"$awards",
+									"$received",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$addFields",
+				Value: bson.D{
+					{Key: "balance",
+						Value: bson.D{
+							{Key: "$subtract",
+								Value: bson.A{
+									"$balance",
+									bson.D{
+										{Key: "$add",
+											Value: bson.A{
+												"$fees",
+												"$sent",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		bson.D{
+			{Key: "$addFields",
+				Value: bson.D{
+					{Key: "balance",
+						Value: bson.D{
+							{Key: "$max",
+								Value: bson.A{
+									0,
+									"$balance",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
-	cursor, err := s.db.Collection("ledger").Aggregate(ctx, mongo.Pipeline{matchStage, groupStage})
+	cursor, err := s.db.Collection("accounts").Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, fmt.Errorf("error get account summary: %w", err)
 	}

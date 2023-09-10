@@ -26,6 +26,7 @@ type AccountSummary struct {
 	Received uint64 `json:"received" bson:"received"`
 	Awards   uint64 `json:"awards" bson:"awards"`
 	Fees     uint64 `json:"fees" bson:"fees"`
+	Balance  uint64 `json:"balance" bson:"balance"`
 	LayerTms int32  `json:"timestamp" bson:"timestamp"`
 }
 
