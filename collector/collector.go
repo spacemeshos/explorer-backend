@@ -3,6 +3,8 @@ package collector
 import (
 	"context"
 	"errors"
+	"github.com/spacemeshos/go-spacemesh/common/types"
+	"github.com/spacemeshos/go-spacemesh/sql"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/keepalive"
 	"time"
@@ -16,12 +18,12 @@ import (
 )
 
 const (
-	streamType_node_SyncStatus  int = 1
-	streamType_mesh_Layer       int = 2
-	streamType_globalState      int = 3
-	streamType_mesh_Malfeasance int = 4
+	streamType_node_SyncStatus int = 1
+	//streamType_mesh_Layer       int = 2
+	streamType_globalState      int = 2
+	streamType_mesh_Malfeasance int = 3
 
-	streamType_count int = 4
+	streamType_count int = 3
 )
 
 type Listener interface {
@@ -29,10 +31,13 @@ type Listener interface {
 	OnNodeStatus(connectedPeers uint64, isSynced bool, syncedLayer uint32, topLayer uint32, verifiedLayer uint32)
 	OnLayer(layer *pb.Layer)
 	OnAccount(account *pb.Account)
+	OnAccounts(accounts []*types.Account)
 	OnReward(reward *pb.Reward)
 	OnMalfeasanceProof(proof *pb.MalfeasanceProof)
 	OnTransactionReceipt(receipt *pb.TransactionReceipt)
 	GetLastLayer(parent context.Context) uint32
+	LayersInQueue() int
+	IsLayerInQueue(layer *pb.Layer) bool
 }
 
 type Collector struct {
@@ -42,6 +47,7 @@ type Collector struct {
 	syncFromLayerFlag     uint32
 
 	listener Listener
+	db       *sql.Database
 
 	nodeClient    pb.NodeServiceClient
 	meshClient    pb.MeshServiceClient
@@ -60,7 +66,7 @@ type Collector struct {
 }
 
 func NewCollector(nodePublicAddress string, nodePrivateAddress string,
-	syncMissingLayersFlag bool, syncFromLayerFlag int, listener Listener) *Collector {
+	syncMissingLayersFlag bool, syncFromLayerFlag int, listener Listener, db *sql.Database) *Collector {
 	return &Collector{
 		apiPublicUrl:          nodePublicAddress,
 		apiPrivateUrl:         nodePrivateAddress,
@@ -68,6 +74,7 @@ func NewCollector(nodePublicAddress string, nodePrivateAddress string,
 		syncFromLayerFlag:     uint32(syncFromLayerFlag),
 		listener:              listener,
 		notify:                make(chan int),
+		db:                    db,
 	}
 }
 
@@ -121,14 +128,6 @@ func (c *Collector) Run() error {
 		err := c.syncStatusPump()
 		if err != nil {
 			return errors.Join(errors.New("cannot start sync status pump"), err)
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		err := c.layersPump()
-		if err != nil {
-			return errors.Join(errors.New("cannot start sync layers pump"), err)
 		}
 		return nil
 	})

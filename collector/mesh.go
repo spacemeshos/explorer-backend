@@ -3,7 +3,10 @@ package collector
 import (
 	"context"
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/collector/sql"
 	"github.com/spacemeshos/explorer-backend/utils"
+	"github.com/spacemeshos/go-spacemesh/common/types"
+	accounts2 "github.com/spacemeshos/go-spacemesh/sql/accounts"
 	"io"
 	"time"
 
@@ -46,12 +49,6 @@ func (c *Collector) getNetworkInfo() error {
 		return err
 	}
 
-	accounts, err := c.debugClient.Accounts(ctx, &pb.AccountsRequest{})
-	if err != nil {
-		log.Err(fmt.Errorf("cannot get accounts: %v", err))
-		return err
-	}
-
 	res, err := c.smesherClient.PostConfig(ctx, &empty.Empty{})
 	if err != nil {
 		log.Err(fmt.Errorf("cannot get POST config: %v", err))
@@ -67,47 +64,7 @@ func (c *Collector) getNetworkInfo() error {
 		(uint64(res.BitsPerLabel)*uint64(res.LabelsPerUnit))/8,
 	)
 
-	for _, account := range accounts.GetAccountWrapper() {
-		c.listener.OnAccount(account)
-	}
-
 	return nil
-}
-
-func (c *Collector) layersPump() error {
-	var req pb.LayerStreamRequest
-
-	log.Info("Start mesh layer pump")
-	defer func() {
-		c.notify <- -streamType_mesh_Layer
-		log.Info("Stop mesh layer pump")
-	}()
-
-	c.notify <- +streamType_mesh_Layer
-
-	stream, err := c.meshClient.LayerStream(context.Background(), &req)
-	if err != nil {
-		log.Err(fmt.Errorf("cannot get layer stream: %v", err))
-		return err
-	}
-
-	for {
-		response, err := stream.Recv()
-		if err == io.EOF {
-			return err
-		}
-		if err != nil {
-			log.Err(fmt.Errorf("cannot receive layer: %v", err))
-			return err
-		}
-		layer := response.GetLayer()
-
-		if layer.Number.Number < c.syncFromLayerFlag {
-			continue
-		}
-
-		c.listener.OnLayer(layer)
-	}
 }
 
 func (c *Collector) syncMissingLayers() error {
@@ -123,18 +80,23 @@ func (c *Collector) syncMissingLayers() error {
 		return nil
 	}
 
-	for i := lastLayer + 1; i <= syncedLayerNum; i++ {
-		layers, err := c.meshClient.LayersQuery(context.Background(), &pb.LayersQueryRequest{
-			StartLayer: &pb.LayerNumber{Number: i},
-			EndLayer:   &pb.LayerNumber{Number: i},
-		})
-		if err != nil {
-			return err
-		}
+	log.Info("Syncing missing layers %d...%d", lastLayer+1, syncedLayerNum)
 
-		for _, layer := range layers.GetLayer() {
-			log.Info("syncing missing layer: %d", layer.Number.Number)
-			c.listener.OnLayer(layer)
+	for i := lastLayer + 1; i <= syncedLayerNum; i++ {
+		err := c.syncLayer(types.LayerID(i))
+		if err != nil {
+			fmt.Errorf("syncMissingLayers error: %v", err)
+		}
+	}
+
+	log.Info("Waiting for layers queue to be empty")
+	for {
+		layersInQueue := c.listener.LayersInQueue()
+		if layersInQueue > 0 {
+			log.Info("%d layers in queue. Waiting", layersInQueue)
+			time.Sleep(15 * time.Second)
+		} else {
+			break
 		}
 	}
 
@@ -170,4 +132,44 @@ func (c *Collector) malfeasancePump() error {
 		proof := response.GetProof()
 		c.listener.OnMalfeasanceProof(proof)
 	}
+}
+
+func (c *Collector) syncLayer(lid types.LayerID) error {
+	layer, err := sql.GetLayer(c.db, lid)
+	if err != nil {
+		return err
+	}
+
+	if c.listener.IsLayerInQueue(layer) {
+		log.Info("layer %d is already in queue", layer.Number.Number)
+		return nil
+	}
+
+	log.Info("syncing layer: %d", layer.Number.Number)
+	c.listener.OnLayer(layer)
+
+	log.Info("syncing accounts for layer: %d", layer.Number.Number)
+	accounts, err := accounts2.Snapshot(c.db, lid)
+	if err != nil {
+		fmt.Errorf("%v\n", err)
+	}
+	c.listener.OnAccounts(accounts)
+
+	log.Info("syncing rewards for layer: %d", layer.Number.Number)
+	rewards, err := sql.GetLayerRewards(c.db, lid)
+	if err != nil {
+		fmt.Errorf("%v\n", err)
+	}
+
+	for _, reward := range rewards {
+		r := &pb.Reward{
+			Layer:       &pb.LayerNumber{Number: reward.Layer.Uint32()},
+			Total:       &pb.Amount{Value: reward.TotalReward},
+			LayerReward: &pb.Amount{Value: reward.LayerReward},
+			Coinbase:    &pb.AccountId{Address: reward.Coinbase.String()},
+		}
+		c.listener.OnReward(r)
+	}
+
+	return nil
 }

@@ -40,7 +40,6 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 
 	if summary != nil {
 		acc.Sent = summary.Sent
-		acc.Balance = summary.Awards + summary.Received - summary.Sent - summary.Fees
 		acc.Received = summary.Received
 		acc.Awards = summary.Awards
 		acc.Fees = summary.Fees

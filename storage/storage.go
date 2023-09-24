@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/spacemeshos/go-spacemesh/common/types"
 	"sync"
 	"time"
 
@@ -196,6 +197,37 @@ func (s *Storage) OnAccount(in *pb.Account) {
 	}
 }
 
+func (s *Storage) OnAccounts(accounts []*types.Account) {
+	log.Info("OnAccounts")
+
+	var updateOps []mongo.WriteModel
+
+	for _, acc := range accounts {
+		filter := bson.D{{Key: "address", Value: acc.Address.String()}}
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "balance", Value: acc.Balance},
+				{Key: "counter", Value: acc.NextNonce},
+				{Key: "created", Value: 0},
+			}},
+		}
+
+		updateModel := mongo.NewUpdateOneModel()
+		updateModel.Filter = filter
+		updateModel.Update = update
+		updateModel.SetUpsert(true)
+
+		updateOps = append(updateOps, updateModel)
+	}
+
+	if len(updateOps) > 0 {
+		_, err := s.db.Collection("accounts").BulkWrite(context.TODO(), updateOps)
+		if err != nil {
+			log.Err(fmt.Errorf("OnAccounts: error accounts write %v", err))
+		}
+	}
+}
+
 func (s *Storage) OnReward(in *pb.Reward) {
 	log.Info("OnReward(%+v)", in)
 	reward := model.NewReward(in)
@@ -247,6 +279,17 @@ func (s *Storage) pushLayer(layer *pb.Layer) {
 	s.layersQueue.PushBack(layer)
 	s.layersLock.Unlock()
 	s.layersReady.Signal()
+}
+
+func (s *Storage) IsLayerInQueue(layer *pb.Layer) bool {
+	for l := s.layersQueue.Front(); l != nil; l = l.Next() {
+		if val, ok := l.Value.(*pb.Layer); ok {
+			if val.Number == layer.Number {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (s *Storage) popLayer() *pb.Layer {
@@ -559,4 +602,10 @@ func (s *Storage) Ping() error {
 	defer cancel()
 
 	return s.client.Ping(ctx, nil)
+}
+
+func (s *Storage) LayersInQueue() int {
+	s.layersLock.Lock()
+	defer s.layersLock.Unlock()
+	return s.layersQueue.Len()
 }

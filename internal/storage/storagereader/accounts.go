@@ -35,7 +35,6 @@ func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*option
 			continue
 		}
 
-		doc.Balance = summary.Awards + summary.Received - summary.Sent - summary.Fees
 		doc.Sent = summary.Sent
 		doc.Received = summary.Received
 		doc.Awards = summary.Awards
