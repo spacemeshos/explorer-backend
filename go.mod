@@ -1,6 +1,6 @@
 module github.com/spacemeshos/explorer-backend
 
-go 1.21.1
+go 1.21
 
 require (
 	github.com/davecgh/go-spew v1.1.1
