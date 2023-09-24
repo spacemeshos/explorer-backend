@@ -54,7 +54,7 @@ var flags = []cli.Flag{
 		Usage:       "Explorer MongoDB Uri string in format mongodb://<host>:<port>",
 		Required:    false,
 		Destination: &mongoDbUrlStringFlag,
-		Value:       "mongodb://localhost:27017/?maxPoolSize=400",
+		Value:       "mongodb://localhost:27017",
 		EnvVars:     []string{"SPACEMESH_MONGO_URI"},
 	},
 	&cli.StringFlag{
