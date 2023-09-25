@@ -42,8 +42,8 @@ func (c *Collector) syncStatusPump() error {
 		log.Info("Node sync status: %v", status)
 
 		lastLayer := c.listener.GetLastLayer(context.TODO())
-		if lastLayer != status.GetSyncedLayer().GetNumber() {
-			for i := lastLayer + 1; i <= status.GetSyncedLayer().GetNumber(); i++ {
+		if lastLayer != status.GetVerifiedLayer().GetNumber() {
+			for i := lastLayer + 1; i <= status.GetVerifiedLayer().GetNumber(); i++ {
 				err := c.syncLayer(types.LayerID(i))
 				if err != nil {
 					fmt.Errorf("syncLayer error: %v", err)

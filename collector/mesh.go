@@ -73,7 +73,7 @@ func (c *Collector) syncMissingLayers() error {
 		log.Err(fmt.Errorf("cannot receive node status: %v", err))
 		return err
 	}
-	syncedLayerNum := status.Status.SyncedLayer.Number
+	syncedLayerNum := status.Status.VerifiedLayer.Number
 	lastLayer := c.listener.GetLastLayer(context.TODO())
 
 	if syncedLayerNum == lastLayer {
@@ -142,6 +142,11 @@ func (c *Collector) syncLayer(lid types.LayerID) error {
 
 	if c.listener.IsLayerInQueue(layer) {
 		log.Info("layer %d is already in queue", layer.Number.Number)
+		return nil
+	}
+
+	if lastLayer := c.listener.GetLastLayer(context.TODO()); lastLayer >= layer.Number.Number {
+		log.Info("layer %d is already in database", layer.Number.Number)
 		return nil
 	}
 

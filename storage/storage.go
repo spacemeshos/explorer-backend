@@ -284,7 +284,7 @@ func (s *Storage) pushLayer(layer *pb.Layer) {
 func (s *Storage) IsLayerInQueue(layer *pb.Layer) bool {
 	for l := s.layersQueue.Front(); l != nil; l = l.Next() {
 		if val, ok := l.Value.(*pb.Layer); ok {
-			if val.Number == layer.Number {
+			if val.Number.Number == layer.Number.Number {
 				return true
 			}
 		}
@@ -292,14 +292,20 @@ func (s *Storage) IsLayerInQueue(layer *pb.Layer) bool {
 	return false
 }
 
-func (s *Storage) popLayer() *pb.Layer {
+func (s *Storage) processLayer() *pb.Layer {
 	s.layersLock.Lock()
 	defer s.layersLock.Unlock()
-	layer := s.layersQueue.Front()
-	if layer != nil {
-		return s.layersQueue.Remove(layer).(*pb.Layer)
+	l := s.layersQueue.Front()
+	if l == nil {
+		return nil
 	}
-	return nil
+
+	layer := l.Value.(*pb.Layer)
+	s.updateLayer(layer)
+
+	s.layersQueue.Remove(l)
+
+	return layer
 }
 
 func (s *Storage) requestBalanceUpdate(layer uint32, address string) {
@@ -546,8 +552,8 @@ func (s *Storage) updateLayers() {
 		s.layersReady.Wait()
 		s.layersReady.L.Unlock()
 
-		for layer := s.popLayer(); layer != nil; layer = s.popLayer() {
-			s.updateLayer(layer)
+		for s.processLayer() != nil {
+			log.Info("processing layer")
 		}
 	}
 }
