@@ -38,6 +38,7 @@ type Listener interface {
 	GetLastLayer(parent context.Context) uint32
 	LayersInQueue() int
 	IsLayerInQueue(layer *pb.Layer) bool
+	GetEpochNumLayers() uint32
 }
 
 type Collector struct {

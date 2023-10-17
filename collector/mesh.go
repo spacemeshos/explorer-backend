@@ -135,7 +135,7 @@ func (c *Collector) malfeasancePump() error {
 }
 
 func (c *Collector) syncLayer(lid types.LayerID) error {
-	layer, err := sql.GetLayer(c.db, lid)
+	layer, err := sql.GetLayer(c.db, lid, c.listener.GetEpochNumLayers())
 	if err != nil {
 		return err
 	}

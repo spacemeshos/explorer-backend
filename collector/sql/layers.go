@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func GetLayer(db *sql.Database, lid types.LayerID) (*pb.Layer, error) {
+func GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer, error) {
 	var bs []*pb.Block
 	var activations []types.ATXID
 
@@ -49,10 +49,14 @@ func GetLayer(db *sql.Database, lid types.LayerID) (*pb.Layer, error) {
 		})
 	}
 
-	for _, b := range layer.Ballots() {
-		if b.EpochData != nil && b.ActiveSet != nil {
-			activations = append(activations, b.ActiveSet...)
+	epoch := lid.Uint32() / numLayers
+	if lid.Uint32()%numLayers == 0 {
+		atxsId, err := atxs.GetIDsByEpoch(db, types.EpochID(epoch-1))
+		if err != nil {
+			return nil, err
 		}
+
+		activations = append(activations, atxsId...)
 	}
 
 	// Extract ATX data from block data

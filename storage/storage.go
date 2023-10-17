@@ -176,6 +176,10 @@ func (s *Storage) GetEpochForLayer(layer uint32) uint32 {
 	return 0
 }
 
+func (s *Storage) GetEpochNumLayers() uint32 {
+	return s.NetworkInfo.EpochNumLayers
+}
+
 func (s *Storage) OnLayer(in *pb.Layer) {
 	s.pushLayer(in)
 }
