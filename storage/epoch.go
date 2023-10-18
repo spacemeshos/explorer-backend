@@ -205,6 +205,37 @@ func (s *Storage) GetEpochsData(parent context.Context, query *bson.D, opts ...*
 	return epochs, nil
 }
 
+func (s *Storage) GetCirculation(parent context.Context) (int64, error) {
+	pipeline := bson.A{
+		bson.D{
+			{Key: "$group",
+				Value: bson.D{
+					{Key: "_id", Value: primitive.Null{}},
+					{Key: "circulation", Value: bson.D{{Key: "$sum", Value: "$total"}}},
+				},
+			},
+		},
+	}
+
+	cursor, err := s.db.Collection("rewards").Aggregate(parent, pipeline)
+	if err != nil {
+		return 0, fmt.Errorf("error get circulation: %w", err)
+	}
+
+	var result struct {
+		Circulation int64 `bson:"circulation"`
+	}
+
+	if cursor.Next(context.Background()) {
+		if err := cursor.Decode(&result); err != nil {
+			return 0, fmt.Errorf("error decode circulation: %w", err)
+		}
+		return result.Circulation, nil
+	}
+
+	return 0, nil
+}
+
 func (s *Storage) GetEpochsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
