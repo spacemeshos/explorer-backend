@@ -202,9 +202,10 @@ func (s *Storage) OnReward(in *pb.Reward) {
 	if reward == nil {
 		return
 	}
-	smesher, err := s.GetSmesherByCoinbase(context.Background(), reward.Coinbase)
+
+	smesher, err := s.GetSmesher(context.Background(), &bson.D{{Key: "id", Value: in.Smesher}})
+	// smesher, err := s.GetSmesherByCoinbase(context.Background(), reward.Coinbase)
 	if err == nil {
-		reward.Smesher = smesher.Id
 		reward.Space = smesher.CommitmentSize
 	}
 	reward.Timestamp = s.getLayerTimestamp(reward.Layer)
