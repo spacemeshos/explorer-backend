@@ -41,7 +41,7 @@ func (e *Service) GetSmeshers(ctx context.Context, page, perPage int64) (smesher
 
 // GetSmesherActivations returns smesher activations by filter.
 func (e *Service) GetSmesherActivations(ctx context.Context, smesherID string, page, perPage int64) (atxs []*model.Activation, total int64, err error) {
-	return e.getActivations(ctx, &bson.D{{Key: "smesher", Value: smesherID}}, e.getFindOptions("id", page, perPage))
+	return e.getActivations(ctx, &bson.D{{Key: "smesher", Value: smesherID}}, e.getFindOptions("layer", page, perPage))
 }
 
 // GetSmesherRewards returns smesher rewards by filter.

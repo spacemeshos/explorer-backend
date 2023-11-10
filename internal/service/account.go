@@ -87,7 +87,7 @@ func (e *Service) GetAccountTransactions(ctx context.Context, accountID string, 
 			bson.D{{Key: "receiver", Value: addr.String()}},
 		}},
 	}
-	return e.getTransactions(ctx, filter, e.getFindOptions("counter", page, perPage))
+	return e.getTransactions(ctx, filter, e.getFindOptions("layer", page, perPage))
 }
 
 // GetAccountRewards returns rewards by account id.
@@ -96,7 +96,7 @@ func (e *Service) GetAccountRewards(ctx context.Context, accountID string, page,
 	if err != nil {
 		return nil, 0, ErrNotFound
 	}
-	opts := e.getFindOptions("coinbase", page, perPage)
+	opts := e.getFindOptions("layer", page, perPage)
 	opts.SetProjection(bson.D{})
 	return e.getRewards(ctx, &bson.D{{Key: "coinbase", Value: addr.String()}}, opts)
 }

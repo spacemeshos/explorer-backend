@@ -26,7 +26,7 @@ func (e *Service) GetTransaction(ctx context.Context, txID string) (*model.Trans
 
 // GetTransactions returns txs by filter.
 func (e *Service) GetTransactions(ctx context.Context, page, perPage int64) (txs []*model.Transaction, total int64, err error) {
-	return e.getTransactions(ctx, &bson.D{}, e.getFindOptions("timestamp", page, perPage))
+	return e.getTransactions(ctx, &bson.D{}, e.getFindOptions("layer", page, perPage))
 }
 
 func (e *Service) getTransactions(ctx context.Context, filter *bson.D, options *options.FindOptions) (txs []*model.Transaction, total int64, err error) {
