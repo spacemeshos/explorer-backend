@@ -24,6 +24,7 @@ type Reward struct {
 type RewardService interface {
 	GetReward(ctx context.Context, rewardID string) (*Reward, error)
 	GetRewards(ctx context.Context, page, perPage int64) ([]*Reward, int64, error)
+	GetTotalRewards(ctx context.Context) (int64, int64, error)
 }
 
 func NewReward(reward *pb.Reward) *Reward {

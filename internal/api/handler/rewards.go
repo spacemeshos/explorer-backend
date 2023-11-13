@@ -32,3 +32,17 @@ func Reward(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, DataResponse{Data: []*model.Reward{reward}})
 }
+
+func TotalRewards(c echo.Context) error {
+	cc := c.(*ApiContext)
+
+	total, count, err := cc.Service.GetTotalRewards(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get total rewards. info: %w", err)
+	}
+
+	return c.JSON(http.StatusOK, DataResponse{Data: map[string]interface{}{
+		"rewards": total,
+		"count":   count,
+	}})
+}

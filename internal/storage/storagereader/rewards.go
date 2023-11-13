@@ -88,6 +88,32 @@ func (s *Reader) CountCoinbaseRewards(ctx context.Context, coinbase string) (tot
 	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count")), nil
 }
 
+// GetTotalRewards returns the total number of rewards.
+func (s *Reader) GetTotalRewards(ctx context.Context) (total, count int64, err error) {
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "total", Value: bson.D{
+				{Key: "$sum", Value: "$total"},
+			}},
+			{Key: "count", Value: bson.D{
+				{Key: "$sum", Value: 1},
+			}},
+		}},
+	}
+	cursor, err := s.db.Collection("rewards").Aggregate(ctx, mongo.Pipeline{
+		groupStage,
+	})
+	if err != nil {
+		return 0, 0, fmt.Errorf("error get total rewards: %w", err)
+	}
+	if !cursor.Next(ctx) {
+		return 0, 0, nil
+	}
+	doc := cursor.Current
+	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count")), nil
+}
+
 // GetLatestReward returns the latest reward for given coinbase
 func (s *Reader) GetLatestReward(ctx context.Context, coinbase string) (*model.Reward, error) {
 	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "coinbase", Value: coinbase}}}}
