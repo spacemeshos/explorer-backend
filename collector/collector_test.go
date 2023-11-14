@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spacemeshos/explorer-backend/collector"
+	"github.com/spacemeshos/go-spacemesh/sql"
 	"os"
 	"testing"
 	"time"
@@ -49,12 +50,15 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	sqlDb, err := sql.Open("file:test.db?cache=shared&mode=memory", sql.WithConnections(16), sql.WithMigrations(nil))
 	seed := testseed.GetServerSeed()
 	generator = testseed.NewSeedGenerator(seed)
 	if err = generator.GenerateEpoches(10); err != nil {
 		fmt.Println("failed to generate epochs", err)
 		os.Exit(1)
 	}
+
+	dbClient := &testseed.Client{SeedGen: generator}
 
 	node, err = testserver.CreateFakeSMNode(generator.FirstLayerTime, generator, seed)
 	if err != nil {
@@ -83,7 +87,8 @@ func TestMain(m *testing.M) {
 	}()
 
 	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort),
-		fmt.Sprintf("localhost:%d", privateNode.NodePort), false, 0, storageDB)
+		fmt.Sprintf("localhost:%d", privateNode.NodePort), false,
+		0, storageDB, sqlDb, dbClient)
 	storageDB.AccountUpdater = collectorApp
 	defer storageDB.Close()
 	go collectorApp.Run()

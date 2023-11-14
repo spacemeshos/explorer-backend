@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer, error) {
+func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer, error) {
 	var bs []*pb.Block
 	var activations []types.ATXID
 
@@ -33,7 +33,7 @@ func GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer,
 	layer := types.NewExistingLayer(lid, blts, blks)
 
 	for _, b := range layer.Blocks() {
-		mtxs, missing := GetMeshTransactions(db, b.TxIDs)
+		mtxs, missing := getMeshTransactions(db, b.TxIDs)
 		if len(missing) != 0 {
 			return nil, status.Errorf(codes.Internal, "error retrieving tx data")
 		}
@@ -94,7 +94,7 @@ func GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer,
 	}, nil
 }
 
-func GetMeshTransactions(db *sql.Database, ids []types.TransactionID) ([]*types.MeshTransaction, map[types.TransactionID]struct{}) {
+func getMeshTransactions(db *sql.Database, ids []types.TransactionID) ([]*types.MeshTransaction, map[types.TransactionID]struct{}) {
 	missing := make(map[types.TransactionID]struct{})
 	mtxs := make([]*types.MeshTransaction, 0, len(ids))
 	for _, tid := range ids {
@@ -115,7 +115,7 @@ func GetATXs(db *sql.Database, atxIds []types.ATXID) (map[types.ATXID]*types.Ver
 	var mIds []types.ATXID
 	a := make(map[types.ATXID]*types.VerifiedActivationTx, len(atxIds))
 	for _, id := range atxIds {
-		t, err := GetFullAtx(db, id)
+		t, err := getFullAtx(db, id)
 		if err != nil {
 			mIds = append(mIds, id)
 		} else {
@@ -125,7 +125,7 @@ func GetATXs(db *sql.Database, atxIds []types.ATXID) (map[types.ATXID]*types.Ver
 	return a, mIds
 }
 
-func GetFullAtx(db *sql.Database, id types.ATXID) (*types.VerifiedActivationTx, error) {
+func getFullAtx(db *sql.Database, id types.ATXID) (*types.VerifiedActivationTx, error) {
 	if id == types.EmptyATXID {
 		return nil, errors.New("trying to fetch empty atx id")
 	}

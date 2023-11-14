@@ -5,7 +5,7 @@ import (
 	"github.com/spacemeshos/go-spacemesh/sql"
 )
 
-func GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*types.Reward, err error) {
+func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*types.Reward, err error) {
 	_, err = db.Exec("select coinbase, layer, total_reward, layer_reward from rewards where layer = ?1;",
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, int64(lid))

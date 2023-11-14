@@ -124,9 +124,10 @@ func main() {
 			log.Info("SQLite storage open error %v", err)
 			return err
 		}
+		dbClient := &sql.Client{}
 
 		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag,
-			syncMissingLayersBoolFlag, syncFromLayerFlag, mongoStorage, db)
+			syncMissingLayersBoolFlag, syncFromLayerFlag, mongoStorage, db, dbClient)
 		mongoStorage.AccountUpdater = c
 
 		sigs := make(chan os.Signal, 1)

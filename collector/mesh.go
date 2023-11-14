@@ -3,10 +3,8 @@ package collector
 import (
 	"context"
 	"fmt"
-	"github.com/spacemeshos/explorer-backend/collector/sql"
 	"github.com/spacemeshos/explorer-backend/utils"
 	"github.com/spacemeshos/go-spacemesh/common/types"
-	accounts2 "github.com/spacemeshos/go-spacemesh/sql/accounts"
 	"io"
 	"time"
 
@@ -135,7 +133,7 @@ func (c *Collector) malfeasancePump() error {
 }
 
 func (c *Collector) syncLayer(lid types.LayerID) error {
-	layer, err := sql.GetLayer(c.db, lid, c.listener.GetEpochNumLayers())
+	layer, err := c.dbClient.GetLayer(c.db, lid, c.listener.GetEpochNumLayers())
 	if err != nil {
 		return err
 	}
@@ -154,14 +152,14 @@ func (c *Collector) syncLayer(lid types.LayerID) error {
 	c.listener.OnLayer(layer)
 
 	log.Info("syncing accounts for layer: %d", layer.Number.Number)
-	accounts, err := accounts2.Snapshot(c.db, lid)
+	accounts, err := c.dbClient.AccountsSnapshot(c.db, lid)
 	if err != nil {
 		fmt.Errorf("%v\n", err)
 	}
 	c.listener.OnAccounts(accounts)
 
 	log.Info("syncing rewards for layer: %d", layer.Number.Number)
-	rewards, err := sql.GetLayerRewards(c.db, lid)
+	rewards, err := c.dbClient.GetLayerRewards(c.db, lid)
 	if err != nil {
 		fmt.Errorf("%v\n", err)
 	}

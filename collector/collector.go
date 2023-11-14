@@ -3,8 +3,9 @@ package collector
 import (
 	"context"
 	"errors"
+	"github.com/spacemeshos/explorer-backend/collector/sql"
 	"github.com/spacemeshos/go-spacemesh/common/types"
-	"github.com/spacemeshos/go-spacemesh/sql"
+	sql2 "github.com/spacemeshos/go-spacemesh/sql"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/keepalive"
 	"time"
@@ -48,7 +49,8 @@ type Collector struct {
 	syncFromLayerFlag     uint32
 
 	listener Listener
-	db       *sql.Database
+	db       *sql2.Database
+	dbClient sql.DatabaseClient
 
 	nodeClient    pb.NodeServiceClient
 	meshClient    pb.MeshServiceClient
@@ -66,8 +68,7 @@ type Collector struct {
 	notify chan int
 }
 
-func NewCollector(nodePublicAddress string, nodePrivateAddress string,
-	syncMissingLayersFlag bool, syncFromLayerFlag int, listener Listener, db *sql.Database) *Collector {
+func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool, syncFromLayerFlag int, listener Listener, db *sql2.Database, dbClient sql.DatabaseClient) *Collector {
 	return &Collector{
 		apiPublicUrl:          nodePublicAddress,
 		apiPrivateUrl:         nodePrivateAddress,
@@ -76,6 +77,7 @@ func NewCollector(nodePublicAddress string, nodePrivateAddress string,
 		listener:              listener,
 		notify:                make(chan int),
 		db:                    db,
+		dbClient:              dbClient,
 	}
 }
 
