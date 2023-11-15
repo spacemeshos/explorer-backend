@@ -42,5 +42,10 @@ func (e *Service) getActivations(ctx context.Context, filter *bson.D, options *o
 	if err != nil {
 		return nil, 0, fmt.Errorf("error get atxs: %w", err)
 	}
+
+	for _, atx := range atxs {
+		atx.TargetEpoch = atx.Layer / e.networkInfo.EpochNumLayers
+	}
+
 	return atxs, total, nil
 }

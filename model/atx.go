@@ -16,6 +16,7 @@ type Activation struct {
 	PrevAtx        string `json:"prevAtx" bson:"prevAtx"`   // previous ATX pointed to
 	NumUnits       uint32 `json:"numunits" bson:"numunits"` // number of PoST data commitment units
 	CommitmentSize uint64 `json:"commitmentSize" bson:"commitmentSize"`
+	TargetEpoch    uint32 `json:"targetEpoch" bson:"-"`
 	Timestamp      uint32 `json:"timestamp" bson:"timestamp"`
 }
 
