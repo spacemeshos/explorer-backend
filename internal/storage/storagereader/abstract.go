@@ -18,7 +18,8 @@ type StorageReader interface {
 	GetTransactions(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Transaction, error)
 	CountSentTransactions(ctx context.Context, address string) (amount, fees, count int64, err error)
 	CountReceivedTransactions(ctx context.Context, address string) (amount, count int64, err error)
-	GetLatestSentTransaction(ctx context.Context, address string) (*model.Transaction, error)
+	GetLatestTransaction(ctx context.Context, address string) (*model.Transaction, error)
+	GetFirstSentTransaction(ctx context.Context, address string) (*model.Transaction, error)
 
 	CountApps(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error)
 	GetApps(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.App, error)

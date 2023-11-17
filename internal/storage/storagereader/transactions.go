@@ -96,14 +96,46 @@ func (s *Reader) CountReceivedTransactions(ctx context.Context, address string) 
 	return utils.GetAsInt64(doc.Lookup("amount")), utils.GetAsInt64(doc.Lookup("count")), nil
 }
 
-// GetLatestSentTransaction returns the latest tx for given address
-func (s *Reader) GetLatestSentTransaction(ctx context.Context, address string) (*model.Transaction, error) {
-	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "sender", Value: address}}}}
+// GetLatestTransaction returns the latest tx for given address
+func (s *Reader) GetLatestTransaction(ctx context.Context, address string) (*model.Transaction, error) {
+	matchStage := bson.D{{Key: "$match", Value: bson.D{
+		{Key: "$or", Value: bson.A{
+			bson.D{{"sender", address}},
+			bson.D{{"receiver", address}},
+		}}},
+	}}
 	groupStage := bson.D{
 		{Key: "$group", Value: bson.D{
 			{Key: "_id", Value: ""},
 			{Key: "layer", Value: bson.D{
 				{Key: "$max", Value: "$layer"},
+			}},
+		}},
+	}
+
+	cursor, err := s.db.Collection("txs").Aggregate(ctx, mongo.Pipeline{matchStage, groupStage})
+	if err != nil {
+		return nil, fmt.Errorf("error occured while getting latest reward: %w", err)
+	}
+	if !cursor.Next(ctx) {
+		return nil, nil
+	}
+
+	var tx *model.Transaction
+	if err = cursor.Decode(&tx); err != nil {
+		return nil, fmt.Errorf("error decode reward: %w", err)
+	}
+	return tx, nil
+}
+
+// GetFirstSentTransaction returns the first sent tx for given address
+func (s *Reader) GetFirstSentTransaction(ctx context.Context, address string) (*model.Transaction, error) {
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "sender", Value: address}}}}
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "layer", Value: bson.D{
+				{Key: "$min", Value: "$layer"},
 			}},
 		}},
 	}

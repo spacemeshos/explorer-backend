@@ -38,7 +38,7 @@ func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*option
 		doc.Received = summary.Received
 		doc.Awards = summary.Awards
 		doc.Fees = summary.Fees
-		doc.LayerTms = int32(s.GetLayerTimestamp(uint32(doc.Created)))
+		doc.LastActivity = summary.LastActivity
 	}
 	return docs, nil
 }
@@ -69,6 +69,28 @@ func (s *Reader) GetAccountSummary(ctx context.Context, address string) (*model.
 	}
 	accSummary.Sent = uint64(sent)
 	accSummary.Fees = uint64(fees)
+
+	latestTx, err := s.GetLatestTransaction(ctx, address)
+	if err != nil {
+		return nil, fmt.Errorf("error occured while getting latest sent txs: %w", err)
+	}
+
+	latestReward, err := s.GetLatestReward(ctx, address)
+	if err != nil {
+		return nil, fmt.Errorf("error occured while getting latest reawrd: %w", err)
+	}
+
+	if latestTx != nil {
+		if latestReward != nil && latestReward.Layer > latestTx.Layer {
+			accSummary.LastActivity = int32(s.GetLayerTimestamp(latestReward.Layer))
+		} else {
+			accSummary.LastActivity = int32(s.GetLayerTimestamp(latestTx.Layer))
+		}
+	} else {
+		if latestReward != nil {
+			accSummary.LastActivity = int32(s.GetLayerTimestamp(latestReward.Layer))
+		}
+	}
 
 	return &accSummary, nil
 }

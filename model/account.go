@@ -12,12 +12,12 @@ type Account struct {
 	Counter uint64 `json:"counter" bson:"counter"`
 	Created uint64 `json:"created" bson:"created"`
 	// get from ledger collection
-	Sent     uint64 `json:"sent" bson:"-"`
-	Received uint64 `json:"received" bson:"-"`
-	Awards   uint64 `json:"awards" bson:"-"`
-	Fees     uint64 `json:"fees" bson:"-"`
-	LayerTms int32  `json:"timestamp" bson:"-"`
-	Txs      int64  `json:"txs" bson:"-"`
+	Sent         uint64 `json:"sent" bson:"-"`
+	Received     uint64 `json:"received" bson:"-"`
+	Awards       uint64 `json:"awards" bson:"-"`
+	Fees         uint64 `json:"fees" bson:"-"`
+	LastActivity int32  `json:"timestamp" bson:"-"`
+	Txs          int64  `json:"txs" bson:"-"`
 }
 
 // AccountSummary data taken from `ledger` collection. Not all accounts from api have filled this data.
@@ -27,6 +27,8 @@ type AccountSummary struct {
 	Awards   uint64 `json:"awards" bson:"awards"`
 	Fees     uint64 `json:"fees" bson:"fees"`
 	LayerTms int32  `json:"timestamp" bson:"timestamp"`
+
+	LastActivity int32 `json:"lastActivity" bson:"-"`
 }
 
 type AccountService interface {

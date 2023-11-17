@@ -43,15 +43,15 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 		acc.Received = summary.Received
 		acc.Awards = summary.Awards
 		acc.Fees = summary.Fees
-		acc.LayerTms = summary.LayerTms
+		acc.LastActivity = summary.LastActivity
 	}
 
-	if acc.LayerTms == 0 {
+	if acc.LastActivity == 0 {
 		net, err := e.GetNetworkInfo(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error get network info for acc summury: %w", err)
 		}
-		acc.LayerTms = int32(net.GenesisTime)
+		acc.LastActivity = int32(net.GenesisTime)
 	}
 
 	acc.Txs, err = e.storage.CountTransactions(ctx, &bson.D{
