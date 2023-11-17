@@ -141,6 +141,8 @@ func TestEpochAtxsHandler(t *testing.T) {
 		require.Equal(t, len(ep.Activations), len(loopResult.Data))
 		for _, atx := range loopResult.Data {
 			generatedAtx, ok := ep.Activations[atx.Id]
+			// target epoch is not stored in db
+			atx.TargetEpoch = 0
 			require.True(t, ok)
 			require.Equal(t, *generatedAtx, atx)
 		}
