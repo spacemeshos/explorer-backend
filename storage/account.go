@@ -155,7 +155,6 @@ func (s *Storage) UpdateAccount(parent context.Context, address string, balance 
 		{Key: "$set", Value: bson.D{
 			{Key: "balance", Value: balance},
 			{Key: "counter", Value: counter},
-			{Key: "created", Value: 0},
 		}},
 	}, options.Update().SetUpsert(true))
 	if err != nil {

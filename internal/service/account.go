@@ -22,7 +22,7 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 	}
 
 	filter := &bson.D{{Key: "address", Value: addr.String()}}
-	accs, total, err := e.getAccounts(ctx, filter, options.Find().SetSort(bson.D{{Key: "address", Value: 1}}).SetLimit(1).SetProjection(bson.D{
+	accs, total, err := e.getAccounts(ctx, filter, options.Find().SetSort(bson.D{{Key: "created", Value: 1}}).SetLimit(1).SetProjection(bson.D{
 		{Key: "_id", Value: 0},
 		{Key: "layer", Value: 0},
 	}))

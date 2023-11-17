@@ -188,19 +188,6 @@ func (s *Storage) OnMalfeasanceProof(in *pb.MalfeasanceProof) {
 	s.updateMalfeasanceProof(in)
 }
 
-func (s *Storage) OnAccount(in *pb.Account) {
-	log.Info("OnAccount(%+v)", in)
-	account := model.NewAccount(in)
-	if account == nil {
-		return
-	}
-	err := s.UpdateAccount(context.Background(), account.Address, account.Balance, account.Counter)
-	//TODO: better error handling
-	if err != nil {
-		log.Err(fmt.Errorf("OnAccount: error %v", err))
-	}
-}
-
 func (s *Storage) OnAccounts(accounts []*types.Account) {
 	log.Info("OnAccounts")
 
@@ -212,7 +199,7 @@ func (s *Storage) OnAccounts(accounts []*types.Account) {
 			{Key: "$set", Value: bson.D{
 				{Key: "balance", Value: acc.Balance},
 				{Key: "counter", Value: acc.NextNonce},
-				{Key: "created", Value: 0},
+				{Key: "created", Value: acc.Layer.Uint32()},
 			}},
 		}
 
