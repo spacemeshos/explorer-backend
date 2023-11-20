@@ -16,7 +16,98 @@ func (s *Reader) CountAccounts(ctx context.Context, query *bson.D, opts ...*opti
 
 // GetAccounts returns the accounts matching the query.
 func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Account, error) {
-	cursor, err := s.db.Collection("accounts").Find(ctx, query, opts...)
+	skip := int64(0)
+	if opts[0].Skip != nil {
+		skip = *opts[0].Skip
+	}
+
+	pipeline := bson.A{
+		bson.D{
+			{"$lookup",
+				bson.D{
+					{"from", "txs"},
+					{"let", bson.D{{"addr", "$address"}}},
+					{"pipeline",
+						bson.A{
+							bson.D{
+								{"$match",
+									bson.D{
+										{"$or",
+											bson.A{
+												bson.D{
+													{"$expr",
+														bson.D{
+															{"$eq",
+																bson.A{
+																	"$sender",
+																	"$$addr",
+																},
+															},
+														},
+													},
+												},
+												bson.D{
+													{"$expr",
+														bson.D{
+															{"$eq",
+																bson.A{
+																	"$receiver",
+																	"$$addr",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							bson.D{{"$sort", bson.D{{"layer", 1}}}},
+							bson.D{{"$limit", 1}},
+							bson.D{
+								{"$project",
+									bson.D{
+										{"_id", 0},
+										{"layer", 1},
+									},
+								},
+							},
+						},
+					},
+					{"as", "createdLayerRst"},
+				},
+			},
+		},
+		bson.D{
+			{"$addFields",
+				bson.D{
+					{"createdLayer",
+						bson.D{
+							{"$arrayElemAt",
+								bson.A{
+									"$createdLayerRst.layer",
+									0,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		bson.D{{"$project", bson.D{{"createdLayerRst", 0}}}},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "createdLayer", Value: -1}}}},
+		bson.D{{Key: "$skip", Value: skip}},
+		bson.D{{Key: "$limit", Value: *opts[0].Limit}},
+	}
+
+	if query != nil {
+		pipeline = append(bson.A{
+			bson.D{{Key: "$match", Value: *query}},
+		}, pipeline...)
+	}
+
+	cursor, err := s.db.Collection("accounts").Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get accounts: %w", err)
 	}
