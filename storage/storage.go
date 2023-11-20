@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/spacemeshos/go-spacemesh/common/types"
 	"sync"
 	"time"
 
@@ -175,6 +176,10 @@ func (s *Storage) GetEpochForLayer(layer uint32) uint32 {
 	return 0
 }
 
+func (s *Storage) GetEpochNumLayers() uint32 {
+	return s.NetworkInfo.EpochNumLayers
+}
+
 func (s *Storage) OnLayer(in *pb.Layer) {
 	s.pushLayer(in)
 }
@@ -183,16 +188,34 @@ func (s *Storage) OnMalfeasanceProof(in *pb.MalfeasanceProof) {
 	s.updateMalfeasanceProof(in)
 }
 
-func (s *Storage) OnAccount(in *pb.Account) {
-	log.Info("OnAccount(%+v)", in)
-	account := model.NewAccount(in)
-	if account == nil {
-		return
+func (s *Storage) OnAccounts(accounts []*types.Account) {
+	log.Info("OnAccounts")
+
+	var updateOps []mongo.WriteModel
+
+	for _, acc := range accounts {
+		filter := bson.D{{Key: "address", Value: acc.Address.String()}}
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "balance", Value: acc.Balance},
+				{Key: "counter", Value: acc.NextNonce},
+				{Key: "created", Value: acc.Layer.Uint32()},
+			}},
+		}
+
+		updateModel := mongo.NewUpdateOneModel()
+		updateModel.Filter = filter
+		updateModel.Update = update
+		updateModel.SetUpsert(true)
+
+		updateOps = append(updateOps, updateModel)
 	}
-	err := s.UpdateAccount(context.Background(), account.Address, account.Balance, account.Counter)
-	//TODO: better error handling
-	if err != nil {
-		log.Err(fmt.Errorf("OnAccount: error %v", err))
+
+	if len(updateOps) > 0 {
+		_, err := s.db.Collection("accounts").BulkWrite(context.TODO(), updateOps)
+		if err != nil {
+			log.Err(fmt.Errorf("OnAccounts: error accounts write %v", err))
+		}
 	}
 }
 
@@ -249,14 +272,31 @@ func (s *Storage) pushLayer(layer *pb.Layer) {
 	s.layersReady.Signal()
 }
 
-func (s *Storage) popLayer() *pb.Layer {
+func (s *Storage) IsLayerInQueue(layer *pb.Layer) bool {
+	for l := s.layersQueue.Front(); l != nil; l = l.Next() {
+		if val, ok := l.Value.(*pb.Layer); ok {
+			if val.Number.Number == layer.Number.Number {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (s *Storage) processLayer() *pb.Layer {
 	s.layersLock.Lock()
 	defer s.layersLock.Unlock()
-	layer := s.layersQueue.Front()
-	if layer != nil {
-		return s.layersQueue.Remove(layer).(*pb.Layer)
+	l := s.layersQueue.Front()
+	if l == nil {
+		return nil
 	}
-	return nil
+
+	layer := l.Value.(*pb.Layer)
+	s.updateLayer(layer)
+
+	s.layersQueue.Remove(l)
+
+	return layer
 }
 
 func (s *Storage) requestBalanceUpdate(layer uint32, address string) {
@@ -503,8 +543,8 @@ func (s *Storage) updateLayers() {
 		s.layersReady.Wait()
 		s.layersReady.L.Unlock()
 
-		for layer := s.popLayer(); layer != nil; layer = s.popLayer() {
-			s.updateLayer(layer)
+		for s.processLayer() != nil {
+			log.Info("processing layer")
 		}
 	}
 }
@@ -559,4 +599,10 @@ func (s *Storage) Ping() error {
 	defer cancel()
 
 	return s.client.Ping(ctx, nil)
+}
+
+func (s *Storage) LayersInQueue() int {
+	s.layersLock.Lock()
+	defer s.layersLock.Unlock()
+	return s.layersQueue.Len()
 }

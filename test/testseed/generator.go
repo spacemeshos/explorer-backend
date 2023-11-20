@@ -398,10 +398,9 @@ func (s *SeedGenerator) generateAccount(layerNum uint32) (model.Account, *signin
 		Address: v0.ComputePrincipal(v0.TemplateAddress, &v0.SpawnArguments{
 			PublicKey: key,
 		}).String(),
-		Balance:  0,
-		Counter:  0,
-		Created:  uint64(layerNum),
-		LayerTms: int32(s.seed.GenesisTime),
+		Balance: 0,
+		Counter: 0,
+		Created: uint64(layerNum),
 	}, signer
 }
 

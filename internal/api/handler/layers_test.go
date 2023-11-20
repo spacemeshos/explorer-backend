@@ -127,6 +127,8 @@ func TestLayerAtxs(t *testing.T) { // /layers/{id:[0-9]+}/atxs
 			for _, tx := range loopResp.Data {
 				generatedAtx, ok := epoch.Activations[tx.Id]
 				require.True(t, ok)
+				// TargetEpoch is not stored in db
+				tx.TargetEpoch = 0
 				require.Equal(t, generatedAtx, &tx)
 			}
 		}

@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/spacemeshos/address"
+	"github.com/spacemeshos/explorer-backend/collector"
+	"github.com/spacemeshos/explorer-backend/collector/sql"
+	"github.com/spacemeshos/explorer-backend/storage"
+	"github.com/spacemeshos/go-spacemesh/log"
+	"github.com/urfave/cli/v2"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/spacemeshos/explorer-backend/collector"
-	"github.com/spacemeshos/explorer-backend/storage"
-	"github.com/spacemeshos/go-spacemesh/log"
-	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -29,6 +29,7 @@ var (
 	testnetBoolFlag              bool
 	syncFromLayerFlag            int
 	syncMissingLayersBoolFlag    bool
+	sqlitePathStringFlag         string
 )
 
 var flags = []cli.Flag{
@@ -87,6 +88,14 @@ var flags = []cli.Flag{
 		Value:       true,
 		EnvVars:     []string{"SPACEMESH_SYNC_MISSING_LAYERS"},
 	},
+	&cli.StringFlag{
+		Name:        "sqlite",
+		Usage:       "Path to node sqlite file",
+		Required:    false,
+		Destination: &sqlitePathStringFlag,
+		Value:       "explorer.sql",
+		EnvVars:     []string{"SPACEMESH_SQLITE"},
+	},
 }
 
 func main() {
@@ -110,8 +119,15 @@ func main() {
 			return err
 		}
 
+		db, err := sql.Setup(sqlitePathStringFlag)
+		if err != nil {
+			log.Info("SQLite storage open error %v", err)
+			return err
+		}
+		dbClient := &sql.Client{}
+
 		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag,
-			syncMissingLayersBoolFlag, syncFromLayerFlag, mongoStorage)
+			syncMissingLayersBoolFlag, syncFromLayerFlag, mongoStorage, db, dbClient)
 		mongoStorage.AccountUpdater = c
 
 		sigs := make(chan os.Signal, 1)

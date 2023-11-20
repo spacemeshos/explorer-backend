@@ -45,6 +45,8 @@ func TestSmesherAtxsHandler(t *testing.T) { // /smeshers/{id}/atxs
 			require.Equal(t, 1, len(resp.Data))
 			atx, ok := epoch.Activations[resp.Data[0].Id]
 			require.True(t, ok)
+			// TargetEpoch is not stored in db
+			resp.Data[0].TargetEpoch = 0
 			require.Equal(t, *atx, resp.Data[0])
 		}
 	}

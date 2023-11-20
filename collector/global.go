@@ -60,55 +60,10 @@ func (c *Collector) globalStatePump() error {
 			return err
 		}
 		item := response.GetDatum()
-		if account := item.GetAccountWrapper(); account != nil {
-			c.listener.OnAccount(account)
-		} else if reward := item.GetReward(); reward != nil {
-			if reward.Layer.Number > c.syncFromLayerFlag {
-				c.listener.OnReward(reward)
-			}
-		} else if receipt := item.GetReceipt(); receipt != nil {
+		if receipt := item.GetReceipt(); receipt != nil {
 			if receipt.Layer.Number > c.syncFromLayerFlag {
 				c.listener.OnTransactionReceipt(receipt)
 			}
 		}
 	}
 }
-
-/*
-func (c *Collector) transactionsStatePump() error {
-    var req empty.Empty
-
-    log.Info("Start global state transactions state pump")
-    defer func() {
-        c.notify <- -streamType_global_TransactionState
-        log.Info("Stop global state transactions state pump")
-    }()
-
-    c.notify <- +streamType_global_TransactionState
-
-    stream, err := c.globalClient.TransactionStateStream(context.Background(), &req)
-    if err != nil {
-        log.Error("cannot get global state transactions state: %v", err)
-        return err
-    }
-
-    for {
-        txState, err := stream.Recv()
-        if err == io.EOF {
-            return err
-        }
-        if err != nil {
-            log.Error("cannot receive TransactionState: %v", err)
-            return err
-        }
-
-        log.Info("TransactionState: %v, %v", txState.GetId(), txState.GetState())
-        var id sm.TransactionID
-        copy(id[:], txState.GetId().GetId())
-
-        c.history.AddTransactionState(&id, txState.GetState());
-    }
-
-    return nil
-}
-*/

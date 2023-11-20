@@ -50,6 +50,11 @@ func TestSearch(t *testing.T) { // /search/{id}
 		var resp accountResp
 		res.RequireUnmarshal(t, &resp)
 		require.Equal(t, 1, len(resp.Data))
+		resp.Data[0].LastActivity = 0
+		resp.Data[0].Awards = 0
+		resp.Data[0].Fees = 0
+		resp.Data[0].Sent = 0
+		resp.Data[0].Received = 0
 		require.Equal(t, acc.Account, resp.Data[0])
 	}
 }

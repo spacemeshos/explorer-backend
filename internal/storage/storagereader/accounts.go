@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/spacemeshos/explorer-backend/model"
@@ -35,50 +34,63 @@ func (s *Reader) GetAccounts(ctx context.Context, query *bson.D, opts ...*option
 			continue
 		}
 
-		doc.Balance = summary.Awards + summary.Received - summary.Sent - summary.Fees
 		doc.Sent = summary.Sent
 		doc.Received = summary.Received
 		doc.Awards = summary.Awards
 		doc.Fees = summary.Fees
-		doc.LayerTms = int32(s.GetLayerTimestamp(uint32(doc.Created)))
+		doc.LastActivity = summary.LastActivity
 	}
 	return docs, nil
 }
 
 // GetAccountSummary returns the summary of the accounts matching the query. Not all accounts from api have filled this data.
 func (s *Reader) GetAccountSummary(ctx context.Context, address string) (*model.AccountSummary, error) {
-	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "address", Value: address}}}}
-	groupStage := bson.D{
-		{Key: "$group", Value: bson.D{
-			{Key: "_id", Value: ""},
-			{Key: "sent", Value: bson.D{
-				{Key: "$sum", Value: "$sent"},
-			}},
-			{Key: "received", Value: bson.D{
-				{Key: "$sum", Value: "$received"},
-			}},
-			{Key: "awards", Value: bson.D{
-				{Key: "$sum", Value: "$reward"},
-			}},
-			{Key: "fees", Value: bson.D{
-				{Key: "$sum", Value: "$fee"},
-			}},
-			{Key: "layer", Value: bson.D{
-				{Key: "$max", Value: "$layer"},
-			}},
-		}},
+	var accSummary model.AccountSummary
+
+	totalRewards, _, err := s.CountCoinbaseRewards(ctx, address)
+	if err != nil {
+		return nil, fmt.Errorf("error occured while getting sum of rewards: %w", err)
+	}
+	accSummary.Awards = uint64(totalRewards)
+
+	received, _, err := s.CountReceivedTransactions(ctx, address)
+	if err != nil {
+		if err != nil {
+			return nil, fmt.Errorf("error occured while getting sum of received txs: %w", err)
+		}
+	}
+	accSummary.Received = uint64(received)
+
+	sent, fees, _, err := s.CountSentTransactions(ctx, address)
+	if err != nil {
+		if err != nil {
+			return nil, fmt.Errorf("error occured while getting sum of sent txs: %w", err)
+		}
+	}
+	accSummary.Sent = uint64(sent)
+	accSummary.Fees = uint64(fees)
+
+	latestTx, err := s.GetLatestTransaction(ctx, address)
+	if err != nil {
+		return nil, fmt.Errorf("error occured while getting latest sent txs: %w", err)
 	}
 
-	cursor, err := s.db.Collection("ledger").Aggregate(ctx, mongo.Pipeline{matchStage, groupStage})
+	latestReward, err := s.GetLatestReward(ctx, address)
 	if err != nil {
-		return nil, fmt.Errorf("error get account summary: %w", err)
+		return nil, fmt.Errorf("error occured while getting latest reawrd: %w", err)
 	}
-	if !cursor.Next(ctx) {
-		return nil, nil
+
+	if latestTx != nil {
+		if latestReward != nil && latestReward.Layer > latestTx.Layer {
+			accSummary.LastActivity = int32(s.GetLayerTimestamp(latestReward.Layer))
+		} else {
+			accSummary.LastActivity = int32(s.GetLayerTimestamp(latestTx.Layer))
+		}
+	} else {
+		if latestReward != nil {
+			accSummary.LastActivity = int32(s.GetLayerTimestamp(latestReward.Layer))
+		}
 	}
-	var accSummary model.AccountSummary
-	if err = cursor.Decode(&accSummary); err != nil {
-		return nil, fmt.Errorf("error decode account summary: %w", err)
-	}
+
 	return &accSummary, nil
 }

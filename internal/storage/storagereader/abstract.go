@@ -16,6 +16,10 @@ type StorageReader interface {
 
 	CountTransactions(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error)
 	GetTransactions(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Transaction, error)
+	CountSentTransactions(ctx context.Context, address string) (amount, fees, count int64, err error)
+	CountReceivedTransactions(ctx context.Context, address string) (amount, count int64, err error)
+	GetLatestTransaction(ctx context.Context, address string) (*model.Transaction, error)
+	GetFirstSentTransaction(ctx context.Context, address string) (*model.Transaction, error)
 
 	CountApps(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error)
 	GetApps(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.App, error)
@@ -39,8 +43,11 @@ type StorageReader interface {
 	GetLayer(ctx context.Context, layerNumber int) (*model.Layer, error)
 
 	CountRewards(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error)
+	CountCoinbaseRewards(ctx context.Context, coinbase string) (total, count int64, err error)
 	GetRewards(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Reward, error)
 	GetReward(ctx context.Context, rewardID string) (*model.Reward, error)
+	GetLatestReward(ctx context.Context, coinbase string) (*model.Reward, error)
+	GetTotalRewards(ctx context.Context) (total, count int64, err error)
 
 	CountSmeshers(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error)
 	GetSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Smesher, error)

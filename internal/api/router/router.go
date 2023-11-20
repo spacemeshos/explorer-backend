@@ -34,6 +34,7 @@ func Init(e *echo.Echo) {
 	e.GET("/txs/:id", handler.Transaction)
 
 	e.GET("/rewards", handler.Rewards)
+	e.GET("/rewards/total", handler.TotalRewards)
 	e.GET("/rewards/:id", handler.Reward)
 
 	e.GET("/accounts", handler.Accounts)

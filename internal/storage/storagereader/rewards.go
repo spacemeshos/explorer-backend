@@ -3,6 +3,8 @@ package storagereader
 import (
 	"context"
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/utils"
+	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,6 +53,90 @@ func (s *Reader) GetReward(ctx context.Context, rewardID string) (*model.Reward,
 	var reward *model.Reward
 	if err = cursor.Decode(&reward); err != nil {
 		return nil, fmt.Errorf("error decode reward `%s`: %w", rewardID, err)
+	}
+	return reward, nil
+}
+
+// CountCoinbaseRewards returns the number of rewards for given coinbase address.
+func (s *Reader) CountCoinbaseRewards(ctx context.Context, coinbase string) (total, count int64, err error) {
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "coinbase", Value: coinbase}}}}
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "total", Value: bson.D{
+				{Key: "$sum", Value: "$total"},
+			}},
+			{Key: "layerReward", Value: bson.D{
+				{Key: "$sum", Value: "$layerReward"},
+			}},
+			{Key: "count", Value: bson.D{
+				{Key: "$sum", Value: 1},
+			}},
+		}},
+	}
+	cursor, err := s.db.Collection("rewards").Aggregate(ctx, mongo.Pipeline{
+		matchStage,
+		groupStage,
+	})
+	if err != nil {
+		return 0, 0, fmt.Errorf("error get coinbase rewards: %w", err)
+	}
+	if !cursor.Next(ctx) {
+		return 0, 0, nil
+	}
+	doc := cursor.Current
+	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count")), nil
+}
+
+// GetTotalRewards returns the total number of rewards.
+func (s *Reader) GetTotalRewards(ctx context.Context) (total, count int64, err error) {
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "total", Value: bson.D{
+				{Key: "$sum", Value: "$total"},
+			}},
+			{Key: "count", Value: bson.D{
+				{Key: "$sum", Value: 1},
+			}},
+		}},
+	}
+	cursor, err := s.db.Collection("rewards").Aggregate(ctx, mongo.Pipeline{
+		groupStage,
+	})
+	if err != nil {
+		return 0, 0, fmt.Errorf("error get total rewards: %w", err)
+	}
+	if !cursor.Next(ctx) {
+		return 0, 0, nil
+	}
+	doc := cursor.Current
+	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count")), nil
+}
+
+// GetLatestReward returns the latest reward for given coinbase
+func (s *Reader) GetLatestReward(ctx context.Context, coinbase string) (*model.Reward, error) {
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "coinbase", Value: coinbase}}}}
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "layer", Value: bson.D{
+				{Key: "$max", Value: "$layer"},
+			}},
+		}},
+	}
+
+	cursor, err := s.db.Collection("rewards").Aggregate(ctx, mongo.Pipeline{matchStage, groupStage})
+	if err != nil {
+		return nil, fmt.Errorf("error occured while getting latest reward: %w", err)
+	}
+	if !cursor.Next(ctx) {
+		return nil, nil
+	}
+
+	var reward *model.Reward
+	if err = cursor.Decode(&reward); err != nil {
+		return nil, fmt.Errorf("error decode reward: %w", err)
 	}
 	return reward, nil
 }

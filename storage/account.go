@@ -155,7 +155,6 @@ func (s *Storage) UpdateAccount(parent context.Context, address string, balance 
 		{Key: "$set", Value: bson.D{
 			{Key: "balance", Value: balance},
 			{Key: "counter", Value: counter},
-			{Key: "created", Value: 0},
 		}},
 	}, options.Update().SetUpsert(true))
 	if err != nil {
@@ -230,48 +229,4 @@ func (s *Storage) AddAccountReward(parent context.Context, layer uint32, address
 		log.Info("AddAccountReward: update account touch error %v", err)
 	}
 	return nil
-}
-
-func (s *Storage) GetAccountSummary(parent context.Context, address string) (uint64, uint64, uint64, uint64, uint32) {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
-	defer cancel()
-	matchStage := bson.D{
-		{Key: "$match", Value: bson.D{
-			{Key: "address", Value: address},
-		}},
-	}
-	groupStage := bson.D{
-		{Key: "$group", Value: bson.D{
-			{Key: "_id", Value: ""},
-			{Key: "sent", Value: bson.D{
-				{Key: "$sum", Value: "$sent"},
-			}},
-			{Key: "received", Value: bson.D{
-				{Key: "$sum", Value: "$received"},
-			}},
-			{Key: "awards", Value: bson.D{
-				{Key: "$sum", Value: "$reward"},
-			}},
-			{Key: "fees", Value: bson.D{
-				{Key: "$sum", Value: "$sentTxFee"},
-			}},
-			{Key: "layer", Value: bson.D{
-				{Key: "$max", Value: "$layer"},
-			}},
-		}},
-	}
-	cursor, err := s.db.Collection("ledger").Aggregate(ctx, mongo.Pipeline{
-		matchStage,
-		groupStage,
-	})
-	if err != nil {
-		log.Info("GetAccountSummary: %v", err)
-		return 0, 0, 0, 0, 0
-	}
-	if !cursor.Next(ctx) {
-		log.Info("GetAccountSummary: Empty result")
-		return 0, 0, 0, 0, 0
-	}
-	doc := cursor.Current
-	return utils.GetAsUInt64(doc.Lookup("sent")), utils.GetAsUInt64(doc.Lookup("received")), utils.GetAsUInt64(doc.Lookup("awards")), utils.GetAsUInt64(doc.Lookup("fees")), s.getLayerTimestamp(utils.GetAsUInt32(doc.Lookup("layer")))
 }

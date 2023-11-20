@@ -22,7 +22,7 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 	}
 
 	filter := &bson.D{{Key: "address", Value: addr.String()}}
-	accs, total, err := e.getAccounts(ctx, filter, options.Find().SetSort(bson.D{{Key: "address", Value: 1}}).SetLimit(1).SetProjection(bson.D{
+	accs, total, err := e.getAccounts(ctx, filter, options.Find().SetSort(bson.D{{Key: "created", Value: 1}}).SetLimit(1).SetProjection(bson.D{
 		{Key: "_id", Value: 0},
 		{Key: "layer", Value: 0},
 	}))
@@ -40,19 +40,18 @@ func (e *Service) GetAccount(ctx context.Context, accountID string) (*model.Acco
 
 	if summary != nil {
 		acc.Sent = summary.Sent
-		acc.Balance = summary.Awards + summary.Received - summary.Sent - summary.Fees
 		acc.Received = summary.Received
 		acc.Awards = summary.Awards
 		acc.Fees = summary.Fees
-		acc.LayerTms = summary.LayerTms
+		acc.LastActivity = summary.LastActivity
 	}
 
-	if acc.LayerTms == 0 {
+	if acc.LastActivity == 0 {
 		net, err := e.GetNetworkInfo(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error get network info for acc summury: %w", err)
 		}
-		acc.LayerTms = int32(net.GenesisTime)
+		acc.LastActivity = int32(net.GenesisTime)
 	}
 
 	acc.Txs, err = e.storage.CountTransactions(ctx, &bson.D{
@@ -88,7 +87,7 @@ func (e *Service) GetAccountTransactions(ctx context.Context, accountID string, 
 			bson.D{{Key: "receiver", Value: addr.String()}},
 		}},
 	}
-	return e.getTransactions(ctx, filter, e.getFindOptions("counter", page, perPage))
+	return e.getTransactions(ctx, filter, e.getFindOptions("layer", page, perPage))
 }
 
 // GetAccountRewards returns rewards by account id.
@@ -97,7 +96,7 @@ func (e *Service) GetAccountRewards(ctx context.Context, accountID string, page,
 	if err != nil {
 		return nil, 0, ErrNotFound
 	}
-	opts := e.getFindOptions("coinbase", page, perPage)
+	opts := e.getFindOptions("layer", page, perPage)
 	opts.SetProjection(bson.D{})
 	return e.getRewards(ctx, &bson.D{{Key: "coinbase", Value: addr.String()}}, opts)
 }

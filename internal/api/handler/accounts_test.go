@@ -18,8 +18,12 @@ func TestAccounts(t *testing.T) { // accounts
 		accGenerated, ok := generator.Accounts[strings.ToLower(acc.Address)]
 		require.True(t, ok)
 		// this not calculated on list endpoints
-		acc.LayerTms = accGenerated.Account.LayerTms
+		acc.LastActivity = accGenerated.Account.LastActivity
+		acc.Received = accGenerated.Account.Received
+		acc.Sent = accGenerated.Account.Sent
+		acc.Fees = accGenerated.Account.Fees
 		acc.Txs = accGenerated.Account.Txs
+		acc.Awards = accGenerated.Account.Awards
 		require.Equal(t, accGenerated.Account, acc)
 	}
 }
@@ -31,6 +35,13 @@ func TestAccount(t *testing.T) { // /accounts/{id}
 		res.RequireOK(t)
 		var resp accountResp
 		res.RequireUnmarshal(t, &resp)
+		// this not calculated on list endpoints
+		resp.Data[0].LastActivity = acc.Account.LastActivity
+		resp.Data[0].Received = acc.Account.Received
+		resp.Data[0].Sent = acc.Account.Sent
+		resp.Data[0].Fees = acc.Account.Fees
+		resp.Data[0].Txs = acc.Account.Txs
+		resp.Data[0].Awards = acc.Account.Awards
 		require.Equal(t, 1, len(resp.Data))
 		require.Equal(t, acc.Account, resp.Data[0])
 	}
