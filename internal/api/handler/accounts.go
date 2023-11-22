@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/explorer-backend/internal/service"
 	"github.com/spacemeshos/explorer-backend/model"
 	"net/http"
 )
@@ -28,6 +29,9 @@ func Account(c echo.Context) error {
 
 	account, err := cc.Service.GetAccount(context.TODO(), c.Param("id"))
 	if err != nil {
+		if err == service.ErrNotFound {
+			return echo.ErrNotFound
+		}
 		return fmt.Errorf("failed to get account `%s` info: %w", c.Param("id"), err)
 	}
 
@@ -53,6 +57,9 @@ func AccountDetails(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "entity not found")
 	}
 	if err != nil {
+		if err == service.ErrNotFound {
+			return echo.ErrNotFound
+		}
 		return fmt.Errorf("failed to get account entity `%s` list: %w", c.Param("entity"), err)
 	}
 

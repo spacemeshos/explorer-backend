@@ -42,7 +42,7 @@ func (e *Service) GetLayer(ctx context.Context, layerNum int) (*model.Layer, err
 		return nil, fmt.Errorf("error get layer %d: %w", layerNum, err)
 	}
 	if layer == nil {
-		return nil, fmt.Errorf("layer %d not found: %w", layerNum, ErrNotFound)
+		return nil, ErrNotFound
 	}
 	return layer, nil
 }

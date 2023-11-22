@@ -17,7 +17,7 @@ func (e *Service) GetReward(ctx context.Context, rewardID string) (*model.Reward
 		return nil, fmt.Errorf("error get reward: %w", err)
 	}
 	if reward == nil {
-		return nil, fmt.Errorf("reward not found `%s`: %w", rewardID, ErrNotFound)
+		return nil, ErrNotFound
 	}
 	return reward, nil
 }

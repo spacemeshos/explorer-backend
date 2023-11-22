@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/explorer-backend/internal/service"
 	"net/http"
 
 	"github.com/spacemeshos/explorer-backend/model"
@@ -27,6 +28,9 @@ func Transaction(c echo.Context) error {
 	cc := c.(*ApiContext)
 	tx, err := cc.Service.GetTransaction(context.TODO(), c.Param("id"))
 	if err != nil {
+		if err == service.ErrNotFound {
+			return echo.ErrNotFound
+		}
 		return fmt.Errorf("failed to get transaction %s list: %s", c.Param("id"), err)
 	}
 
