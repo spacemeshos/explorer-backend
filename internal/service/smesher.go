@@ -17,7 +17,7 @@ func (e *Service) GetSmesher(ctx context.Context, smesherID string) (*model.Smes
 		return nil, err
 	}
 	if smesher == nil {
-		return nil, fmt.Errorf("smesher not found `%s`: %w", smesherID, ErrNotFound)
+		return nil, ErrNotFound
 	}
 	smesher.Rewards, _, err = e.CountSmesherRewards(ctx, smesherID)
 	return smesher, err

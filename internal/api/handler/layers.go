@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/explorer-backend/internal/service"
 	"net/http"
 	"strconv"
 
@@ -35,6 +36,9 @@ func Layer(c echo.Context) error {
 
 	layer, err := cc.Service.GetLayer(context.TODO(), layerID)
 	if err != nil {
+		if err == service.ErrNotFound {
+			return echo.ErrNotFound
+		}
 		return fmt.Errorf("failed to get layer info: %w", err)
 	}
 

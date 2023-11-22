@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/explorer-backend/internal/service"
 	"net/http"
 	"strconv"
 
@@ -34,6 +35,9 @@ func Epoch(c echo.Context) error {
 	}
 	epochs, err := cc.Service.GetEpoch(context.TODO(), layerNum)
 	if err != nil {
+		if err == service.ErrNotFound {
+			return echo.ErrNotFound
+		}
 		return fmt.Errorf("failed to get epoch info: %w", err)
 	}
 

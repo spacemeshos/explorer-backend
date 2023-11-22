@@ -18,7 +18,7 @@ func (e *Service) GetBlock(ctx context.Context, blockID string) (*model.Block, e
 		return nil, fmt.Errorf("error get block by `%s`: %w", blockID, err)
 	}
 	if len(blocks) == 0 {
-		return nil, fmt.Errorf("not found block `%s`", blockID)
+		return nil, ErrNotFound
 	}
 	return blocks[0], nil
 }
