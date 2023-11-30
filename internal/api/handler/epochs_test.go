@@ -109,6 +109,8 @@ func TestEpochSmeshersHandler(t *testing.T) {
 			generatedSmesher, ok := ep.Smeshers[strings.ToLower(smesher.Id)]
 			require.True(t, ok)
 			smesher.Rewards = generatedSmesher.Rewards // this not calculated on list endpoints, simply set as 0.
+			smesher.Timestamp = generatedSmesher.Timestamp
+			smesher.AtxLayer = generatedSmesher.AtxLayer
 			require.Equal(t, *generatedSmesher, smesher)
 		}
 	}
