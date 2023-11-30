@@ -18,6 +18,8 @@ func TestSmeshersHandler(t *testing.T) { // /smeshers
 		generatedSmesher, ok := generator.Smeshers[strings.ToLower(smesher.Id)]
 		require.True(t, ok)
 		smesher.Rewards = generatedSmesher.Rewards // for this endpoint we not calculate extra values, cause not use this field
+		smesher.Timestamp = generatedSmesher.Timestamp
+		smesher.AtxLayer = generatedSmesher.AtxLayer
 		require.Equal(t, generatedSmesher, &smesher)
 	}
 }

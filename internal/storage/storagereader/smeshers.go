@@ -24,8 +24,15 @@ func (s *Reader) CountSmeshers(ctx context.Context, query *bson.D, opts ...*opti
 // GetSmeshers returns the smeshers matching the query.
 func (s *Reader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Smesher, error) {
 	skip := int64(0)
-	if opts[0].Skip != nil {
-		skip = *opts[0].Skip
+	limit := int64(0)
+	if len(opts) > 0 {
+		if opts[0].Skip != nil {
+			skip = *opts[0].Skip
+		}
+
+		if opts[0].Limit != nil {
+			limit = *opts[0].Limit
+		}
 	}
 
 	pipeline := bson.A{
@@ -87,12 +94,15 @@ func (s *Reader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*option
 		bson.D{{Key: "$project", Value: bson.D{{Key: "atxLayerRst", Value: 0}}}},
 		bson.D{{Key: "$sort", Value: bson.D{{Key: "atxLayer", Value: -1}}}},
 		bson.D{{Key: "$skip", Value: skip}},
-		bson.D{{Key: "$limit", Value: *opts[0].Limit}},
 	}
 	if query != nil {
 		pipeline = append(bson.A{
 			bson.D{{Key: "$match", Value: *query}},
 		}, pipeline...)
+	}
+
+	if limit > 0 {
+		pipeline = append(pipeline, bson.D{{Key: "$limit", Value: limit}})
 	}
 
 	cursor, err := s.db.Collection("smeshers").Aggregate(ctx, pipeline)
