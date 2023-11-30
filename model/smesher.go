@@ -19,7 +19,6 @@ type Smesher struct {
 	Lat            float64            `json:"lat" bson:"lat"`
 	Lon            float64            `json:"lon" bson:"lon"`
 	Rewards        int64              `json:"rewards" bson:"-"`
-	AtxLayer       uint32             `json:"atxLayer" bson:"atxLayer"`
 	Proofs         []MalfeasanceProof `json:"proofs,omitempty" bson:"proofs,omitempty"`
 }
 
