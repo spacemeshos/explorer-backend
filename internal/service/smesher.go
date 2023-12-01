@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -56,8 +55,9 @@ func (e *Service) CountSmesherRewards(ctx context.Context, smesherID string) (to
 	return e.storage.CountSmesherRewards(ctx, smesherID)
 }
 
+// TODO: optimize queries
 func (e *Service) getSmeshers(ctx context.Context, filter *bson.D, options *options.FindOptions) (smeshers []*model.Smesher, total int64, err error) {
-	atxs, err := e.storage.GetActivations(ctx, filter, options)
+	atxs, err := e.storage.GetActivations(ctx, filter)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error count smeshers: %w", err)
 	}
@@ -70,13 +70,16 @@ func (e *Service) getSmeshers(ctx context.Context, filter *bson.D, options *opti
 			lastID = atx.SmesherId
 		}
 	}
-	total = int64(len(smeshersList))
-	if total == 0 {
-		return []*model.Smesher{}, 0, nil
+
+	total, err = e.storage.CountSmeshers(ctx, &bson.D{{Key: "id", Value: bson.M{"$in": smeshersList}}})
+	if err != nil {
+		return []*model.Smesher{}, 0, err
 	}
-	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{{Key: "id", Value: bson.M{"$in": smeshersList}}})
+
+	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{{Key: "id", Value: bson.M{"$in": smeshersList}}}, options)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error load smeshers: %w", err)
 	}
+
 	return smeshers, total, nil
 }
