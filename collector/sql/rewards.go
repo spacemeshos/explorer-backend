@@ -6,7 +6,7 @@ import (
 )
 
 func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*types.Reward, err error) {
-	_, err = db.Exec("select coinbase, layer, total_reward, layer_reward from rewards where layer = ?1;",
+	_, err = db.Exec("select coinbase, layer, total_reward, layer_reward, pubkey from rewards where layer = ?1;",
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, int64(lid))
 		}, func(stmt *sql.Statement) bool {
@@ -20,6 +20,7 @@ func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*ty
 				Layer:       types.LayerID(uint32(stmt.ColumnInt64(1))),
 				TotalReward: uint64(stmt.ColumnInt64(2)),
 				LayerReward: uint64(stmt.ColumnInt64(3)),
+				SmesherID:   types.BytesToNodeID(stmt.ColumnViewBytes(4)),
 			}
 			rst = append(rst, reward)
 			return true

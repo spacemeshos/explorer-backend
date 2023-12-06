@@ -53,27 +53,6 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
 	return smesher, nil
 }
 
-func (s *Storage) GetSmesherByCoinbase(parent context.Context, coinbase string) (*model.Smesher, error) {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
-	defer cancel()
-	cursor, err := s.db.Collection("coinbases").Find(ctx, &bson.D{{Key: "coinbase", Value: coinbase}})
-	if err != nil {
-		log.Info("GetSmesherByCoinbase: %v", err)
-		return nil, err
-	}
-	if !cursor.Next(ctx) {
-		log.Info("GetSmesherByCoinbase: Empty result")
-		return nil, errors.New("Empty result")
-	}
-	doc := cursor.Current
-	smesher := utils.GetAsString(doc.Lookup("smesherId"))
-	if smesher == "" {
-		log.Info("GetSmesherByCoinbase: Empty result")
-		return nil, errors.New("Empty result")
-	}
-	return s.GetSmesher(ctx, &bson.D{{Key: "id", Value: smesher}})
-}
-
 func (s *Storage) GetSmeshersCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()

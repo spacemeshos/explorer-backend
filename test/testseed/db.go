@@ -96,15 +96,16 @@ func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*ty
 				continue
 			}
 
-			coinbase, _ := utils.StringToBytes(reward.Coinbase)
-			var addr types.Address
-			copy(addr[:], coinbase)
+			coinbase, _ := types.StringToAddress(reward.Coinbase)
+			smesher, _ := utils.StringToBytes(reward.Smesher)
+			smesherId := types.BytesToNodeID(smesher)
 
 			r := &types.Reward{
 				Layer:       types.LayerID(reward.Layer),
 				TotalReward: reward.Total,
 				LayerReward: reward.LayerReward,
-				Coinbase:    addr,
+				Coinbase:    coinbase,
+				SmesherID:   smesherId,
 			}
 
 			rst = append(rst, r)

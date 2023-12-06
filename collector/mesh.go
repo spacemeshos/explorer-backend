@@ -170,6 +170,7 @@ func (c *Collector) syncLayer(lid types.LayerID) error {
 			Total:       &pb.Amount{Value: reward.TotalReward},
 			LayerReward: &pb.Amount{Value: reward.LayerReward},
 			Coinbase:    &pb.AccountId{Address: reward.Coinbase.String()},
+			Smesher:     &pb.SmesherId{Id: reward.SmesherID.Bytes()},
 		}
 		c.listener.OnReward(r)
 	}

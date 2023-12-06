@@ -47,7 +47,6 @@ func (s *Storage) GetReward(parent context.Context, query *bson.D) (*model.Rewar
 		LayerComputed: utils.GetAsUInt32(doc.Lookup("layerComputed")),
 		Coinbase:      utils.GetAsString(doc.Lookup("coinbase")),
 		Smesher:       utils.GetAsString(doc.Lookup("smesher")),
-		Space:         utils.GetAsUInt64(doc.Lookup("space")),
 		Timestamp:     utils.GetAsUInt32(doc.Lookup("timestamp")),
 	}
 	return account, nil
@@ -99,8 +98,6 @@ func (s *Storage) GetLayersRewards(parent context.Context, layerStart uint32, la
 		return 0, 0
 	}
 	doc := cursor.Current
-	//    log.Info("LayersRewards(%v, %v): %v + %v", layerStart, layerEnd, utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("layerReward")))
-	//    reward := utils.GetAsInt64(doc.Lookup("total")) + utils.GetAsInt64(doc.Lookup("layerReward"))
 	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count"))
 }
 
@@ -135,8 +132,6 @@ func (s *Storage) GetSmesherRewards(parent context.Context, smesher string) (int
 		return 0, 0
 	}
 	doc := cursor.Current
-	//    log.Info("LayersRewards(%v, %v): %v + %v", layerStart, layerEnd, utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("layerReward")))
-	//    reward := utils.GetAsInt64(doc.Lookup("total")) + utils.GetAsInt64(doc.Lookup("layerReward"))
 	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count"))
 }
 
@@ -170,7 +165,6 @@ func (s *Storage) SaveReward(parent context.Context, in *model.Reward) error {
 		{Key: "layerComputed", Value: in.LayerComputed},
 		{Key: "coinbase", Value: in.Coinbase},
 		{Key: "smesher", Value: in.Smesher},
-		{Key: "space", Value: in.Space},
 		{Key: "timestamp", Value: in.Timestamp},
 	})
 	if err != nil {
