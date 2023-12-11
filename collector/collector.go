@@ -21,7 +21,7 @@ import (
 const (
 	streamType_node_SyncStatus int = 1
 	//streamType_mesh_Layer       int = 2
-	streamType_globalState      int = 2
+	streamType_transactions     int = 2
 	streamType_mesh_Malfeasance int = 3
 
 	streamType_count int = 3
@@ -34,7 +34,7 @@ type Listener interface {
 	OnAccounts(accounts []*types.Account)
 	OnReward(reward *pb.Reward)
 	OnMalfeasanceProof(proof *pb.MalfeasanceProof)
-	OnTransactionReceipt(receipt *pb.TransactionReceipt)
+	OnTransactionResult(res *pb.TransactionResult, state *pb.TransactionState)
 	GetLastLayer(parent context.Context) uint32
 	LayersInQueue() int
 	IsLayerInQueue(layer *pb.Layer) bool
@@ -51,11 +51,12 @@ type Collector struct {
 	db       *sql2.Database
 	dbClient sql.DatabaseClient
 
-	nodeClient    pb.NodeServiceClient
-	meshClient    pb.MeshServiceClient
-	globalClient  pb.GlobalStateServiceClient
-	debugClient   pb.DebugServiceClient
-	smesherClient pb.SmesherServiceClient
+	nodeClient         pb.NodeServiceClient
+	meshClient         pb.MeshServiceClient
+	globalClient       pb.GlobalStateServiceClient
+	transactionsClient pb.TransactionServiceClient
+	debugClient        pb.DebugServiceClient
+	smesherClient      pb.SmesherServiceClient
 
 	streams       [streamType_count]bool
 	activeStreams int
@@ -110,6 +111,7 @@ func (c *Collector) Run() error {
 	c.nodeClient = pb.NewNodeServiceClient(publicConn)
 	c.meshClient = pb.NewMeshServiceClient(publicConn)
 	c.globalClient = pb.NewGlobalStateServiceClient(publicConn)
+	c.transactionsClient = pb.NewTransactionServiceClient(publicConn)
 	c.debugClient = pb.NewDebugServiceClient(publicConn)
 	c.smesherClient = pb.NewSmesherServiceClient(privateConn)
 
@@ -135,9 +137,9 @@ func (c *Collector) Run() error {
 	})
 
 	g.Go(func() error {
-		err := c.globalStatePump()
+		err := c.transactionsPump()
 		if err != nil {
-			return errors.Join(errors.New("cannot start sync global state pump"), err)
+			return errors.Join(errors.New("cannot start transactions pump"), err)
 		}
 		return nil
 	})

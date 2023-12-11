@@ -38,16 +38,20 @@ type Transaction struct {
 	Sender   string `json:"sender" bson:"sender"` // tx originator, should match signer inside Signature
 	Receiver string `json:"receiver" bson:"receiver"`
 	SvmData  string `json:"svmData" bson:"svmData"` // svm binary data. Decode with svm-codec
+
+	Message          string   `json:"message" bson:"message"`
+	TouchedAddresses []string `json:"touchedAddresses" bson:"touchedAddresses"`
 }
 
 type TransactionReceipt struct {
-	Id      string //nolint will fix it later
-	Layer   uint32
-	Index   uint32 // the index of the tx in the ordered list of txs to be executed by stf in the layer
-	Result  int
-	GasUsed uint64 // gas units used by the transaction (gas price in tx)
-	Fee     uint64 // transaction fee charged for the transaction
-	SvmData string // svm binary data. Decode with svm-codec
+	Id               string //nolint will fix it later
+	Result           int
+	Message          string
+	GasUsed          uint64 // gas units used by the transaction (gas price in tx)
+	Fee              uint64 // transaction fee charged for the transaction
+	Layer            uint32
+	Block            string
+	TouchedAddresses []string
 }
 
 type TransactionService interface {
@@ -55,16 +59,20 @@ type TransactionService interface {
 	GetTransactions(ctx context.Context, page, perPage int64) (txs []*Transaction, total int64, err error)
 }
 
-func NewTransactionReceipt(txReceipt *pb.TransactionReceipt) *TransactionReceipt {
-	return &TransactionReceipt{
-		Id:      utils.BytesToHex(txReceipt.GetId().GetId()),
-		Result:  int(txReceipt.GetResult()),
-		GasUsed: txReceipt.GetGasUsed(),
-		Fee:     txReceipt.GetFee().GetValue(),
-		Layer:   uint32(txReceipt.GetLayer().GetNumber()),
-		Index:   txReceipt.GetIndex(),
-		SvmData: utils.BytesToHex(txReceipt.GetSvmData()),
+func NewTransactionResult(res *pb.TransactionResult, state *pb.TransactionState, networkInfo NetworkInfo) (*Transaction, error) {
+	layerStart := networkInfo.GenesisTime + res.GetLayer()*networkInfo.LayerDuration
+	tx, err := NewTransaction(res.GetTx(), res.GetLayer(), utils.NBytesToHex(res.GetBlock(), 20), layerStart, 0)
+	if err != nil {
+		return nil, err
 	}
+
+	tx.State = int(state.State)
+	tx.Fee = res.GetFee()
+	tx.GasUsed = res.GetGasConsumed()
+	tx.Message = res.GetMessage()
+	tx.TouchedAddresses = res.GetTouchedAddresses()
+
+	return tx, nil
 }
 
 // NewTransaction try to parse the transaction and return a new Transaction struct.
@@ -73,7 +81,6 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse transaction: %w", err)
 	}
-
 	tx := &Transaction{
 		Id:         utils.BytesToHex(in.GetId()),
 		Sender:     txDecoded.GetPrincipal().String(),
@@ -82,7 +89,7 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp 
 		Layer:      layer,
 		Block:      blockID,
 		BlockIndex: blockIndex,
-		State:      int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
+		State:      int(pb.TransactionState_TRANSACTION_STATE_UNSPECIFIED),
 		Timestamp:  timestamp,
 		MaxGas:     in.GetMaxGas(),
 		GasPrice:   txDecoded.GetGasPrice(),
@@ -98,20 +105,4 @@ func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp 
 	tx.PublicKey = strings.Join(keys, ",")
 
 	return tx, nil
-}
-
-func GetTransactionStateFromResult(txResult int) int {
-	switch txResult {
-	case int(pb.TransactionReceipt_TRANSACTION_RESULT_EXECUTED):
-		return int(pb.TransactionState_TRANSACTION_STATE_PROCESSED)
-	case int(pb.TransactionReceipt_TRANSACTION_RESULT_BAD_COUNTER):
-		return int(pb.TransactionState_TRANSACTION_STATE_CONFLICTING)
-	case int(pb.TransactionReceipt_TRANSACTION_RESULT_RUNTIME_EXCEPTION):
-		return int(pb.TransactionState_TRANSACTION_STATE_REJECTED)
-	case int(pb.TransactionReceipt_TRANSACTION_RESULT_INSUFFICIENT_GAS):
-		return int(pb.TransactionState_TRANSACTION_STATE_INSUFFICIENT_FUNDS)
-	case int(pb.TransactionReceipt_TRANSACTION_RESULT_INSUFFICIENT_FUNDS):
-		return int(pb.TransactionState_TRANSACTION_STATE_INSUFFICIENT_FUNDS)
-	}
-	return int(pb.TransactionState_TRANSACTION_STATE_UNSPECIFIED)
 }
