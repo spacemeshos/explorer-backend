@@ -39,10 +39,10 @@ func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.
 	}
 	if !cursor.Next(ctx) {
 		log.Info("GetTransaction: Empty result")
-		return nil, errors.New("Empty result")
+		return nil, errors.New("empty result")
 	}
 	doc := cursor.Current
-	account := &model.Transaction{
+	tx := &model.Transaction{
 		Id:         utils.GetAsString(doc.Lookup("id")),
 		Layer:      utils.GetAsUInt32(doc.Lookup("layer")),
 		Block:      utils.GetAsString(doc.Lookup("block")),
@@ -63,7 +63,7 @@ func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.
 		Receiver:   utils.GetAsString(doc.Lookup("receiver")),
 		SvmData:    utils.GetAsString(doc.Lookup("svmData")),
 	}
-	return account, nil
+	return tx, nil
 }
 
 func (s *Storage) GetTransactionsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
@@ -141,6 +141,12 @@ func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ..
 func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
+
+	transaction, err := s.GetTransaction(ctx, &bson.D{{Key: "id", Value: in.Id}})
+	if err != nil && err.Error() != "empty result" {
+		return err
+	}
+
 	tx := bson.D{
 		{
 			Key: "$set",
@@ -164,10 +170,40 @@ func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction)
 				{Key: "sender", Value: in.Sender},
 				{Key: "receiver", Value: in.Receiver},
 				{Key: "svmData", Value: in.SvmData},
+				{Key: "message", Value: in.Message},
+				{Key: "touchedAddresses", Value: in.TouchedAddresses},
 			},
 		},
 	}
-	_, err := s.db.Collection("txs").UpdateOne(ctx,
+
+	if transaction != nil {
+		tx = bson.D{
+			{
+				Key: "$set",
+				Value: bson.D{
+					{Key: "id", Value: in.Id},
+					{Key: "layer", Value: in.Layer},
+					{Key: "block", Value: in.Block},
+					{Key: "blockIndex", Value: in.BlockIndex},
+					{Key: "index", Value: in.Index},
+					{Key: "timestamp", Value: in.Timestamp},
+					{Key: "maxGas", Value: in.MaxGas},
+					{Key: "gasPrice", Value: in.GasPrice},
+					{Key: "fee", Value: in.Fee},
+					{Key: "amount", Value: in.Amount},
+					{Key: "counter", Value: in.Counter},
+					{Key: "type", Value: in.Type},
+					{Key: "signature", Value: in.Signature},
+					{Key: "pubKey", Value: in.PublicKey},
+					{Key: "sender", Value: in.Sender},
+					{Key: "receiver", Value: in.Receiver},
+					{Key: "svmData", Value: in.SvmData},
+				},
+			},
+		}
+	}
+
+	_, err = s.db.Collection("txs").UpdateOne(ctx,
 		bson.D{{Key: "id", Value: in.Id}}, tx, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveTransaction: %v obj: %+v", err, tx)
@@ -208,20 +244,64 @@ func (s *Storage) SaveTransactions(parent context.Context, in map[string]*model.
 	return nil
 }
 
-func (s *Storage) UpdateTransaction(parent context.Context, in *model.TransactionReceipt) error {
+func (s *Storage) SaveTransactionResult(parent context.Context, in *model.Transaction) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("txs").UpdateOne(ctx, bson.D{{Key: "id", Value: in.Id}}, bson.D{
-		{Key: "$set", Value: bson.D{
-			{Key: "index", Value: in.Index},
-			{Key: "state", Value: model.GetTransactionStateFromResult(in.Result)},
-			{Key: "gasUsed", Value: in.GasUsed},
-			{Key: "fee", Value: in.Fee},
-			{Key: "svmData", Value: in.SvmData},
-		}},
-	})
+
+	transaction, err := s.GetTransaction(ctx, &bson.D{{Key: "id", Value: in.Id}})
+	if err != nil && err.Error() != "empty result" {
+		return err
+	}
+
+	tx := bson.D{
+		{
+			Key: "$set",
+			Value: bson.D{
+				{Key: "id", Value: in.Id},
+				{Key: "layer", Value: in.Layer},
+				{Key: "block", Value: in.Block},
+				{Key: "blockIndex", Value: in.BlockIndex},
+				{Key: "index", Value: in.Index},
+				{Key: "state", Value: in.State},
+				{Key: "timestamp", Value: in.Timestamp},
+				{Key: "maxGas", Value: in.MaxGas},
+				{Key: "gasPrice", Value: in.GasPrice},
+				{Key: "gasUsed", Value: in.GasUsed},
+				{Key: "fee", Value: in.Fee},
+				{Key: "amount", Value: in.Amount},
+				{Key: "counter", Value: in.Counter},
+				{Key: "type", Value: in.Type},
+				{Key: "signature", Value: in.Signature},
+				{Key: "pubKey", Value: in.PublicKey},
+				{Key: "sender", Value: in.Sender},
+				{Key: "receiver", Value: in.Receiver},
+				{Key: "svmData", Value: in.SvmData},
+				{Key: "message", Value: in.Message},
+				{Key: "touchedAddresses", Value: in.TouchedAddresses},
+			},
+		},
+	}
+
+	if transaction != nil {
+		tx = bson.D{
+			{
+				Key: "$set",
+				Value: bson.D{
+					{Key: "id", Value: in.Id},
+					{Key: "state", Value: in.State},
+					{Key: "gasUsed", Value: in.GasUsed},
+					{Key: "fee", Value: in.Fee},
+					{Key: "message", Value: in.Message},
+					{Key: "touchedAddresses", Value: in.TouchedAddresses},
+				},
+			},
+		}
+	}
+
+	_, err = s.db.Collection("txs").UpdateOne(ctx,
+		bson.D{{Key: "id", Value: in.Id}}, tx, options.Update().SetUpsert(true))
 	if err != nil {
-		log.Info("UpdateTransaction: %v", err)
+		log.Info("SaveTransactionResult: %v obj: %+v", err, tx)
 	}
 	return err
 }

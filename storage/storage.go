@@ -256,12 +256,17 @@ func (s *Storage) OnReward(in *pb.Reward) {
 	s.updateEpochs() // trigger epoch stat recalculation todo: optimize this
 }
 
-func (s *Storage) OnTransactionReceipt(in *pb.TransactionReceipt) {
-	log.Info("OnTransactionReceipt(%+v)", in)
-	err := s.UpdateTransaction(context.Background(), model.NewTransactionReceipt(in))
+func (s *Storage) OnTransactionResult(res *pb.TransactionResult, state *pb.TransactionState) {
+	log.Info("OnTransactionReceipt(%+v, %+v)", res, state)
+	tx, err := model.NewTransactionResult(res, state, s.NetworkInfo)
+	if err != nil {
+		log.Err(fmt.Errorf("OnTransactionResult: error %v", err))
+	}
+
+	err = s.SaveTransactionResult(context.Background(), tx)
 	//TODO: better error handling
 	if err != nil {
-		log.Err(fmt.Errorf("OnTransactionReceipt: error %v", err))
+		log.Err(fmt.Errorf("OnTransactionResult: error %v", err))
 	}
 }
 

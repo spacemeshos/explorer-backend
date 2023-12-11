@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
@@ -29,41 +28,4 @@ func (c *Collector) GetAccountState(address string) (uint64, uint64, error) {
 	}
 
 	return res.AccountWrapper.StateCurrent.Balance.Value, res.AccountWrapper.StateCurrent.Counter, nil
-}
-
-func (c *Collector) globalStatePump() error {
-	req := pb.GlobalStateStreamRequest{GlobalStateDataFlags: uint32(pb.GlobalStateDataFlag_GLOBAL_STATE_DATA_FLAG_REWARD) |
-		uint32(pb.GlobalStateDataFlag_GLOBAL_STATE_DATA_FLAG_TRANSACTION_RECEIPT) |
-		uint32(pb.GlobalStateDataFlag_GLOBAL_STATE_DATA_FLAG_ACCOUNT)}
-
-	log.Info("Start global state pump")
-	defer func() {
-		c.notify <- -streamType_globalState
-		log.Info("Stop global state pump")
-	}()
-
-	c.notify <- +streamType_globalState
-
-	stream, err := c.globalClient.GlobalStateStream(context.Background(), &req)
-	if err != nil {
-		log.Err(fmt.Errorf("cannot get global state account stream: %v", err))
-		return err
-	}
-
-	for {
-		response, err := stream.Recv()
-		if err == io.EOF {
-			return err
-		}
-		if err != nil {
-			log.Err(fmt.Errorf("cannot receive Global state data: %v", err))
-			return err
-		}
-		item := response.GetDatum()
-		if receipt := item.GetReceipt(); receipt != nil {
-			if receipt.Layer.Number > c.syncFromLayerFlag {
-				c.listener.OnTransactionReceipt(receipt)
-			}
-		}
-	}
 }
