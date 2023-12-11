@@ -334,7 +334,7 @@ func generateTransaction(index int, layer *model.Layer, senderSigner *signing.Ed
 		Block:      block.Id,
 		BlockIndex: uint32(index),
 		Index:      0,
-		State:      int(pb.TransactionState_TRANSACTION_STATE_PROCESSED),
+		State:      int(pb.TransactionState_TRANSACTION_STATE_UNSPECIFIED),
 		Timestamp:  layer.Start,
 		MaxGas:     maxGas,
 		GasPrice:   gasPrice,
