@@ -2,14 +2,11 @@ package collector_test
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
-
-	"github.com/spacemeshos/explorer-backend/model"
 )
 
 func TestTransactions(t *testing.T) {
@@ -18,20 +15,16 @@ func TestTransactions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(generator.Transactions), len(txs))
 	for _, tx := range txs {
-		// temporary hack, until storage return data as slice of bson.B not an struct.
-		txEncoded, err := json.Marshal(tx.Map())
 		require.NoError(t, err)
-		var tmpTx model.Transaction
-		require.NoError(t, json.Unmarshal(txEncoded, &tmpTx))
-		generatedTx, ok := generator.Transactions[tmpTx.Id]
+		generatedTx, ok := generator.Transactions[tx.Id]
 		require.True(t, ok)
-		tmpTx.Receiver = strings.ToLower(tmpTx.Receiver)
-		tmpTx.Sender = strings.ToLower(tmpTx.Sender)
+		tx.Receiver = strings.ToLower(tx.Receiver)
+		tx.Sender = strings.ToLower(tx.Sender)
 		generatedTx.Receiver = strings.ToLower(generatedTx.Receiver)
 		generatedTx.Sender = strings.ToLower(generatedTx.Sender)
 		generatedTx.PublicKey = "" // we do not encode it to send tx, omit this.
 		generatedTx.Signature = "" // we generate sign on emulation of pb stream.
-		tmpTx.Signature = ""       // we generate sign on emulation of pb stream.
-		require.Equal(t, *generatedTx, tmpTx)
+		tx.Signature = ""          // we generate sign on emulation of pb stream.
+		require.Equal(t, *generatedTx, tx)
 	}
 }

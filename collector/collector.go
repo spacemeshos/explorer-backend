@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"github.com/spacemeshos/explorer-backend/collector/sql"
+	"github.com/spacemeshos/explorer-backend/model"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	sql2 "github.com/spacemeshos/go-spacemesh/sql"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/keepalive"
 	"time"
@@ -39,6 +42,8 @@ type Listener interface {
 	LayersInQueue() int
 	IsLayerInQueue(layer *pb.Layer) bool
 	GetEpochNumLayers() uint32
+	GetTransactions(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]model.Transaction, error)
+	UpdateTransactionState(parent context.Context, id string, state int32) error
 }
 
 type Collector struct {

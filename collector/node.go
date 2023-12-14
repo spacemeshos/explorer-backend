@@ -48,6 +48,11 @@ func (c *Collector) syncStatusPump() error {
 				if err != nil {
 					fmt.Errorf("syncLayer error: %v", err)
 				}
+
+				err = c.syncNotProcessedTxs()
+				if err != nil {
+					fmt.Errorf("syncNotProcessedTxs error: %v", err)
+				}
 			}
 		}
 
