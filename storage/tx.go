@@ -118,7 +118,7 @@ func (s *Storage) IsTransactionExists(parent context.Context, txId string) bool 
 	return count > 0
 }
 
-func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
+func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]model.Transaction, error) {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	cursor, err := s.db.Collection("txs").Find(ctx, query, opts...)
@@ -126,16 +126,16 @@ func (s *Storage) GetTransactions(parent context.Context, query *bson.D, opts ..
 		log.Info("GetTransactions: %v", err)
 		return nil, err
 	}
-	var docs interface{} = []bson.D{}
-	err = cursor.All(ctx, &docs)
+	var txs []model.Transaction
+	err = cursor.All(ctx, &txs)
 	if err != nil {
 		log.Info("GetTransactions: %v", err)
 		return nil, err
 	}
-	if len(docs.([]bson.D)) == 0 {
+	if len(txs) == 0 {
 		return nil, nil
 	}
-	return docs.([]bson.D), nil
+	return txs, nil
 }
 
 func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction) error {
@@ -302,6 +302,27 @@ func (s *Storage) SaveTransactionResult(parent context.Context, in *model.Transa
 		bson.D{{Key: "id", Value: in.Id}}, tx, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveTransactionResult: %v obj: %+v", err, tx)
+	}
+	return err
+}
+
+func (s *Storage) UpdateTransactionState(parent context.Context, id string, state int32) error {
+	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	defer cancel()
+
+	tx := bson.D{
+		{
+			Key: "$set",
+			Value: bson.D{
+				{Key: "state", Value: state},
+			},
+		},
+	}
+
+	_, err := s.db.Collection("txs").UpdateOne(ctx,
+		bson.D{{Key: "id", Value: id}}, tx)
+	if err != nil {
+		log.Info("UpdateTransactionState: %v obj: %+v", err, tx)
 	}
 	return err
 }
