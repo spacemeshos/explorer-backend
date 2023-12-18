@@ -1,6 +1,6 @@
 module github.com/spacemeshos/explorer-backend
 
-go 1.21.3
+go 1.21.5
 
 require (
 	github.com/gofiber/fiber/v2 v2.50.0
@@ -11,13 +11,13 @@ require (
 	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
 	github.com/spacemeshos/api/release/go v1.24.0
 	github.com/spacemeshos/go-scale v1.1.12
-	github.com/spacemeshos/go-spacemesh v1.3.0-test1-nomain.0.20231202004827-d424b786fc9f
+	github.com/spacemeshos/go-spacemesh v1.3.0-test1-nomain.0.20231218095417-c57f0833a490
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.23.7
 	go.mongodb.org/mongo-driver v1.10.1
 	golang.org/x/net v0.19.0
 	golang.org/x/sync v0.5.0
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.0
 )
 
 require (
@@ -36,7 +36,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/uuid v1.4.0 // indirect
+	github.com/google/uuid v1.5.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
@@ -78,9 +78,9 @@ require (
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
+	google.golang.org/genproto v0.0.0-20231211222908-989df2bf70f3 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
