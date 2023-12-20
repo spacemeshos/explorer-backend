@@ -87,7 +87,7 @@ func (e *Service) GetAccountTransactions(ctx context.Context, accountID string, 
 			bson.D{{Key: "receiver", Value: addr.String()}},
 		}},
 	}
-	return e.getTransactions(ctx, filter, e.getFindOptions("layer", page, perPage))
+	return e.getTransactions(ctx, filter, e.getFindOptions("counter", page, perPage))
 }
 
 // GetAccountRewards returns rewards by account id.
