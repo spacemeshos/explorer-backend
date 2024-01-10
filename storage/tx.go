@@ -278,6 +278,7 @@ func (s *Storage) SaveTransactionResult(parent context.Context, in *model.Transa
 				{Key: "svmData", Value: in.SvmData},
 				{Key: "message", Value: in.Message},
 				{Key: "touchedAddresses", Value: in.TouchedAddresses},
+				{Key: "result", Value: in.Result},
 			},
 		},
 	}
@@ -293,6 +294,7 @@ func (s *Storage) SaveTransactionResult(parent context.Context, in *model.Transa
 					{Key: "fee", Value: in.Fee},
 					{Key: "message", Value: in.Message},
 					{Key: "touchedAddresses", Value: in.TouchedAddresses},
+					{Key: "result", Value: in.Result},
 				},
 			},
 		}

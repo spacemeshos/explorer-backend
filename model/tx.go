@@ -21,6 +21,7 @@ type Transaction struct {
 	BlockIndex uint32 `json:"blockIndex" bson:"blockIndex"`
 	Index      uint32 `json:"index" bson:"index"` // the index of the tx in the ordered list of txs to be executed by stf in the layer
 	State      int    `json:"state" bson:"state"`
+	Result     int    `json:"result" bson:"result"`
 	Timestamp  uint32 `json:"timestamp" bson:"timestamp"`
 
 	MaxGas   uint64 `json:"maxGas" bson:"maxGas"`
@@ -71,6 +72,7 @@ func NewTransactionResult(res *pb.TransactionResult, state *pb.TransactionState,
 	tx.GasUsed = res.GetGasConsumed()
 	tx.Message = res.GetMessage()
 	tx.TouchedAddresses = res.GetTouchedAddresses()
+	tx.Result = int(res.Status)
 
 	return tx, nil
 }
