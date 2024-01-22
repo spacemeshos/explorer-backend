@@ -175,6 +175,8 @@ func (c *Collector) syncLayer(lid types.LayerID) error {
 		c.listener.OnReward(r)
 	}
 
+	c.listener.UpdateEpochStats(layer.Number.Number)
+
 	return nil
 }
 

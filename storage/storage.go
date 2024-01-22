@@ -252,8 +252,11 @@ func (s *Storage) OnReward(in *pb.Reward) {
 	}
 
 	s.requestBalanceUpdate(reward.Layer, reward.Coinbase)
-	s.setChangedEpoch(reward.Layer)
-	s.updateEpochs() // trigger epoch stat recalculation todo: optimize this
+}
+
+func (s *Storage) UpdateEpochStats(layer uint32) {
+	s.setChangedEpoch(layer)
+	s.updateEpochs()
 }
 
 func (s *Storage) OnTransactionResult(res *pb.TransactionResult, state *pb.TransactionState) {
