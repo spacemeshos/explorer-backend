@@ -34,10 +34,6 @@ func (s *Reader) GetSmeshers(ctx context.Context, query *bson.D, opts ...*option
 		return nil, fmt.Errorf("error decode smeshers: %w", err)
 	}
 
-	for _, smesher := range smeshers {
-		smesher.Timestamp = s.GetLayerTimestamp(smesher.AtxLayer)
-	}
-
 	return smeshers, nil
 }
 
