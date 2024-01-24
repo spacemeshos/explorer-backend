@@ -52,5 +52,7 @@ type StorageReader interface {
 	CountSmeshers(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error)
 	GetSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Smesher, error)
 	GetSmesher(ctx context.Context, smesherID string) (*model.Smesher, error)
+	CountEpochSmeshers(ctx context.Context, query *bson.D, opts ...*options.CountOptions) (int64, error)
+	GetEpochSmeshers(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Smesher, error)
 	CountSmesherRewards(ctx context.Context, smesherID string) (total, count int64, err error)
 }
