@@ -31,7 +31,7 @@ func (e *Service) GetSmeshers(ctx context.Context, page, perPage int64) (smesher
 	if total == 0 {
 		return []*model.Smesher{}, 0, nil
 	}
-	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{}, e.getFindOptions("id", page, perPage))
+	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{}, e.getFindOptions("_id", page, perPage))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get smeshers: %w", err)
 	}
