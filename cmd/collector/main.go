@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spacemeshos/address"
 	"github.com/spacemeshos/explorer-backend/collector"
 	"github.com/spacemeshos/explorer-backend/collector/sql"
 	"github.com/spacemeshos/explorer-backend/storage"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/urfave/cli/v2"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,6 +32,7 @@ var (
 	syncFromLayerFlag            int
 	syncMissingLayersBoolFlag    bool
 	sqlitePathStringFlag         string
+	metricsPortFlag              int
 )
 
 var flags = []cli.Flag{
@@ -96,6 +99,14 @@ var flags = []cli.Flag{
 		Value:       "explorer.sql",
 		EnvVars:     []string{"SPACEMESH_SQLITE"},
 	},
+	&cli.IntFlag{
+		Name:        "metricsPort",
+		Usage:       ``,
+		Required:    false,
+		Value:       9090,
+		Destination: &metricsPortFlag,
+		EnvVars:     []string{"SPACEMESH_METRICS_PORT"},
+	},
 }
 
 func main() {
@@ -158,6 +169,12 @@ func main() {
 					time.Sleep(5 * time.Second)
 				}
 			}
+		}()
+
+		go func() {
+			// expose metrics endpoint
+			http.Handle("/metrics", promhttp.Handler())
+			http.ListenAndServe(fmt.Sprintf(":%d", metricsPortFlag), nil)
 		}()
 
 		select {}

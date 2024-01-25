@@ -92,6 +92,14 @@ func (e *Service) getFindOptions(key string, page, perPage int64) *options.FindO
 		SetProjection(bson.D{{Key: "_id", Value: 0}})
 }
 
+func (e *Service) getFindOptionsSort(sort bson.D, page, perPage int64) *options.FindOptions {
+	return options.Find().
+		SetSort(sort).
+		SetLimit(perPage).
+		SetSkip((page - 1) * perPage).
+		SetProjection(bson.D{{Key: "_id", Value: 0}})
+}
+
 func (e *Service) getEpochLayers(epoch int) (uint32, uint32) {
 	e.networkInfoMU.RLock()
 	net := e.networkInfo

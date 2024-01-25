@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"sync"
 	"time"
@@ -18,6 +20,31 @@ import (
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"github.com/spacemeshos/explorer-backend/model"
 	"github.com/spacemeshos/go-spacemesh/log"
+)
+
+var (
+	metricLastProcessedLayer = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "explorer_last_processed_layer",
+		Help: "",
+	})
+
+	metricLayersQueueLen = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "explorer_layers_queue_length",
+		Help: "",
+	})
+
+	metricNodeSyncedLayer = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "explorer_node_synced_layer",
+		Help: "",
+	})
+	metricNodeTopLayer = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "explorer_node_top_layer",
+		Help: "",
+	})
+	metricNodeVerifiedLayer = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "explorer_node_verified_layer",
+		Help: "",
+	})
 )
 
 type AccountUpdaterService interface {
@@ -161,6 +188,10 @@ func (s *Storage) OnNodeStatus(connectedPeers uint64, isSynced bool, syncedLayer
 	if err != nil {
 		log.Err(fmt.Errorf("OnNodeStatus: error %v", err))
 	}
+
+	metricNodeTopLayer.Set(float64(topLayer))
+	metricNodeVerifiedLayer.Set(float64(verifiedLayer))
+	metricNodeSyncedLayer.Set(float64(syncedLayer))
 }
 
 func (s *Storage) GetEpochLayers(epoch int32) (uint32, uint32) {
@@ -182,6 +213,7 @@ func (s *Storage) GetEpochNumLayers() uint32 {
 
 func (s *Storage) OnLayer(in *pb.Layer) {
 	s.pushLayer(in)
+	metricLayersQueueLen.Set(float64(s.layersQueue.Len()))
 }
 
 func (s *Storage) OnMalfeasanceProof(in *pb.MalfeasanceProof) {
@@ -246,8 +278,11 @@ func (s *Storage) OnReward(in *pb.Reward) {
 	}
 
 	s.requestBalanceUpdate(reward.Layer, reward.Coinbase)
-	s.setChangedEpoch(reward.Layer)
-	s.updateEpochs() // trigger epoch stat recalculation todo: optimize this
+}
+
+func (s *Storage) UpdateEpochStats(layer uint32) {
+	s.setChangedEpoch(layer)
+	s.updateEpochs()
 }
 
 func (s *Storage) OnTransactionResult(res *pb.TransactionResult, state *pb.TransactionState) {
@@ -294,6 +329,9 @@ func (s *Storage) processLayer() *pb.Layer {
 	s.updateLayer(layer)
 
 	s.layersQueue.Remove(l)
+
+	metricLastProcessedLayer.Set(float64(layer.Number.Number))
+	metricLayersQueueLen.Set(float64(s.layersQueue.Len()))
 
 	return layer
 }

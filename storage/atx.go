@@ -27,7 +27,7 @@ func (s *Storage) InitActivationsStorage(ctx context.Context) error {
 }
 
 func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.Activation, error) {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
 	defer cancel()
 	cursor, err := s.db.Collection("activations").Find(ctx, query)
 	if err != nil {
@@ -53,7 +53,7 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 }
 
 func (s *Storage) GetActivationsCount(parent context.Context, query *bson.D, opts ...*options.CountOptions) int64 {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
 	defer cancel()
 	count, err := s.db.Collection("activations").CountDocuments(ctx, query, opts...)
 	if err != nil {
@@ -64,7 +64,7 @@ func (s *Storage) GetActivationsCount(parent context.Context, query *bson.D, opt
 }
 
 func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]bson.D, error) {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
 	defer cancel()
 	cursor, err := s.db.Collection("activations").Find(ctx, query, opts...)
 	if err != nil {
@@ -85,7 +85,7 @@ func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...
 }
 
 func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) error {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
 	defer cancel()
 	_, err := s.db.Collection("activations").InsertOne(ctx, bson.D{
 		{Key: "id", Value: in.Id},
@@ -104,7 +104,7 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
 }
 
 func (s *Storage) SaveActivations(parent context.Context, in []*model.Activation) error {
-	ctx, cancel := context.WithTimeout(parent, 10*time.Second)
+	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
 	defer cancel()
 	for _, atx := range in {
 		_, err := s.db.Collection("activations").InsertOne(ctx, bson.D{

@@ -31,7 +31,7 @@ func (e *Service) GetSmeshers(ctx context.Context, page, perPage int64) (smesher
 	if total == 0 {
 		return []*model.Smesher{}, 0, nil
 	}
-	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{}, e.getFindOptions("id", page, perPage))
+	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{}, e.getFindOptions("timestamp", page, perPage))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get smeshers: %w", err)
 	}
@@ -55,28 +55,13 @@ func (e *Service) CountSmesherRewards(ctx context.Context, smesherID string) (to
 	return e.storage.CountSmesherRewards(ctx, smesherID)
 }
 
-// TODO: optimize queries
 func (e *Service) getSmeshers(ctx context.Context, filter *bson.D, options *options.FindOptions) (smeshers []*model.Smesher, total int64, err error) {
-	atxs, err := e.storage.GetActivations(ctx, filter)
-	if err != nil {
-		return nil, 0, fmt.Errorf("error count smeshers: %w", err)
-	}
-
-	smeshersList := make([]string, 0, len(atxs))
-	var lastID string
-	for _, atx := range atxs {
-		if lastID != atx.SmesherId {
-			smeshersList = append(smeshersList, atx.SmesherId)
-			lastID = atx.SmesherId
-		}
-	}
-
-	total, err = e.storage.CountSmeshers(ctx, &bson.D{{Key: "id", Value: bson.M{"$in": smeshersList}}})
+	total, err = e.storage.CountEpochSmeshers(ctx, filter)
 	if err != nil {
 		return []*model.Smesher{}, 0, err
 	}
 
-	smeshers, err = e.storage.GetSmeshers(ctx, &bson.D{{Key: "id", Value: bson.M{"$in": smeshersList}}}, options)
+	smeshers, err = e.storage.GetEpochSmeshers(ctx, filter, options)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error load smeshers: %w", err)
 	}

@@ -74,7 +74,9 @@ func (e *Service) GetLayers(ctx context.Context, page, perPage int64) (layers []
 
 // GetLayerTransactions returns transactions for layer.
 func (e *Service) GetLayerTransactions(ctx context.Context, layerNum int, page, perPage int64) (txs []*model.Transaction, total int64, err error) {
-	return e.getTransactions(ctx, &bson.D{{Key: "layer", Value: layerNum}}, e.getFindOptions("id", page, perPage))
+	return e.getTransactions(ctx, &bson.D{{Key: "layer", Value: layerNum}}, e.getFindOptionsSort(bson.D{
+		{Key: "blockIndex", Value: 1},
+	}, page, perPage))
 }
 
 // GetLayerSmeshers returns smeshers for layer.
