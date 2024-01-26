@@ -213,36 +213,3 @@ func (c *Collector) syncNotProcessedTxs() error {
 
 	return nil
 }
-
-func (c *Collector) syncNotProcessedTxs() error {
-	txs, err := c.listener.GetTransactions(context.TODO(), &bson.D{{Key: "state", Value: 0}})
-	if err != nil {
-		return err
-	}
-
-	for _, tx := range txs {
-		txId, err := utils.StringToBytes(tx.Id)
-		if err != nil {
-			return err
-		}
-
-		state, err := c.transactionsClient.TransactionsState(context.TODO(), &pb.TransactionsStateRequest{
-			TransactionId:       []*pb.TransactionId{{Id: txId}},
-			IncludeTransactions: false,
-		})
-		if err != nil {
-			return err
-		}
-
-		txState := state.TransactionsState[0]
-
-		if txState != nil {
-			err := c.listener.UpdateTransactionState(context.TODO(), tx.Id, int32(txState.State))
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
