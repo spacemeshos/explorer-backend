@@ -10,6 +10,7 @@ import (
 type DatabaseClient interface {
 	GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer, error)
 	GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*types.Reward, err error)
+	GetAllRewards(db *sql.Database) (rst []*types.Reward, err error)
 	AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*types.Account, err error)
 }
 

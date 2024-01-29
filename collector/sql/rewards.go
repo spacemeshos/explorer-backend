@@ -27,3 +27,24 @@ func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*ty
 		})
 	return
 }
+
+func (c *Client) GetAllRewards(db *sql.Database) (rst []*types.Reward, err error) {
+	_, err = db.Exec("select coinbase, layer, total_reward, layer_reward, pubkey from rewards;",
+		nil, func(stmt *sql.Statement) bool {
+			addrBytes := stmt.ColumnViewBytes(0)
+
+			var addr types.Address
+			copy(addr[:], addrBytes)
+
+			reward := &types.Reward{
+				Coinbase:    addr,
+				Layer:       types.LayerID(uint32(stmt.ColumnInt64(1))),
+				TotalReward: uint64(stmt.ColumnInt64(2)),
+				LayerReward: uint64(stmt.ColumnInt64(3)),
+				SmesherID:   types.BytesToNodeID(stmt.ColumnViewBytes(4)),
+			}
+			rst = append(rst, reward)
+			return true
+		})
+	return
+}

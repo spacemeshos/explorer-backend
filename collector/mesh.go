@@ -213,3 +213,23 @@ func (c *Collector) syncNotProcessedTxs() error {
 
 	return nil
 }
+
+func (c *Collector) syncAllRewards() error {
+	rewards, err := c.dbClient.GetAllRewards(c.db)
+	if err != nil {
+		return fmt.Errorf("%v\n", err)
+	}
+
+	for _, reward := range rewards {
+		r := &pb.Reward{
+			Layer:       &pb.LayerNumber{Number: reward.Layer.Uint32()},
+			Total:       &pb.Amount{Value: reward.TotalReward},
+			LayerReward: &pb.Amount{Value: reward.LayerReward},
+			Coinbase:    &pb.AccountId{Address: reward.Coinbase.String()},
+			Smesher:     &pb.SmesherId{Id: reward.SmesherID.Bytes()},
+		}
+		c.listener.OnReward(r)
+	}
+
+	return nil
+}
