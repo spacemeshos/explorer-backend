@@ -2,6 +2,9 @@ package collector_test
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/spacemeshos/explorer-backend/model"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,20 +17,19 @@ func TestRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(generator.Rewards), len(rewards))
 
-	//TODO: fix lack of smesher id
-	//for _, reward := range rewards {
-	//	// temporary hack, until storage return data as slice of bson.B not an struct.
-	//	rewardEncoded, err := json.Marshal(reward.Map())
-	//	require.NoError(t, err)
-	//	var tmpReward model.Reward
-	//	require.NoError(t, json.Unmarshal(rewardEncoded, &tmpReward))
-	//	generatedReward, ok := generator.Rewards[strings.ToLower(tmpReward.Smesher)]
-	//	require.True(t, ok, "reward not found")
-	//	generatedReward.Smesher = strings.ToLower(generatedReward.Smesher)
-	//	tmpReward.Smesher = strings.ToLower(tmpReward.Smesher)
-	//	tmpReward.Coinbase = strings.ToLower(tmpReward.Coinbase)
-	//	generatedReward.Coinbase = strings.ToLower(generatedReward.Coinbase)
-	//	tmpReward.ID = "" // id is internal mongo id. before insert to db we do not know it.
-	//	require.Equal(t, *generatedReward, tmpReward)
-	//}
+	for _, reward := range rewards {
+		// temporary hack, until storage return data as slice of bson.B not an struct.
+		rewardEncoded, err := json.Marshal(reward.Map())
+		require.NoError(t, err)
+		var tmpReward model.Reward
+		require.NoError(t, json.Unmarshal(rewardEncoded, &tmpReward))
+		generatedReward, ok := generator.Rewards[strings.ToLower(tmpReward.Smesher)]
+		require.True(t, ok, "reward not found")
+		generatedReward.Smesher = strings.ToLower(generatedReward.Smesher)
+		tmpReward.Smesher = strings.ToLower(tmpReward.Smesher)
+		tmpReward.Coinbase = strings.ToLower(tmpReward.Coinbase)
+		generatedReward.Coinbase = strings.ToLower(generatedReward.Coinbase)
+		tmpReward.ID = "" // id is internal mongo id. before insert to db we do not know it.
+		require.Equal(t, *generatedReward, tmpReward)
+	}
 }

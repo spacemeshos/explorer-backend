@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spacemeshos/address"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 	"github.com/spacemeshos/go-spacemesh/signing"
 
@@ -355,7 +354,7 @@ func generateTransaction(index int, layer *model.Layer, senderSigner *signing.Ed
 func (s *SeedGenerator) generateSmesher(layerNum uint32, coinbase string, commitmentSize uint64) model.Smesher {
 	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Smesher{
-		Id:             utils.BytesToHex(address.GenerateAddress(randomBytes(20)).Bytes()),
+		Id:             utils.BytesToHex(randomBytes(32)),
 		CommitmentSize: commitmentSize,
 		Coinbase:       coinbase,
 		AtxCount:       1,
@@ -372,7 +371,6 @@ func (s *SeedGenerator) generateReward(layerNum uint32, smesher *model.Smesher) 
 		LayerComputed: 0,
 		Coinbase:      smesher.Coinbase,
 		Smesher:       smesher.Id,
-		Space:         smesher.CommitmentSize,
 		Timestamp:     tx,
 	}
 }

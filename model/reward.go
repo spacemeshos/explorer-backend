@@ -16,8 +16,7 @@ type Reward struct {
 	LayerComputed uint32 `json:"layerComputed" bson:"layerComputed"` // layer number of the layer when reward was computed
 	// tx_fee = total - layer_reward
 	Coinbase  string `json:"coinbase" bson:"coinbase"` // account awarded this reward
-	Smesher   string `json:"smesher" bson:"smesher"`   // it will be nice to always have this in reward events
-	Space     uint64 `json:"space" bson:"space"`
+	Smesher   string `json:"smesher" bson:"smesher"`
 	Timestamp uint32 `json:"timestamp" bson:"timestamp"`
 }
 

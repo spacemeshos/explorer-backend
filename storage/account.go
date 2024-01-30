@@ -34,18 +34,6 @@ func (s *Storage) InitAccountsStorage(ctx context.Context) error {
 		return err
 	}
 
-	if _, err := s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys:    bson.D{{Key: "address", Value: 1}},
-		Options: options.Index().SetName("addressIndex").SetUnique(false)}); err != nil {
-		return err
-	}
-
-	if _, err := s.db.Collection("ledger").Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys:    bson.D{{Key: "layer", Value: 1}},
-		Options: options.Index().SetName("layerIndex").SetUnique(false)}); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -166,16 +154,7 @@ func (s *Storage) UpdateAccount(parent context.Context, address string, balance 
 func (s *Storage) AddAccountSent(parent context.Context, layer uint32, address string, amount uint64, fee uint64) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
-		{Key: "address", Value: address},
-		{Key: "layer", Value: layer},
-		{Key: "sent", Value: amount},
-		{Key: "sentTxFee", Value: fee},
-	})
-	if err != nil {
-		log.Info("AddAccountSent: %v", err)
-	}
-	_, err = s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.D{
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "layer", Value: layer},
 		}},
@@ -189,15 +168,7 @@ func (s *Storage) AddAccountSent(parent context.Context, layer uint32, address s
 func (s *Storage) AddAccountReceived(parent context.Context, layer uint32, address string, amount uint64) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
-		{Key: "address", Value: address},
-		{Key: "layer", Value: layer},
-		{Key: "received", Value: amount},
-	})
-	if err != nil {
-		log.Info("AddAccountReceived: %v", err)
-	}
-	_, err = s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.D{
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "layer", Value: layer},
 		}},
@@ -211,16 +182,7 @@ func (s *Storage) AddAccountReceived(parent context.Context, layer uint32, addre
 func (s *Storage) AddAccountReward(parent context.Context, layer uint32, address string, reward uint64, fee uint64) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("ledger").InsertOne(ctx, bson.D{
-		{Key: "address", Value: address},
-		{Key: "layer", Value: layer},
-		{Key: "reward", Value: reward},
-		{Key: "fee", Value: fee},
-	})
-	if err != nil {
-		log.Info("AddAccountReward: %v", err)
-	}
-	_, err = s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.D{
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "layer", Value: layer},
 		}},

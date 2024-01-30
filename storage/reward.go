@@ -22,6 +22,7 @@ func (s *Storage) InitRewardsStorage(ctx context.Context) error {
 		{Keys: bson.D{{Key: "coinbase", Value: 1}}, Options: options.Index().SetName("coinbaseIndex").SetUnique(false)},
 		{Keys: bson.D{{Key: "layer", Value: 1}, {Key: "smesher", Value: 1}, {Key: "coinbase", Value: 1}}, Options: options.Index().SetName("rewardIndex").SetUnique(false)},
 		{Keys: bson.D{{Key: "layer", Value: 1}, {Key: "total", Value: 1}, {Key: "layerReward", Value: 1}}, Options: options.Index().SetName("layerRewards").SetUnique(false)},
+		{Keys: bson.D{{Key: "smesher", Value: 1}, {Key: "layer", Value: 1}}, Options: options.Index().SetName("keyIndex").SetUnique(true)},
 	}
 	_, err := s.db.Collection("rewards").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(20*time.Second))
 	return err
@@ -47,7 +48,6 @@ func (s *Storage) GetReward(parent context.Context, query *bson.D) (*model.Rewar
 		LayerComputed: utils.GetAsUInt32(doc.Lookup("layerComputed")),
 		Coinbase:      utils.GetAsString(doc.Lookup("coinbase")),
 		Smesher:       utils.GetAsString(doc.Lookup("smesher")),
-		Space:         utils.GetAsUInt64(doc.Lookup("space")),
 		Timestamp:     utils.GetAsUInt32(doc.Lookup("timestamp")),
 	}
 	return account, nil
@@ -99,8 +99,6 @@ func (s *Storage) GetLayersRewards(parent context.Context, layerStart uint32, la
 		return 0, 0
 	}
 	doc := cursor.Current
-	//    log.Info("LayersRewards(%v, %v): %v + %v", layerStart, layerEnd, utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("layerReward")))
-	//    reward := utils.GetAsInt64(doc.Lookup("total")) + utils.GetAsInt64(doc.Lookup("layerReward"))
 	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count"))
 }
 
@@ -135,8 +133,6 @@ func (s *Storage) GetSmesherRewards(parent context.Context, smesher string) (int
 		return 0, 0
 	}
 	doc := cursor.Current
-	//    log.Info("LayersRewards(%v, %v): %v + %v", layerStart, layerEnd, utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("layerReward")))
-	//    reward := utils.GetAsInt64(doc.Lookup("total")) + utils.GetAsInt64(doc.Lookup("layerReward"))
 	return utils.GetAsInt64(doc.Lookup("total")), utils.GetAsInt64(doc.Lookup("count"))
 }
 
@@ -163,16 +159,18 @@ func (s *Storage) GetRewards(parent context.Context, query *bson.D, opts ...*opt
 func (s *Storage) SaveReward(parent context.Context, in *model.Reward) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("rewards").InsertOne(ctx, bson.D{
-		{Key: "layer", Value: in.Layer},
-		{Key: "total", Value: in.Total},
-		{Key: "layerReward", Value: in.LayerReward},
-		{Key: "layerComputed", Value: in.LayerComputed},
-		{Key: "coinbase", Value: in.Coinbase},
-		{Key: "smesher", Value: in.Smesher},
-		{Key: "space", Value: in.Space},
-		{Key: "timestamp", Value: in.Timestamp},
-	})
+	_, err := s.db.Collection("rewards").UpdateOne(ctx, bson.D{{Key: "smesher", Value: in.Smesher}, {Key: "layer", Value: in.Layer}}, bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "layer", Value: in.Layer},
+			{Key: "total", Value: in.Total},
+			{Key: "layerReward", Value: in.LayerReward},
+			{Key: "layerComputed", Value: in.LayerComputed},
+			{Key: "coinbase", Value: in.Coinbase},
+			{Key: "smesher", Value: in.Smesher},
+			{Key: "timestamp", Value: in.Timestamp},
+		},
+	}}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveReward: %v", err)
 	}

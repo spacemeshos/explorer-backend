@@ -257,14 +257,9 @@ func (s *Storage) OnReward(in *pb.Reward) {
 	if reward == nil {
 		return
 	}
-	smesher, err := s.GetSmesherByCoinbase(context.Background(), reward.Coinbase)
-	if err == nil {
-		reward.Smesher = smesher.Id
-		reward.Space = smesher.CommitmentSize
-	}
 	reward.Timestamp = s.getLayerTimestamp(reward.Layer)
 
-	err = s.SaveReward(context.Background(), reward)
+	err := s.SaveReward(context.Background(), reward)
 	//TODO: better error handling
 	if err != nil {
 		log.Err(fmt.Errorf("OnReward save: error %v", err))
@@ -276,7 +271,6 @@ func (s *Storage) OnReward(in *pb.Reward) {
 		log.Err(fmt.Errorf("OnReward add account: error %v", err))
 	}
 
-	//    s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.LayerReward, reward.Total - reward.LayerReward)
 	err = s.AddAccountReward(context.Background(), reward.Layer, reward.Coinbase, reward.Total, reward.LayerReward)
 	//TODO: better error handling
 	if err != nil {
@@ -445,18 +439,7 @@ func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation
 	var smesherUpdateOps []mongo.WriteModel
 
 	for _, atx := range atxs {
-		//err := s.SaveSmesher(context.Background(), atx.GetSmesher(s.postUnitSize))
-		////TODO: better error handling
-		//if err != nil {
-		//	log.Err(fmt.Errorf("updateActivations: error %v", err))
-		//}
 		smesherUpdateOps = append(smesherUpdateOps, s.SaveSmesherQuery(atx.GetSmesher(s.postUnitSize)))
-
-		//err = s.UpdateSmesher(context.Background(), atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
-		////TODO: better error handling
-		//if err != nil {
-		//	log.Err(fmt.Errorf("updateActivations: error %v", err))
-		//}
 		coinbaseOp, smesherOp := s.UpdateSmesherQuery(atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
 		coinbaseUpdateOps = append(coinbaseUpdateOps, coinbaseOp)
 		smesherUpdateOps = append(smesherUpdateOps, smesherOp)
