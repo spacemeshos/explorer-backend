@@ -115,6 +115,28 @@ func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*ty
 	return rst, nil
 }
 
+func (c *Client) GetAllRewards(db *sql.Database) (rst []*types.Reward, err error) {
+	for _, epoch := range c.SeedGen.Epochs {
+		for _, reward := range epoch.Rewards {
+			coinbase, _ := types.StringToAddress(reward.Coinbase)
+			smesher, _ := utils.StringToBytes(reward.Smesher)
+			smesherId := types.BytesToNodeID(smesher)
+
+			r := &types.Reward{
+				Layer:       types.LayerID(reward.Layer),
+				TotalReward: reward.Total,
+				LayerReward: reward.LayerReward,
+				Coinbase:    coinbase,
+				SmesherID:   smesherId,
+			}
+
+			rst = append(rst, r)
+		}
+	}
+
+	return rst, nil
+}
+
 func (c *Client) AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*types.Account, err error) {
 	for _, accountContainer := range c.SeedGen.Accounts {
 		if accountContainer.layerID != lid.Uint32() {
