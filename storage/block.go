@@ -80,40 +80,22 @@ func (s *Storage) GetBlocks(parent context.Context, query *bson.D, opts ...*opti
 func (s *Storage) SaveBlock(parent context.Context, in *model.Block) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
-		{Key: "id", Value: in.Id},
-		{Key: "layer", Value: in.Layer},
-		{Key: "epoch", Value: in.Epoch},
-		{Key: "start", Value: in.Start},
-		{Key: "end", Value: in.End},
-		{Key: "txsnumber", Value: in.TxsNumber},
-		{Key: "txsvalue", Value: in.TxsValue},
-	})
+	_, err := s.db.Collection("blocks").UpdateOne(ctx, bson.D{{Key: "id", Value: in.Id}}, bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "id", Value: in.Id},
+			{Key: "layer", Value: in.Layer},
+			{Key: "epoch", Value: in.Epoch},
+			{Key: "start", Value: in.Start},
+			{Key: "end", Value: in.End},
+			{Key: "txsnumber", Value: in.TxsNumber},
+			{Key: "txsvalue", Value: in.TxsValue},
+		},
+	}}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveBlock: %v", err)
 	}
 	return err
-}
-
-func (s *Storage) SaveBlocks(parent context.Context, in []*model.Block) error {
-	ctx, cancel := context.WithTimeout(parent, 10*time.Second)
-	defer cancel()
-	for _, block := range in {
-		_, err := s.db.Collection("blocks").InsertOne(ctx, bson.D{
-			{Key: "id", Value: block.Id},
-			{Key: "layer", Value: block.Layer},
-			{Key: "epoch", Value: block.Epoch},
-			{Key: "start", Value: block.Start},
-			{Key: "end", Value: block.End},
-			{Key: "txsnumber", Value: block.TxsNumber},
-			{Key: "txsvalue", Value: block.TxsValue},
-		})
-		if err != nil {
-			log.Info("SaveBlocks: %v", err)
-			return err
-		}
-	}
-	return nil
 }
 
 func (s *Storage) SaveOrUpdateBlocks(parent context.Context, in []*model.Block) error {

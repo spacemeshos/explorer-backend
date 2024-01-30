@@ -24,9 +24,6 @@ func Init(e *echo.Echo) {
 	e.GET("/smeshers/:id", handler.Smesher)
 	e.GET("/smeshers/:id/:entity", handler.SmesherDetails)
 
-	e.GET("/apps", handler.Apps)
-	e.GET("/apps/:id", handler.App)
-
 	e.GET("/atxs", handler.Activations)
 	e.GET("/atxs/:id", handler.Activation)
 

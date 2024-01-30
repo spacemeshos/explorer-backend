@@ -211,39 +211,6 @@ func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction)
 	return err
 }
 
-func (s *Storage) SaveTransactions(parent context.Context, in map[string]*model.Transaction) error {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
-	defer cancel()
-	for _, tx := range in {
-		_, err := s.db.Collection("txs").InsertOne(ctx, bson.D{
-			{Key: "id", Value: tx.Id},
-			{Key: "layer", Value: tx.Layer},
-			{Key: "block", Value: tx.Block},
-			{Key: "blockIndex", Value: tx.BlockIndex},
-			{Key: "index", Value: tx.Index},
-			{Key: "state", Value: tx.State},
-			{Key: "timestamp", Value: tx.Timestamp},
-			{Key: "maxGas", Value: tx.MaxGas},
-			{Key: "gasPrice", Value: tx.GasPrice},
-			{Key: "gasUsed", Value: tx.GasUsed},
-			{Key: "fee", Value: tx.Fee},
-			{Key: "amount", Value: tx.Amount},
-			{Key: "counter", Value: tx.Counter},
-			{Key: "type", Value: tx.Type},
-			{Key: "signature", Value: tx.Signature},
-			{Key: "pubKey", Value: tx.PublicKey},
-			{Key: "sender", Value: tx.Sender},
-			{Key: "receiver", Value: tx.Receiver},
-			{Key: "svmData", Value: tx.SvmData},
-		})
-		if err != nil {
-			log.Info("SaveTransactions: %v", err)
-			return err
-		}
-	}
-	return nil
-}
-
 func (s *Storage) SaveTransactionResult(parent context.Context, in *model.Transaction) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()

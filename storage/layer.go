@@ -106,20 +106,23 @@ func (s *Storage) GetLayers(parent context.Context, query *bson.D, opts ...*opti
 func (s *Storage) SaveLayer(parent context.Context, in *model.Layer) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("layers").InsertOne(ctx, bson.D{
-		{Key: "number", Value: in.Number},
-		{Key: "status", Value: in.Status},
-		{Key: "txs", Value: in.Txs},
-		{Key: "start", Value: in.Start},
-		{Key: "end", Value: in.End},
-		{Key: "txsamount", Value: in.TxsAmount},
-		{Key: "atxnumunits", Value: in.AtxNumUnits},
-		{Key: "rewards", Value: in.Rewards},
-		{Key: "epoch", Value: in.Epoch},
-		{Key: "smeshers", Value: in.Smeshers},
-		{Key: "hash", Value: in.Hash},
-		{Key: "blocksnumber", Value: in.BlocksNumber},
-	})
+	_, err := s.db.Collection("layers").UpdateOne(ctx, bson.D{{Key: "number", Value: in.Number}}, bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "number", Value: in.Number},
+			{Key: "status", Value: in.Status},
+			{Key: "txs", Value: in.Txs},
+			{Key: "start", Value: in.Start},
+			{Key: "end", Value: in.End},
+			{Key: "txsamount", Value: in.TxsAmount},
+			{Key: "atxnumunits", Value: in.AtxNumUnits},
+			{Key: "rewards", Value: in.Rewards},
+			{Key: "epoch", Value: in.Epoch},
+			{Key: "smeshers", Value: in.Smeshers},
+			{Key: "hash", Value: in.Hash},
+			{Key: "blocksnumber", Value: in.BlocksNumber},
+		},
+	}}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveLayer: %v", err)
 	}

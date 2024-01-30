@@ -87,42 +87,23 @@ func (s *Storage) GetActivations(parent context.Context, query *bson.D, opts ...
 func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
 	defer cancel()
-	_, err := s.db.Collection("activations").InsertOne(ctx, bson.D{
-		{Key: "id", Value: in.Id},
-		{Key: "layer", Value: in.Layer},
-		{Key: "smesher", Value: in.SmesherId},
-		{Key: "coinbase", Value: in.Coinbase},
-		{Key: "prevAtx", Value: in.PrevAtx},
-		{Key: "numunits", Value: in.NumUnits},
-		{Key: "commitmentSize", Value: int64(in.NumUnits) * int64(s.postUnitSize)},
-		{Key: "timestamp", Value: in.Timestamp},
-	})
+	_, err := s.db.Collection("activations").UpdateOne(ctx, bson.D{{Key: "id", Value: in.Id}}, bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "id", Value: in.Id},
+			{Key: "layer", Value: in.Layer},
+			{Key: "smesher", Value: in.SmesherId},
+			{Key: "coinbase", Value: in.Coinbase},
+			{Key: "prevAtx", Value: in.PrevAtx},
+			{Key: "numunits", Value: in.NumUnits},
+			{Key: "commitmentSize", Value: int64(in.NumUnits) * int64(s.postUnitSize)},
+			{Key: "timestamp", Value: in.Timestamp},
+		},
+	}}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveActivation: %v", err)
 	}
 	return err
-}
-
-func (s *Storage) SaveActivations(parent context.Context, in []*model.Activation) error {
-	ctx, cancel := context.WithTimeout(parent, 5*time.Minute)
-	defer cancel()
-	for _, atx := range in {
-		_, err := s.db.Collection("activations").InsertOne(ctx, bson.D{
-			{Key: "id", Value: atx.Id},
-			{Key: "layer", Value: atx.Layer},
-			{Key: "smesher", Value: atx.SmesherId},
-			{Key: "coinbase", Value: atx.Coinbase},
-			{Key: "prevAtx", Value: atx.PrevAtx},
-			{Key: "numunits", Value: atx.NumUnits},
-			{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
-			{Key: "timestamp", Value: atx.Timestamp},
-		})
-		if err != nil {
-			log.Info("SaveActivations: %v", err)
-			return err
-		}
-	}
-	return nil
 }
 
 func (s *Storage) SaveOrUpdateActivations(parent context.Context, in []*model.Activation) error {

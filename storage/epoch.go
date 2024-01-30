@@ -271,40 +271,43 @@ func (s *Storage) GetEpochs(parent context.Context, query *bson.D, opts ...*opti
 func (s *Storage) SaveEpoch(parent context.Context, epoch *model.Epoch) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("epochs").InsertOne(ctx, bson.D{
-		{Key: "number", Value: epoch.Number},
-		{Key: "start", Value: epoch.Start},
-		{Key: "end", Value: epoch.End},
-		{Key: "layerstart", Value: epoch.LayerStart},
-		{Key: "layerend", Value: epoch.LayerEnd},
-		{Key: "layers", Value: epoch.Layers},
-		{Key: "stats", Value: bson.D{
-			{Key: "current", Value: bson.D{
-				{Key: "capacity", Value: epoch.Stats.Current.Capacity},
-				{Key: "decentral", Value: epoch.Stats.Current.Decentral},
-				{Key: "smeshers", Value: epoch.Stats.Current.Smeshers},
-				{Key: "transactions", Value: epoch.Stats.Current.Transactions},
-				{Key: "accounts", Value: epoch.Stats.Current.Accounts},
-				{Key: "circulation", Value: epoch.Stats.Current.Circulation},
-				{Key: "rewards", Value: epoch.Stats.Current.Rewards},
-				{Key: "rewardsnumber", Value: epoch.Stats.Current.RewardsNumber},
-				{Key: "security", Value: epoch.Stats.Current.Security},
-				{Key: "txsamount", Value: epoch.Stats.Current.TxsAmount},
+	_, err := s.db.Collection("epochs").UpdateOne(ctx, bson.D{{Key: "number", Value: epoch.Number}}, bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "number", Value: epoch.Number},
+			{Key: "start", Value: epoch.Start},
+			{Key: "end", Value: epoch.End},
+			{Key: "layerstart", Value: epoch.LayerStart},
+			{Key: "layerend", Value: epoch.LayerEnd},
+			{Key: "layers", Value: epoch.Layers},
+			{Key: "stats", Value: bson.D{
+				{Key: "current", Value: bson.D{
+					{Key: "capacity", Value: epoch.Stats.Current.Capacity},
+					{Key: "decentral", Value: epoch.Stats.Current.Decentral},
+					{Key: "smeshers", Value: epoch.Stats.Current.Smeshers},
+					{Key: "transactions", Value: epoch.Stats.Current.Transactions},
+					{Key: "accounts", Value: epoch.Stats.Current.Accounts},
+					{Key: "circulation", Value: epoch.Stats.Current.Circulation},
+					{Key: "rewards", Value: epoch.Stats.Current.Rewards},
+					{Key: "rewardsnumber", Value: epoch.Stats.Current.RewardsNumber},
+					{Key: "security", Value: epoch.Stats.Current.Security},
+					{Key: "txsamount", Value: epoch.Stats.Current.TxsAmount},
+				}},
+				{Key: "cumulative", Value: bson.D{
+					{Key: "capacity", Value: epoch.Stats.Cumulative.Capacity},
+					{Key: "decentral", Value: epoch.Stats.Cumulative.Decentral},
+					{Key: "smeshers", Value: epoch.Stats.Cumulative.Smeshers},
+					{Key: "transactions", Value: epoch.Stats.Cumulative.Transactions},
+					{Key: "accounts", Value: epoch.Stats.Cumulative.Accounts},
+					{Key: "circulation", Value: epoch.Stats.Cumulative.Circulation},
+					{Key: "rewards", Value: epoch.Stats.Cumulative.Rewards},
+					{Key: "rewardsnumber", Value: epoch.Stats.Cumulative.RewardsNumber},
+					{Key: "security", Value: epoch.Stats.Cumulative.Security},
+					{Key: "txsamount", Value: epoch.Stats.Cumulative.TxsAmount},
+				}},
 			}},
-			{Key: "cumulative", Value: bson.D{
-				{Key: "capacity", Value: epoch.Stats.Cumulative.Capacity},
-				{Key: "decentral", Value: epoch.Stats.Cumulative.Decentral},
-				{Key: "smeshers", Value: epoch.Stats.Cumulative.Smeshers},
-				{Key: "transactions", Value: epoch.Stats.Cumulative.Transactions},
-				{Key: "accounts", Value: epoch.Stats.Cumulative.Accounts},
-				{Key: "circulation", Value: epoch.Stats.Cumulative.Circulation},
-				{Key: "rewards", Value: epoch.Stats.Cumulative.Rewards},
-				{Key: "rewardsnumber", Value: epoch.Stats.Cumulative.RewardsNumber},
-				{Key: "security", Value: epoch.Stats.Cumulative.Security},
-				{Key: "txsamount", Value: epoch.Stats.Cumulative.TxsAmount},
-			}},
-		}},
-	})
+		},
+	}}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveEpoch: %v", err)
 	}
