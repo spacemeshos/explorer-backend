@@ -102,10 +102,6 @@ func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) 
 	if err != nil {
 		log.Info("Init accounts storage error: %v", err)
 	}
-	err = s.InitAppsStorage(ctx)
-	if err != nil {
-		log.Info("Init apps storage error: %v", err)
-	}
 	err = s.InitActivationsStorage(ctx)
 	if err != nil {
 		log.Info("Init activations storage error: %v", err)

@@ -123,13 +123,16 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
 func (s *Storage) SaveAccount(parent context.Context, layer uint32, in *model.Account) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("accounts").InsertOne(ctx, bson.D{
-		{Key: "address", Value: in.Address},
-		{Key: "created", Value: layer},
-		{Key: "layer", Value: layer},
-		{Key: "balance", Value: in.Balance},
-		{Key: "counter", Value: in.Counter},
-	})
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: in.Address}}, bson.D{{
+		Key: "$set",
+		Value: bson.D{
+			{Key: "address", Value: in.Address},
+			{Key: "created", Value: layer},
+			{Key: "layer", Value: layer},
+			{Key: "balance", Value: in.Balance},
+			{Key: "counter", Value: in.Counter},
+		},
+	}}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveAccount: %v", err)
 	}

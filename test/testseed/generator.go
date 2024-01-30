@@ -150,12 +150,6 @@ func (s *SeedGenerator) SaveEpoches(ctx context.Context, db *storage.Storage) er
 			return fmt.Errorf("failed to save account: %s", err)
 		}
 	}
-
-	for _, app := range s.Apps {
-		if err := db.SaveApp(ctx, &app); err != nil {
-			return fmt.Errorf("failed to save app: %s", err)
-		}
-	}
 	return nil
 }
 
