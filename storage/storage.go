@@ -393,7 +393,6 @@ func (s *Storage) updateLayer(in *pb.Layer) {
 		log.Err(fmt.Errorf("updateLayer: error %v", err))
 	}
 
-	s.updateActivations(layer, atxs)
 	s.updateTransactions(layer, txs)
 
 	err = s.SaveOrUpdateLayer(context.Background(), layer)
@@ -423,42 +422,32 @@ func (s *Storage) updateNetworkStatus(layer *model.Layer) {
 	}
 }
 
-func (s *Storage) updateActivations(layer *model.Layer, atxs []*model.Activation) {
-	log.Info("updateActivations(%v)", len(atxs))
-	err := s.SaveOrUpdateActivations(context.Background(), atxs)
+func (s *Storage) OnActivation(atx *types.VerifiedActivationTx) {
+	log.Info("OnActivation(%s)", atx.String())
+
+	activation := model.NewActivation(atx)
+
+	err := s.SaveOrUpdateActivation(context.Background(), activation)
+	if err != nil {
+		log.Err(fmt.Errorf("OnActivation: error %v", err))
+	}
+
+	err = s.SaveSmesher(context.Background(), activation.GetSmesher(s.postUnitSize), activation.TargetEpoch)
+	if err != nil {
+		log.Err(fmt.Errorf("OnActivation: save smesher error %v", err))
+	}
+
+	err = s.UpdateSmesher(context.Background(), activation.SmesherId, activation.Coinbase,
+		uint64(atx.NumUnits)*s.postUnitSize, activation.Received, activation.TargetEpoch)
+	if err != nil {
+		log.Err(fmt.Errorf("OnActivation: update smesher error %v", err))
+	}
+
+	epochNumLayers := s.GetEpochNumLayers()
+	err = s.AddAccount(context.Background(), epochNumLayers*activation.PublishEpoch, activation.Coinbase, 0)
 	//TODO: better error handling
 	if err != nil {
 		log.Err(fmt.Errorf("updateActivations: error %v", err))
-	}
-
-	var coinbaseUpdateOps []mongo.WriteModel
-	var smesherUpdateOps []mongo.WriteModel
-
-	for _, atx := range atxs {
-		smesherUpdateOps = append(smesherUpdateOps, s.SaveSmesherQuery(atx.GetSmesher(s.postUnitSize)))
-		coinbaseOp, smesherOp := s.UpdateSmesherQuery(atx.SmesherId, atx.Coinbase, uint64(atx.NumUnits)*s.postUnitSize, s.getLayerTimestamp(atx.Layer))
-		coinbaseUpdateOps = append(coinbaseUpdateOps, coinbaseOp)
-		smesherUpdateOps = append(smesherUpdateOps, smesherOp)
-
-		err = s.AddAccount(context.Background(), layer.Number, atx.Coinbase, 0)
-		//TODO: better error handling
-		if err != nil {
-			log.Err(fmt.Errorf("updateActivations: error %v", err))
-		}
-	}
-
-	if len(smesherUpdateOps) > 0 {
-		_, err = s.db.Collection("smeshers").BulkWrite(context.TODO(), smesherUpdateOps)
-		if err != nil {
-			log.Err(fmt.Errorf("updateActivations: error smeshers write %v", err))
-		}
-	}
-
-	if len(coinbaseUpdateOps) > 0 {
-		_, err = s.db.Collection("coinbases").BulkWrite(context.TODO(), coinbaseUpdateOps)
-		if err != nil {
-			log.Err(fmt.Errorf("updateActivations: error smeshers write %v", err))
-		}
 	}
 }
 

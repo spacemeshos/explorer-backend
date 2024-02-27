@@ -89,14 +89,11 @@ func (e *Service) GetEpochTransactions(ctx context.Context, epochNum int, page, 
 
 // GetEpochSmeshers returns smeshers for the given epoch.
 func (e *Service) GetEpochSmeshers(ctx context.Context, epochNum int, page, perPage int64) (smeshers []*model.Smesher, total int64, err error) {
-	layerStart, layerEnd := e.getEpochLayers(epochNum)
-	filter := &bson.D{{Key: "layer", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
-	return e.getSmeshers(ctx, filter, e.getFindOptions("layer", page, perPage).SetProjection(bson.D{
-		{Key: "id", Value: 0},
-		{Key: "layer", Value: 0},
-		{Key: "coinbase", Value: 0},
-		{Key: "prevAtx", Value: 0},
-		{Key: "cSize", Value: 0},
+	filter := &bson.D{{
+		Key: "epochs", Value: epochNum,
+	}}
+	return e.getSmeshers(ctx, filter, e.getFindOptions("timestamp", page, perPage).SetProjection(bson.D{
+		{Key: "epochs", Value: 0},
 	}))
 }
 
@@ -111,7 +108,6 @@ func (e *Service) GetEpochRewards(ctx context.Context, epochNum int, page, perPa
 
 // GetEpochActivations returns activations for the given epoch.
 func (e *Service) GetEpochActivations(ctx context.Context, epochNum int, page, perPage int64) (atxs []*model.Activation, total int64, err error) {
-	layerStart, layerEnd := e.getEpochLayers(epochNum)
-	filter := &bson.D{{Key: "layer", Value: bson.D{{Key: "$gte", Value: layerStart}, {Key: "$lte", Value: layerEnd}}}}
+	filter := &bson.D{{Key: "targetEpoch", Value: epochNum}}
 	return e.getActivations(ctx, filter, e.getFindOptions("layer", page, perPage))
 }

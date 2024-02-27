@@ -48,7 +48,7 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
 		CommitmentSize: utils.GetAsUInt64(doc.Lookup("cSize")),
 		Coinbase:       utils.GetAsString(doc.Lookup("coinbase")),
 		AtxCount:       utils.GetAsUInt32(doc.Lookup("atxcount")),
-		Timestamp:      utils.GetAsUInt32(doc.Lookup("timestamp")),
+		Timestamp:      utils.GetAsUInt64(doc.Lookup("timestamp")),
 	}
 	return smesher, nil
 }
@@ -95,7 +95,7 @@ func (s *Storage) GetSmeshers(parent context.Context, query *bson.D, opts ...*op
 	return docs.([]bson.D), nil
 }
 
-func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
+func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher, epoch uint32) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	opts := options.Update().SetUpsert(true)
@@ -110,6 +110,7 @@ func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher) error {
 			{Key: "atxcount", Value: in.AtxCount},
 			{Key: "timestamp", Value: in.Timestamp},
 		}},
+		{Key: "$addToSet", Value: bson.M{"epochs": epoch}},
 	}, opts)
 	if err != nil {
 		return fmt.Errorf("error save smesher: %w", err)
@@ -140,7 +141,7 @@ func (s *Storage) SaveSmesherQuery(in *model.Smesher) *mongo.UpdateOneModel {
 	return updateModel
 }
 
-func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase string, space uint64, timestamp uint32) error {
+func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase string, space uint64, timestamp int64, epoch uint32) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 
@@ -165,6 +166,7 @@ func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase
 			{Key: "atxcount", Value: atxCount},
 			{Key: "timestamp", Value: timestamp},
 		}},
+		{Key: "$addToSet", Value: bson.M{"epochs": epoch}},
 	})
 	if err != nil {
 		log.Info("UpdateSmesher: %v", err)

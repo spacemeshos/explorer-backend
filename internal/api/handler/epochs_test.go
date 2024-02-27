@@ -111,6 +111,7 @@ func TestEpochSmeshersHandler(t *testing.T) {
 			smesher.Rewards = generatedSmesher.Rewards // this not calculated on list endpoints, simply set as 0.
 			smesher.Timestamp = generatedSmesher.Timestamp
 			smesher.AtxLayer = generatedSmesher.AtxLayer
+			smesher.Epochs = generatedSmesher.Epochs
 			require.Equal(t, *generatedSmesher, smesher)
 		}
 	}
@@ -143,8 +144,6 @@ func TestEpochAtxsHandler(t *testing.T) {
 		require.Equal(t, len(ep.Activations), len(loopResult.Data))
 		for _, atx := range loopResult.Data {
 			generatedAtx, ok := ep.Activations[atx.Id]
-			// target epoch is not stored in db
-			atx.TargetEpoch = 0
 			require.True(t, ok)
 			require.Equal(t, *generatedAtx, atx)
 		}

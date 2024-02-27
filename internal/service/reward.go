@@ -42,6 +42,6 @@ func (e *Service) getRewards(ctx context.Context, filter *bson.D, options *optio
 	return rewards, total, nil
 }
 
-func (e *Service) GetTotalRewards(ctx context.Context) (int64, int64, error) {
-	return e.storage.GetTotalRewards(ctx)
+func (e *Service) GetTotalRewards(ctx context.Context, filter *bson.D) (int64, int64, error) {
+	return e.storage.GetTotalRewards(ctx, filter)
 }

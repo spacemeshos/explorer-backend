@@ -16,8 +16,6 @@ func TestActivations(t *testing.T) { // /atxs
 	require.Equal(t, len(insertedAtxs), len(resp.Data))
 	for _, atx := range resp.Data {
 		generatedAtx, ok := insertedAtxs[atx.Id]
-		// TargetEpoch is not stored in db
-		atx.TargetEpoch = 0
 		require.True(t, ok)
 		require.Equal(t, generatedAtx, &atx)
 	}
@@ -38,8 +36,6 @@ func TestActivation(t *testing.T) { // /atxs/{id}
 		response.RequireUnmarshal(t, &respLoop)
 		require.Equal(t, 1, len(respLoop.Data))
 		generatedAtx, ok := insertedAtxs[atx.Id]
-		// TargetEpoch is not stored in db
-		respLoop.Data[0].TargetEpoch = 0
 		require.True(t, ok)
 		require.Equal(t, *generatedAtx, respLoop.Data[0])
 	}

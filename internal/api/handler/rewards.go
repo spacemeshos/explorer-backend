@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/explorer-backend/internal/service"
+	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 
 	"github.com/spacemeshos/explorer-backend/model"
@@ -40,7 +41,7 @@ func Reward(c echo.Context) error {
 func TotalRewards(c echo.Context) error {
 	cc := c.(*ApiContext)
 
-	total, count, err := cc.Service.GetTotalRewards(context.TODO())
+	total, count, err := cc.Service.GetTotalRewards(context.TODO(), &bson.D{})
 	if err != nil {
 		return fmt.Errorf("failed to get total rewards. info: %w", err)
 	}

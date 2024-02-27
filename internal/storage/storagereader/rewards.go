@@ -89,7 +89,7 @@ func (s *Reader) CountCoinbaseRewards(ctx context.Context, coinbase string) (tot
 }
 
 // GetTotalRewards returns the total number of rewards.
-func (s *Reader) GetTotalRewards(ctx context.Context) (total, count int64, err error) {
+func (s *Reader) GetTotalRewards(ctx context.Context, filter *bson.D) (total, count int64, err error) {
 	groupStage := bson.D{
 		{Key: "$group", Value: bson.D{
 			{Key: "_id", Value: ""},
@@ -101,9 +101,18 @@ func (s *Reader) GetTotalRewards(ctx context.Context) (total, count int64, err e
 			}},
 		}},
 	}
-	cursor, err := s.db.Collection("rewards").Aggregate(ctx, mongo.Pipeline{
+
+	pipeline := bson.A{
 		groupStage,
-	})
+	}
+
+	if filter != nil {
+		pipeline = append(bson.A{
+			bson.D{{Key: "$match", Value: *filter}},
+		}, pipeline...)
+	}
+
+	cursor, err := s.db.Collection("rewards").Aggregate(ctx, pipeline)
 	if err != nil {
 		return 0, 0, fmt.Errorf("error get total rewards: %w", err)
 	}

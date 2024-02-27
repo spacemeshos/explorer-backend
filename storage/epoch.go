@@ -376,7 +376,7 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 		// todo replace to utils.CalcEpochCapacity
 		epoch.Stats.Current.Capacity = int64(math.Round(((float64(epoch.Stats.Current.Transactions) / duration) / float64(s.NetworkInfo.MaxTransactionsPerSecond)) * 100.0))
 	}
-	atxs, _ := s.GetActivations(context.Background(), layerFilter)
+	atxs, _ := s.GetActivations(context.Background(), &bson.D{{Key: "targetEpoch", Value: epoch.Number}})
 	if atxs != nil {
 		smeshers := make(map[string]int64)
 		for _, atx := range atxs {

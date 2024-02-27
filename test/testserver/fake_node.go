@@ -231,7 +231,7 @@ func (m *meshServiceWrapper) sendEpoch(stream pb.MeshService_LayerStreamServer) 
 				smesherId, _ := utils.StringToBytes(atxGenerated.SmesherId)
 				atx = append(atx, &pb.Activation{
 					Id:        &pb.ActivationId{Id: mustParse(atxGenerated.Id)},
-					Layer:     &pb.LayerNumber{Number: atxGenerated.Layer},
+					Layer:     &pb.LayerNumber{Number: atxGenerated.TargetEpoch * m.seed.EpochNumLayers},
 					SmesherId: &pb.SmesherId{Id: smesherId},
 					Coinbase:  &pb.AccountId{Address: atxGenerated.Coinbase},
 					PrevAtx:   &pb.ActivationId{Id: mustParse(atxGenerated.PrevAtx)},

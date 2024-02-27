@@ -31,10 +31,10 @@ func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32)
 				smesherId, _ := utils.StringToBytes(atxGenerated.SmesherId)
 				atx = append(atx, &pb.Activation{
 					Id:        &pb.ActivationId{Id: mustParse(atxGenerated.Id)},
-					Layer:     &pb.LayerNumber{Number: atxGenerated.Layer},
 					SmesherId: &pb.SmesherId{Id: smesherId},
 					Coinbase:  &pb.AccountId{Address: atxGenerated.Coinbase},
 					PrevAtx:   &pb.ActivationId{Id: mustParse(atxGenerated.PrevAtx)},
+					Layer:     &pb.LayerNumber{Number: atxGenerated.TargetEpoch / numLayers},
 					NumUnits:  atxGenerated.NumUnits,
 				})
 			}
