@@ -14,13 +14,14 @@ type Smesher struct {
 	CommitmentSize uint64             `json:"cSize" bson:"cSize"`
 	Coinbase       string             `json:"coinbase" bson:"coinbase"`
 	AtxCount       uint32             `json:"atxcount" bson:"atxcount"`
-	Timestamp      uint32             `json:"timestamp" bson:"timestamp"`
+	Timestamp      uint64             `json:"timestamp" bson:"timestamp"`
 	Name           string             `json:"name" bson:"name"`
 	Lat            float64            `json:"lat" bson:"lat"`
 	Lon            float64            `json:"lon" bson:"lon"`
 	Rewards        int64              `json:"rewards" bson:"-"`
 	AtxLayer       uint32             `json:"atxLayer" bson:"atxLayer"`
 	Proofs         []MalfeasanceProof `json:"proofs,omitempty" bson:"proofs,omitempty"`
+	Epochs         []uint32           `json:"epochs,omitempty" bson:"epochs,omitempty"`
 }
 
 type SmesherService interface {

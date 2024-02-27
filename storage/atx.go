@@ -41,13 +41,14 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 	doc := cursor.Current
 	account := &model.Activation{
 		Id:             utils.GetAsString(doc.Lookup("id")),
-		Layer:          utils.GetAsUInt32(doc.Lookup("layer")),
 		SmesherId:      utils.GetAsString(doc.Lookup("smesher")),
 		Coinbase:       utils.GetAsString(doc.Lookup("coinbase")),
 		PrevAtx:        utils.GetAsString(doc.Lookup("prevAtx")),
 		NumUnits:       utils.GetAsUInt32(doc.Lookup("numunits")),
 		CommitmentSize: utils.GetAsUInt64(doc.Lookup("commitmentSize")),
-		Timestamp:      utils.GetAsUInt32(doc.Lookup("timestamp")),
+		PublishEpoch:   utils.GetAsUInt32(doc.Lookup("publishEpoch")),
+		TargetEpoch:    utils.GetAsUInt32(doc.Lookup("targetEpoch")),
+		Received:       utils.GetAsInt64(doc.Lookup("received")),
 	}
 	return account, nil
 }
@@ -91,13 +92,14 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
 		Key: "$set",
 		Value: bson.D{
 			{Key: "id", Value: in.Id},
-			{Key: "layer", Value: in.Layer},
 			{Key: "smesher", Value: in.SmesherId},
 			{Key: "coinbase", Value: in.Coinbase},
 			{Key: "prevAtx", Value: in.PrevAtx},
 			{Key: "numunits", Value: in.NumUnits},
 			{Key: "commitmentSize", Value: int64(in.NumUnits) * int64(s.postUnitSize)},
-			{Key: "timestamp", Value: in.Timestamp},
+			{Key: "received", Value: in.Received},
+			{Key: "publishEpoch", Value: in.PublishEpoch},
+			{Key: "targetEpoch", Value: in.TargetEpoch},
 		},
 	}}, options.Update().SetUpsert(true))
 	if err != nil {
@@ -106,41 +108,41 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
 	return err
 }
 
-func (s *Storage) SaveOrUpdateActivations(parent context.Context, in []*model.Activation) error {
-	var atxsUpdateOps []mongo.WriteModel
-
-	for _, atx := range in {
-		filter := bson.D{{Key: "id", Value: atx.Id}}
-		update := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "id", Value: atx.Id},
-				{Key: "layer", Value: atx.Layer},
-				{Key: "smesher", Value: atx.SmesherId},
-				{Key: "coinbase", Value: atx.Coinbase},
-				{Key: "prevAtx", Value: atx.PrevAtx},
-				{Key: "numunits", Value: atx.NumUnits},
-				{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
-				{Key: "timestamp", Value: atx.Timestamp},
-			}},
-		}
-
-		updateModel := mongo.NewUpdateOneModel()
-		updateModel.Filter = filter
-		updateModel.Update = update
-		updateModel.SetUpsert(true)
-
-		atxsUpdateOps = append(atxsUpdateOps, updateModel)
+func (s *Storage) SaveOrUpdateActivation(parent context.Context, atx *model.Activation) error {
+	filter := bson.D{{Key: "id", Value: atx.Id}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "id", Value: atx.Id},
+			{Key: "smesher", Value: atx.SmesherId},
+			{Key: "coinbase", Value: atx.Coinbase},
+			{Key: "prevAtx", Value: atx.PrevAtx},
+			{Key: "numunits", Value: atx.NumUnits},
+			{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
+			{Key: "received", Value: atx.Received},
+			{Key: "publishEpoch", Value: atx.PublishEpoch},
+			{Key: "targetEpoch", Value: atx.TargetEpoch},
+		}},
 	}
 
-	if len(atxsUpdateOps) == 0 {
-		return nil
-	}
-
-	_, err := s.db.Collection("activations").BulkWrite(parent, atxsUpdateOps)
+	_, err := s.db.Collection("activations").UpdateOne(parent, filter, update, options.Update().SetUpsert(true))
 	if err != nil {
-		log.Info("SaveOrUpdateActivations: %v", err)
+		log.Info("SaveOrUpdateActivation: %v", err)
 		return err
 	}
 
 	return nil
+}
+
+func (s *Storage) GetLastActivationReceived() int64 {
+	cursor, err := s.db.Collection("activations").Find(context.Background(), bson.D{}, options.Find().SetSort(bson.D{{Key: "received", Value: -1}}).SetLimit(1))
+	if err != nil {
+		log.Info("GetLastActivationReceived: %v", err)
+		return 0
+	}
+	if !cursor.Next(context.Background()) {
+		log.Info("GetLastActivationReceived: Empty result", err)
+		return 0
+	}
+	doc := cursor.Current
+	return utils.GetAsInt64(doc.Lookup("received"))
 }

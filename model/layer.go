@@ -81,17 +81,6 @@ func NewLayer(in *pb.Layer, networkInfo *NetworkInfo) (*Layer, []*Block, []*Acti
 		layer.TxsAmount += tx.Amount
 	}
 
-	smeshers := make(map[string]bool)
-	for i, a := range pbAtxs {
-		atx := NewActivation(a, layer.Start)
-		atx.Layer = layer.Number
-		atxs[i] = atx
-		layer.AtxNumUnits += uint64(atx.NumUnits)
-		smeshers[atx.SmesherId] = true
-	}
-
-	layer.Smeshers = uint32(len(smeshers))
-
 	return layer, blocks, atxs, txs
 }
 

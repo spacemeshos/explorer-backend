@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
 
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
 
@@ -23,7 +24,7 @@ type Reward struct {
 type RewardService interface {
 	GetReward(ctx context.Context, rewardID string) (*Reward, error)
 	GetRewards(ctx context.Context, page, perPage int64) ([]*Reward, int64, error)
-	GetTotalRewards(ctx context.Context) (int64, int64, error)
+	GetTotalRewards(ctx context.Context, filter *bson.D) (int64, int64, error)
 }
 
 func NewReward(reward *pb.Reward) *Reward {

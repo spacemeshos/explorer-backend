@@ -20,6 +20,7 @@ func TestSmeshersHandler(t *testing.T) { // /smeshers
 		smesher.Rewards = generatedSmesher.Rewards // for this endpoint we not calculate extra values, cause not use this field
 		smesher.Timestamp = generatedSmesher.Timestamp
 		smesher.AtxLayer = generatedSmesher.AtxLayer
+		smesher.Epochs = generatedSmesher.Epochs
 		require.Equal(t, generatedSmesher, &smesher)
 	}
 }
@@ -32,6 +33,7 @@ func TestSmesherHandler(t *testing.T) { // /smeshers/{id}
 		var resp smesherResp
 		res.RequireUnmarshal(t, &resp)
 		require.Equal(t, 1, len(resp.Data))
+		smesher.Epochs = resp.Data[0].Epochs
 		require.Equal(t, *smesher, resp.Data[0])
 	}
 }
@@ -47,8 +49,6 @@ func TestSmesherAtxsHandler(t *testing.T) { // /smeshers/{id}/atxs
 			require.Equal(t, 1, len(resp.Data))
 			atx, ok := epoch.Activations[resp.Data[0].Id]
 			require.True(t, ok)
-			// TargetEpoch is not stored in db
-			resp.Data[0].TargetEpoch = 0
 			require.Equal(t, *atx, resp.Data[0])
 		}
 	}

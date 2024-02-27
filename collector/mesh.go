@@ -233,3 +233,29 @@ func (c *Collector) syncAllRewards() error {
 
 	return nil
 }
+
+func (c *Collector) syncActivations() error {
+	received := c.listener.GetLastActivationReceived()
+
+	err := c.dbClient.GetAtxsReceivedAfter(c.db, received, func(atx *types.VerifiedActivationTx) bool {
+		c.listener.OnActivation(atx)
+		return true
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Collector) createFutureEpoch() error {
+	lastLayer := c.listener.GetLastLayer(context.Background())
+	epochNumLayers := c.listener.GetEpochNumLayers()
+
+	if epochNumLayers > 0 {
+		futureEpoch := lastLayer/epochNumLayers + 1
+		c.listener.UpdateEpochStats(futureEpoch*epochNumLayers + 1)
+	}
+
+	return nil
+}

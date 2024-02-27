@@ -130,7 +130,7 @@ func (s *SeedGenerator) SaveEpoches(ctx context.Context, db *storage.Storage) er
 			}
 		}
 		for _, smesher := range epoch.Smeshers {
-			if err := db.SaveSmesher(ctx, smesher); err != nil {
+			if err := db.SaveSmesher(ctx, smesher, uint32(epoch.Epoch.Number)); err != nil {
 				return fmt.Errorf("failed to save smesher: %v", err)
 			}
 		}
@@ -212,7 +212,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 		seedEpoch.Epoch.Stats.Current.Smeshers++
 		seedEpoch.SmeshersCommitment[tmpSm.Id] += int64(tmpSm.CommitmentSize)
 
-		tmpAtx := s.generateActivation(tmpLayer.Number, atxNumUnits, &tmpSm, s.seed.GetPostUnitsSize())
+		tmpAtx := s.generateActivation(tmpLayer.Number, atxNumUnits, &tmpSm, s.seed.GetPostUnitsSize(), uint32(epochID))
 		seedEpoch.Activations[tmpAtx.Id] = &tmpAtx
 		layerContainer.Activations[tmpAtx.Id] = &tmpAtx
 		seedEpoch.Epoch.Stats.Current.Security += int64(tmpAtx.CommitmentSize)
@@ -245,17 +245,18 @@ func (s *SeedGenerator) getRandomAcc() string {
 	return ""
 }
 
-func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, smesher *model.Smesher, postUnitSize uint64) model.Activation {
+func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, smesher *model.Smesher, postUnitSize uint64, epoch uint32) model.Activation {
 	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Activation{
 		Id:             strings.ToLower(utils.BytesToHex(randomBytes(30))),
-		Layer:          layerNum,
 		SmesherId:      smesher.Id,
 		Coinbase:       smesher.Coinbase,
 		PrevAtx:        strings.ToLower(utils.BytesToHex(randomBytes(30))),
 		NumUnits:       atxNumUnits,
 		CommitmentSize: uint64(atxNumUnits) * postUnitSize,
-		Timestamp:      tx,
+		PublishEpoch:   epoch - 1,
+		TargetEpoch:    epoch,
+		Received:       int64(tx),
 	}
 }
 
@@ -352,7 +353,7 @@ func (s *SeedGenerator) generateSmesher(layerNum uint32, coinbase string, commit
 		CommitmentSize: commitmentSize,
 		Coinbase:       coinbase,
 		AtxCount:       1,
-		Timestamp:      tx,
+		Timestamp:      uint64(tx),
 	}
 }
 
