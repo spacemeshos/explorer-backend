@@ -95,14 +95,9 @@ func TestMain(m *testing.M) {
 
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
-	counter := 0
 	for range ticker.C {
-		counter++
 		num := storageDB.GetRewardsCount(context.TODO(), &bson.D{})
 		if int(num) == len(generator.Rewards) {
-			break
-		}
-		if counter > 10 {
 			break
 		}
 	}

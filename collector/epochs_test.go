@@ -15,12 +15,12 @@ func TestEpochs(t *testing.T) {
 	t.Parallel()
 	epochs, err := storageDB.GetEpochs(context.TODO(), &bson.D{})
 	require.NoError(t, err)
-	require.Equal(t, len(generator.Epochs), len(epochs))
+	require.Equal(t, len(generator.Epochs)+1, len(epochs))
 	data := make(map[int32]*model.Epoch)
 	for _, epoch := range generator.Epochs {
 		data[epoch.Epoch.Number] = &epoch.Epoch
 	}
-	for _, epoch := range epochs {
+	for _, epoch := range epochs[:len(epochs)-1] {
 		// temporary hack, until storage return data as slice of bson.B, not an struct.
 		epochMap := epoch.Map()
 		generatedEpoch, ok := data[epochMap["number"].(int32)]

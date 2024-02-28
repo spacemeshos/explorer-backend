@@ -218,8 +218,6 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 		seedEpoch.Epoch.Stats.Current.Security += int64(tmpAtx.CommitmentSize)
 		s.Activations[tmpAtx.Id] = &tmpAtx
 
-		layerContainer.Layer.Smeshers++
-		layerContainer.Layer.AtxNumUnits += uint64(tmpAtx.NumUnits)
 		seedEpoch.Smeshers[strings.ToLower(tmpSm.Id)] = &tmpSm
 		blockContainer.SmesherID = tmpSm.Id
 
@@ -248,10 +246,10 @@ func (s *SeedGenerator) getRandomAcc() string {
 func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, smesher *model.Smesher, postUnitSize uint64, epoch uint32) model.Activation {
 	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Activation{
-		Id:             strings.ToLower(utils.BytesToHex(randomBytes(30))),
+		Id:             strings.ToLower(utils.BytesToHex(randomBytes(32))),
 		SmesherId:      smesher.Id,
 		Coinbase:       smesher.Coinbase,
-		PrevAtx:        strings.ToLower(utils.BytesToHex(randomBytes(30))),
+		PrevAtx:        strings.ToLower(utils.BytesToHex(randomBytes(32))),
 		NumUnits:       atxNumUnits,
 		CommitmentSize: uint64(atxNumUnits) * postUnitSize,
 		PublishEpoch:   epoch - 1,
@@ -311,10 +309,8 @@ func (s *SeedGenerator) generateLayer(layerNum, epochNum int32) model.Layer {
 		Start:        start,
 		End:          end,
 		TxsAmount:    0,
-		AtxNumUnits:  0,
 		Rewards:      uint64(rand.Intn(1000)),
 		Epoch:        uint32(epochNum),
-		Smeshers:     0,
 		Hash:         strings.ToLower(fmt.Sprintf("%x", sha256.Sum256(randomBytes(32)))),
 		BlocksNumber: 0,
 	}

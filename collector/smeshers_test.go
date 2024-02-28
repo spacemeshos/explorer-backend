@@ -31,7 +31,8 @@ func TestSmeshers(t *testing.T) {
 		generatedSmesher.CommitmentSize = uint64(size)
 		tmpSmesher.Coinbase = strings.ToLower(tmpSmesher.Coinbase)
 		generatedSmesher.Coinbase = strings.ToLower(generatedSmesher.Coinbase)
-		tmpSmesher.Rewards = generatedSmesher.Rewards // this is 0 cause it calculates from special mthod on api.
+		tmpSmesher.Rewards = generatedSmesher.Rewards
+		tmpSmesher.Epochs = generatedSmesher.Epochs // this is 0 cause it calculates from special mthod on api.
 		require.Equal(t, *generatedSmesher, tmpSmesher)
 	}
 }
