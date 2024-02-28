@@ -57,7 +57,11 @@ func (e *Service) Search(ctx context.Context, search string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error get current epoch for search: %w", err)
 		}
-		if id > int(epoch.Number) {
+		if epoch == nil {
+			return fmt.Sprintf("/layers/%d", id), nil
+		}
+
+		if id > int(epoch.Number)+1 {
 			if id <= int(layer.Number) && id > 0 {
 				return fmt.Sprintf("/layers/%d", id), nil
 			}

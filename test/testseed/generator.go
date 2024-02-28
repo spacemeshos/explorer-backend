@@ -163,7 +163,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 	}
 	seedEpoch.Layers = append(seedEpoch.Layers, layerContainer)
 
-	for k := 0; k <= rand.Intn(3); k++ {
+	for k := 0; k <= rand.Intn(5); k++ {
 		tmpAcc, tmpAccSigner := s.generateAccount(tmpLayer.Number)
 		s.Accounts[strings.ToLower(tmpAcc.Address)] = AccountContainer{
 			layerID:      uint32(layerID),
@@ -259,8 +259,8 @@ func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, 
 }
 
 func (s *SeedGenerator) generateEpoch(epochNum int32) model.Epoch {
-	layersStart := uint32(epochNum) * uint32(s.seed.EpochNumLayers)
-	layersEnd := layersStart + uint32(s.seed.EpochNumLayers) - 1
+	layersStart := uint32(epochNum) * s.seed.EpochNumLayers
+	layersEnd := layersStart + s.seed.EpochNumLayers - 1
 
 	epochStart, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layersStart, uint32(s.seed.LayersDuration))
 	_, epochEnd := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layersEnd, uint32(s.seed.LayersDuration))
