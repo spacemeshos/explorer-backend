@@ -10,6 +10,7 @@ import (
 	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
 	"github.com/spacemeshos/go-spacemesh/sql"
 	"strings"
+	"time"
 )
 
 type Client struct {
@@ -155,6 +156,49 @@ func (c *Client) AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*t
 	}
 
 	return rst, nil
+}
+
+func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+	for _, generatedAtx := range c.SeedGen.Activations {
+		smesherIdBytes, _ := utils.StringToBytes(generatedAtx.SmesherId)
+		var nodeId types.NodeID
+		copy(nodeId[:], smesherIdBytes)
+
+		addr, err := types.StringToAddress(generatedAtx.Coinbase)
+		if err != nil {
+			return err
+		}
+
+		prevAtxBytes, _ := utils.StringToBytes(generatedAtx.PrevAtx)
+		var prevAtx types.ATXID
+		copy(prevAtx[:], prevAtxBytes)
+
+		atxIdBytes, _ := utils.StringToBytes(generatedAtx.Id)
+		var atxId types.ATXID
+		copy(atxId[:], atxIdBytes)
+
+		atx := &types.VerifiedActivationTx{
+			ActivationTx: &types.ActivationTx{
+				InnerActivationTx: types.InnerActivationTx{
+					NIPostChallenge: types.NIPostChallenge{
+						Sequence:     1,
+						PrevATXID:    prevAtx,
+						PublishEpoch: types.EpochID(generatedAtx.PublishEpoch),
+					},
+					Coinbase: addr,
+					NumUnits: generatedAtx.NumUnits,
+					NodeID:   &nodeId,
+				},
+				SmesherID: nodeId,
+			},
+		}
+
+		atx.SetID(atxId)
+		atx.SetReceived(time.Unix(0, generatedAtx.Received))
+
+		fn(atx)
+	}
+	return nil
 }
 
 func mustParse(str string) []byte {

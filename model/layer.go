@@ -16,10 +16,8 @@ type Layer struct {
 	Start        uint32 `json:"start" bson:"start"`
 	End          uint32 `json:"end" bson:"end"`
 	TxsAmount    uint64 `json:"txsamount" bson:"txsamount"`
-	AtxNumUnits  uint64 `json:"atxnumunits" bson:"atxnumunits"`
 	Rewards      uint64 `json:"rewards" bson:"rewards"`
 	Epoch        uint32 `json:"epoch" bson:"epoch"`
-	Smeshers     uint32 `json:"smeshers" bson:"smeshers"`
 	Hash         string `json:"hash" bson:"hash"`
 	BlocksNumber uint32 `json:"blocksnumber" bson:"blocksnumber"`
 }
