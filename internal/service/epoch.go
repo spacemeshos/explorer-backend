@@ -18,7 +18,8 @@ func (e *Service) GetCurrentEpoch(ctx context.Context) (*model.Epoch, error) {
 	loadTime := e.currentEpochLoaded
 	e.currentEpochMU.RUnlock()
 	if epoch == nil || loadTime.Add(e.cacheTTL).Unix() < time.Now().Unix() {
-		epochs, err := e.storage.GetEpochs(ctx, &bson.D{}, options.Find().SetSort(bson.D{{Key: "number", Value: -1}}).SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
+		now := time.Now().Unix()
+		epochs, err := e.storage.GetEpochs(ctx, &bson.D{{Key: "end", Value: bson.D{{Key: "$lte", Value: now}}}}, options.Find().SetSort(bson.D{{Key: "number", Value: -1}}).SetLimit(1).SetProjection(bson.D{{Key: "_id", Value: 0}}))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get epoch: %w", err)
 		}

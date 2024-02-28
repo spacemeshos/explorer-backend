@@ -410,3 +410,10 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 	//epoch.Stats.Cumulative.Circulation, _ = s.GetLayersRewards(context.Background(), 0, layerEnd)
 	//epoch.Stats.Current.Rewards, epoch.Stats.Current.RewardsNumber = s.GetLayersRewards(context.Background(), layerStart, layerEnd)
 }
+
+func (s *Storage) RecalculateEpochStats() {
+	currentEpoch := s.NetworkInfo.VerifiedLayer / s.NetworkInfo.EpochNumLayers
+	for i := 0; i <= int(currentEpoch+1); i++ {
+		s.UpdateEpochStats(uint32(i) * s.NetworkInfo.EpochNumLayers)
+	}
+}

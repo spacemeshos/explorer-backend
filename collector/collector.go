@@ -47,13 +47,15 @@ type Listener interface {
 	UpdateEpochStats(layer uint32)
 	OnActivation(atx *types.VerifiedActivationTx)
 	GetLastActivationReceived() int64
+	RecalculateEpochStats()
 }
 
 type Collector struct {
-	apiPublicUrl          string
-	apiPrivateUrl         string
-	syncMissingLayersFlag bool
-	syncFromLayerFlag     uint32
+	apiPublicUrl              string
+	apiPrivateUrl             string
+	syncMissingLayersFlag     bool
+	recalculateEpochStatsFlag bool
+	syncFromLayerFlag         uint32
 
 	listener Listener
 	db       *sql2.Database
@@ -76,16 +78,17 @@ type Collector struct {
 	notify chan int
 }
 
-func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool, syncFromLayerFlag int, listener Listener, db *sql2.Database, dbClient sql.DatabaseClient) *Collector {
+func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool, syncFromLayerFlag int, recalculateEpochStatsFlag bool, listener Listener, db *sql2.Database, dbClient sql.DatabaseClient) *Collector {
 	return &Collector{
-		apiPublicUrl:          nodePublicAddress,
-		apiPrivateUrl:         nodePrivateAddress,
-		syncMissingLayersFlag: syncMissingLayersFlag,
-		syncFromLayerFlag:     uint32(syncFromLayerFlag),
-		listener:              listener,
-		notify:                make(chan int),
-		db:                    db,
-		dbClient:              dbClient,
+		apiPublicUrl:              nodePublicAddress,
+		apiPrivateUrl:             nodePrivateAddress,
+		syncMissingLayersFlag:     syncMissingLayersFlag,
+		recalculateEpochStatsFlag: recalculateEpochStatsFlag,
+		syncFromLayerFlag:         uint32(syncFromLayerFlag),
+		listener:                  listener,
+		notify:                    make(chan int),
+		db:                        db,
+		dbClient:                  dbClient,
 	}
 }
 
@@ -133,6 +136,10 @@ func (c *Collector) Run() error {
 		if err != nil {
 			return errors.Join(errors.New("cannot sync missing layers"), err)
 		}
+	}
+
+	if c.recalculateEpochStatsFlag {
+		c.listener.RecalculateEpochStats()
 	}
 
 	g := new(errgroup.Group)

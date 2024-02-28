@@ -24,15 +24,16 @@ var (
 )
 
 var (
-	nodePublicAddressStringFlag  string
-	nodePrivateAddressStringFlag string
-	mongoDbUrlStringFlag         string
-	mongoDbNameStringFlag        string
-	testnetBoolFlag              bool
-	syncFromLayerFlag            int
-	syncMissingLayersBoolFlag    bool
-	sqlitePathStringFlag         string
-	metricsPortFlag              int
+	nodePublicAddressStringFlag   string
+	nodePrivateAddressStringFlag  string
+	mongoDbUrlStringFlag          string
+	mongoDbNameStringFlag         string
+	testnetBoolFlag               bool
+	syncFromLayerFlag             int
+	syncMissingLayersBoolFlag     bool
+	sqlitePathStringFlag          string
+	metricsPortFlag               int
+	recalculateEpochStatsBoolFlag bool
 )
 
 var flags = []cli.Flag{
@@ -107,6 +108,14 @@ var flags = []cli.Flag{
 		Destination: &metricsPortFlag,
 		EnvVars:     []string{"SPACEMESH_METRICS_PORT"},
 	},
+	&cli.BoolFlag{
+		Name:        "recalculateEpochStats",
+		Usage:       `Use this flag to recalculate epoch stats`,
+		Required:    false,
+		Destination: &recalculateEpochStatsBoolFlag,
+		Value:       false,
+		EnvVars:     []string{"SPACEMESH_RECALCULATE_EPOCH_STATS"},
+	},
 }
 
 func main() {
@@ -138,7 +147,7 @@ func main() {
 		dbClient := &sql.Client{}
 
 		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag,
-			syncMissingLayersBoolFlag, syncFromLayerFlag, mongoStorage, db, dbClient)
+			syncMissingLayersBoolFlag, syncFromLayerFlag, recalculateEpochStatsBoolFlag, mongoStorage, db, dbClient)
 		mongoStorage.AccountUpdater = c
 
 		sigs := make(chan os.Signal, 1)
