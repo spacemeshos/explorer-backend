@@ -21,6 +21,7 @@ func (s *Storage) InitActivationsStorage(ctx context.Context) error {
 		{Keys: bson.D{{Key: "layer", Value: 1}}, Options: options.Index().SetName("layerIndex").SetUnique(false)},
 		{Keys: bson.D{{Key: "smesher", Value: 1}}, Options: options.Index().SetName("smesherIndex").SetUnique(false)},
 		{Keys: bson.D{{Key: "coinbase", Value: 1}}, Options: options.Index().SetName("coinbaseIndex").SetUnique(false)},
+		{Keys: bson.D{{Key: "targetEpoch", Value: 1}}, Options: options.Index().SetName("targetEpochIndex").SetUnique(false)},
 	}
 	_, err := s.db.Collection("activations").Indexes().CreateMany(ctx, models, options.CreateIndexes().SetMaxTime(20*time.Second))
 	return err
