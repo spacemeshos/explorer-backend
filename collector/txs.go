@@ -9,8 +9,12 @@ import (
 )
 
 func (c *Collector) transactionsPump() error {
+	epochNumLayers := c.listener.GetEpochNumLayers()
+	lastLayer := c.listener.GetLastLayer(context.Background())
+	currentEpoch := lastLayer / epochNumLayers
+
 	req := pb.TransactionResultsRequest{
-		Start: 1,
+		Start: (currentEpoch - 2) * epochNumLayers,
 		Watch: true,
 	}
 

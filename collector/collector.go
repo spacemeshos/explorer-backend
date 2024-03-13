@@ -142,6 +142,11 @@ func (c *Collector) Run() error {
 		c.listener.RecalculateEpochStats()
 	}
 
+	err = c.syncActivations()
+	if err != nil {
+		return errors.Join(errors.New("cannot sync activations"), err)
+	}
+
 	g := new(errgroup.Group)
 	g.Go(func() error {
 		err := c.syncStatusPump()
