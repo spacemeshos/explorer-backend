@@ -236,6 +236,7 @@ func (c *Collector) syncAllRewards() error {
 
 func (c *Collector) syncActivations() error {
 	received := c.listener.GetLastActivationReceived()
+	log.Info("Syncing activations from %d", received)
 
 	err := c.dbClient.GetAtxsReceivedAfter(c.db, received, func(atx *types.VerifiedActivationTx) bool {
 		c.listener.OnActivation(atx)
