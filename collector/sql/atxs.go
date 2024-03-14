@@ -9,7 +9,7 @@ import (
 )
 
 const fullQuery = `select id, atx, base_tick_height, tick_count, pubkey,
-	effective_num_units, received, epoch, sequence, coinbase, validity from atxs`
+	effective_num_units, received, epoch, sequence, coinbase from atxs`
 
 type decoderCallback func(*types.VerifiedActivationTx, error) bool
 
@@ -42,7 +42,6 @@ func decoder(fn decoderCallback) sql.Decoder {
 		a.PublishEpoch = types.EpochID(uint32(stmt.ColumnInt(7)))
 		a.Sequence = uint64(stmt.ColumnInt64(8))
 		stmt.ColumnBytes(9, a.Coinbase[:])
-		a.SetValidity(types.Validity(stmt.ColumnInt(10)))
 		v, err := a.Verify(baseTickHeight, tickCount)
 		if err != nil {
 			return fn(nil, err)
