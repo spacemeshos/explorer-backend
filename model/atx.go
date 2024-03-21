@@ -8,15 +8,18 @@ import (
 )
 
 type Activation struct {
-	Id             string `json:"id" bson:"id"`             //nolint will fix it later.
-	SmesherId      string `json:"smesher" bson:"smesher"`   //nolint will fix it later // id of smesher who created the ATX
-	Coinbase       string `json:"coinbase" bson:"coinbase"` // coinbase account id
-	PrevAtx        string `json:"prevAtx" bson:"prevAtx"`   // previous ATX pointed to
-	NumUnits       uint32 `json:"numunits" bson:"numunits"` // number of PoST data commitment units
-	CommitmentSize uint64 `json:"commitmentSize" bson:"commitmentSize"`
-	PublishEpoch   uint32 `json:"publishEpoch" bson:"publishEpoch"`
-	TargetEpoch    uint32 `json:"targetEpoch" bson:"targetEpoch"`
-	Received       int64  `json:"received" bson:"received"`
+	Id                string `json:"id" bson:"id"`             //nolint will fix it later.
+	SmesherId         string `json:"smesher" bson:"smesher"`   //nolint will fix it later // id of smesher who created the ATX
+	Coinbase          string `json:"coinbase" bson:"coinbase"` // coinbase account id
+	PrevAtx           string `json:"prevAtx" bson:"prevAtx"`   // previous ATX pointed to
+	NumUnits          uint32 `json:"numunits" bson:"numunits"` // number of PoST data commitment units
+	CommitmentSize    uint64 `json:"commitmentSize" bson:"commitmentSize"`
+	PublishEpoch      uint32 `json:"publishEpoch" bson:"publishEpoch"`
+	TargetEpoch       uint32 `json:"targetEpoch" bson:"targetEpoch"`
+	TickCount         uint64 `json:"tickCount" bson:"tickCount"`
+	Weight            uint64 `json:"weight" bson:"weight"`
+	EffectiveNumUnits uint32 `json:"effectiveNumUnits" bson:"effectiveNumUnits"`
+	Received          int64  `json:"received" bson:"received"`
 }
 
 type ActivationService interface {
@@ -26,14 +29,17 @@ type ActivationService interface {
 
 func NewActivation(atx *types.VerifiedActivationTx) *Activation {
 	return &Activation{
-		Id:           utils.BytesToHex(atx.ID().Bytes()),
-		PublishEpoch: atx.PublishEpoch.Uint32(),
-		TargetEpoch:  atx.PublishEpoch.Uint32() + 1,
-		SmesherId:    utils.BytesToHex(atx.SmesherID.Bytes()),
-		Coinbase:     atx.Coinbase.String(),
-		PrevAtx:      utils.BytesToHex(atx.PrevATXID.Bytes()),
-		NumUnits:     atx.NumUnits,
-		Received:     atx.Received().UnixNano(),
+		Id:                utils.BytesToHex(atx.ID().Bytes()),
+		PublishEpoch:      atx.PublishEpoch.Uint32(),
+		TargetEpoch:       atx.PublishEpoch.Uint32() + 1,
+		SmesherId:         utils.BytesToHex(atx.SmesherID.Bytes()),
+		Coinbase:          atx.Coinbase.String(),
+		PrevAtx:           utils.BytesToHex(atx.PrevATXID.Bytes()),
+		NumUnits:          atx.NumUnits,
+		TickCount:         atx.TickCount(),
+		Weight:            atx.GetWeight(),
+		EffectiveNumUnits: atx.EffectiveNumUnits(),
+		Received:          atx.Received().UnixNano(),
 	}
 }
 
