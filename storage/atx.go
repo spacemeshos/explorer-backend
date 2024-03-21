@@ -41,15 +41,18 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 	}
 	doc := cursor.Current
 	account := &model.Activation{
-		Id:             utils.GetAsString(doc.Lookup("id")),
-		SmesherId:      utils.GetAsString(doc.Lookup("smesher")),
-		Coinbase:       utils.GetAsString(doc.Lookup("coinbase")),
-		PrevAtx:        utils.GetAsString(doc.Lookup("prevAtx")),
-		NumUnits:       utils.GetAsUInt32(doc.Lookup("numunits")),
-		CommitmentSize: utils.GetAsUInt64(doc.Lookup("commitmentSize")),
-		PublishEpoch:   utils.GetAsUInt32(doc.Lookup("publishEpoch")),
-		TargetEpoch:    utils.GetAsUInt32(doc.Lookup("targetEpoch")),
-		Received:       utils.GetAsInt64(doc.Lookup("received")),
+		Id:                utils.GetAsString(doc.Lookup("id")),
+		SmesherId:         utils.GetAsString(doc.Lookup("smesher")),
+		Coinbase:          utils.GetAsString(doc.Lookup("coinbase")),
+		PrevAtx:           utils.GetAsString(doc.Lookup("prevAtx")),
+		NumUnits:          utils.GetAsUInt32(doc.Lookup("numunits")),
+		CommitmentSize:    utils.GetAsUInt64(doc.Lookup("commitmentSize")),
+		PublishEpoch:      utils.GetAsUInt32(doc.Lookup("publishEpoch")),
+		TargetEpoch:       utils.GetAsUInt32(doc.Lookup("targetEpoch")),
+		Received:          utils.GetAsInt64(doc.Lookup("received")),
+		TickCount:         utils.GetAsUInt64(doc.Lookup("tickCount")),
+		Weight:            utils.GetAsUInt64(doc.Lookup("weight")),
+		EffectiveNumUnits: utils.GetAsUInt32(doc.Lookup("effectiveNumUnits")),
 	}
 	return account, nil
 }
@@ -101,6 +104,9 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
 			{Key: "received", Value: in.Received},
 			{Key: "publishEpoch", Value: in.PublishEpoch},
 			{Key: "targetEpoch", Value: in.TargetEpoch},
+			{Key: "tickCount", Value: in.TickCount},
+			{Key: "weight", Value: in.Weight},
+			{Key: "effectiveNumUnits", Value: in.EffectiveNumUnits},
 		},
 	}}, options.Update().SetUpsert(true))
 	if err != nil {
@@ -122,6 +128,9 @@ func (s *Storage) SaveOrUpdateActivation(parent context.Context, atx *model.Acti
 			{Key: "received", Value: atx.Received},
 			{Key: "publishEpoch", Value: atx.PublishEpoch},
 			{Key: "targetEpoch", Value: atx.TargetEpoch},
+			{Key: "tickCount", Value: atx.TickCount},
+			{Key: "weight", Value: atx.Weight},
+			{Key: "effectiveNumUnits", Value: atx.EffectiveNumUnits},
 		}},
 	}
 

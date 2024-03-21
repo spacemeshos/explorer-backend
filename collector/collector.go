@@ -131,6 +131,11 @@ func (c *Collector) Run() error {
 		return errors.Join(errors.New("cannot get network info"), err)
 	}
 
+	err = c.syncActivations()
+	if err != nil {
+		return errors.Join(errors.New("cannot sync activations"), err)
+	}
+
 	if c.syncMissingLayersFlag {
 		err = c.syncMissingLayers()
 		if err != nil {
@@ -140,11 +145,6 @@ func (c *Collector) Run() error {
 
 	if c.recalculateEpochStatsFlag {
 		c.listener.RecalculateEpochStats()
-	}
-
-	err = c.syncActivations()
-	if err != nil {
-		return errors.Join(errors.New("cannot sync activations"), err)
 	}
 
 	g := new(errgroup.Group)
