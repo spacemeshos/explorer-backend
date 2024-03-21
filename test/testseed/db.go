@@ -193,6 +193,7 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 			},
 		}
 
+		atx.SetEffectiveNumUnits(generatedAtx.NumUnits)
 		atx.SetID(atxId)
 		atx.SetReceived(time.Unix(0, generatedAtx.Received))
 

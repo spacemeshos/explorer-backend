@@ -246,15 +246,16 @@ func (s *SeedGenerator) getRandomAcc() string {
 func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, smesher *model.Smesher, postUnitSize uint64, epoch uint32) model.Activation {
 	tx, _ := utils.CalculateLayerStartEndDate(uint32(s.FirstLayerTime.Unix()), layerNum, uint32(s.seed.LayersDuration))
 	return model.Activation{
-		Id:             strings.ToLower(utils.BytesToHex(randomBytes(32))),
-		SmesherId:      smesher.Id,
-		Coinbase:       smesher.Coinbase,
-		PrevAtx:        strings.ToLower(utils.BytesToHex(randomBytes(32))),
-		NumUnits:       atxNumUnits,
-		CommitmentSize: uint64(atxNumUnits) * postUnitSize,
-		PublishEpoch:   epoch - 1,
-		TargetEpoch:    epoch,
-		Received:       int64(tx),
+		Id:                strings.ToLower(utils.BytesToHex(randomBytes(32))),
+		SmesherId:         smesher.Id,
+		Coinbase:          smesher.Coinbase,
+		PrevAtx:           strings.ToLower(utils.BytesToHex(randomBytes(32))),
+		NumUnits:          atxNumUnits,
+		EffectiveNumUnits: atxNumUnits,
+		CommitmentSize:    uint64(atxNumUnits) * postUnitSize,
+		PublishEpoch:      epoch - 1,
+		TargetEpoch:       epoch,
+		Received:          int64(tx),
 	}
 }
 
