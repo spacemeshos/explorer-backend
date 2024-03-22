@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
@@ -51,7 +52,7 @@ func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32)
 
 	epoch := lid.Uint32() / numLayers
 	if lid.Uint32()%numLayers == 0 {
-		atxsId, err := atxs.GetIDsByEpoch(db, types.EpochID(epoch-1))
+		atxsId, err := atxs.GetIDsByEpoch(context.Background(), db, types.EpochID(epoch-1))
 		if err != nil {
 			return nil, err
 		}
@@ -95,6 +96,9 @@ func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32)
 }
 
 func getMeshTransactions(db *sql.Database, ids []types.TransactionID) ([]*types.MeshTransaction, map[types.TransactionID]struct{}) {
+	if ids == nil {
+		return []*types.MeshTransaction{}, map[types.TransactionID]struct{}{}
+	}
 	missing := make(map[types.TransactionID]struct{})
 	mtxs := make([]*types.MeshTransaction, 0, len(ids))
 	for _, tid := range ids {
