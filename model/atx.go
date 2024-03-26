@@ -46,6 +46,8 @@ func NewActivation(atx *types.VerifiedActivationTx) *Activation {
 func (atx *Activation) GetSmesher(unitSize uint64) *Smesher {
 	return &Smesher{
 		Id:             atx.SmesherId,
+		Coinbase:       atx.Coinbase,
+		Timestamp:      uint64(atx.Received),
 		CommitmentSize: uint64(atx.NumUnits) * unitSize,
 	}
 }
