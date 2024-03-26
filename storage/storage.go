@@ -74,7 +74,7 @@ type Storage struct {
 }
 
 func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbUrl))
 
@@ -432,13 +432,7 @@ func (s *Storage) OnActivation(atx *types.VerifiedActivationTx) {
 		log.Err(fmt.Errorf("OnActivation: error %v", err))
 	}
 
-	err = s.SaveSmesher(context.Background(), activation.GetSmesher(s.postUnitSize), activation.TargetEpoch)
-	if err != nil {
-		log.Err(fmt.Errorf("OnActivation: save smesher error %v", err))
-	}
-
-	err = s.UpdateSmesher(context.Background(), activation.SmesherId, activation.Coinbase,
-		uint64(atx.NumUnits)*s.postUnitSize, activation.Received, activation.TargetEpoch)
+	err = s.UpdateSmesher(context.Background(), activation.GetSmesher(s.postUnitSize), activation.TargetEpoch)
 	if err != nil {
 		log.Err(fmt.Errorf("OnActivation: update smesher error %v", err))
 	}

@@ -42,9 +42,6 @@ func (s *Storage) GetSmesher(parent context.Context, query *bson.D) (*model.Smes
 	doc := cursor.Current
 	smesher := &model.Smesher{
 		Id:             utils.GetAsString(doc.Lookup("id")),
-		Name:           utils.GetAsString(doc.Lookup("name")),
-		Lon:            doc.Lookup("lon").Double(),
-		Lat:            doc.Lookup("lat").Double(),
 		CommitmentSize: utils.GetAsUInt64(doc.Lookup("cSize")),
 		Coinbase:       utils.GetAsString(doc.Lookup("coinbase")),
 		AtxCount:       utils.GetAsUInt32(doc.Lookup("atxcount")),
@@ -102,9 +99,6 @@ func (s *Storage) SaveSmesher(parent context.Context, in *model.Smesher, epoch u
 	_, err := s.db.Collection("smeshers").UpdateOne(ctx, bson.D{{Key: "id", Value: in.Id}}, bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "id", Value: in.Id},
-			{Key: "name", Value: in.Name},
-			{Key: "lon", Value: in.Lon},
-			{Key: "lat", Value: in.Lat},
 			{Key: "cSize", Value: in.CommitmentSize},
 			{Key: "coinbase", Value: in.Coinbase},
 			{Key: "atxcount", Value: in.AtxCount},
@@ -123,9 +117,6 @@ func (s *Storage) SaveSmesherQuery(in *model.Smesher) *mongo.UpdateOneModel {
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "id", Value: in.Id},
-			{Key: "name", Value: in.Name},
-			{Key: "lon", Value: in.Lon},
-			{Key: "lat", Value: in.Lat},
 			{Key: "cSize", Value: in.CommitmentSize},
 			{Key: "coinbase", Value: in.Coinbase},
 			{Key: "atxcount", Value: in.AtxCount},
@@ -141,33 +132,35 @@ func (s *Storage) SaveSmesherQuery(in *model.Smesher) *mongo.UpdateOneModel {
 	return updateModel
 }
 
-func (s *Storage) UpdateSmesher(parent context.Context, smesher string, coinbase string, space uint64, timestamp int64, epoch uint32) error {
+func (s *Storage) UpdateSmesher(parent context.Context, in *model.Smesher, epoch uint32) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 
-	opts := options.Update().SetUpsert(true)
-	filter := bson.D{{Key: "smesherId", Value: smesher}}
-	_, err := s.db.Collection("coinbases").UpdateOne(ctx, filter, bson.D{
-		{Key: "$set", Value: bson.D{
-			{Key: "coinbase", Value: coinbase},
-		}}}, opts)
-
+	filter := bson.D{{Key: "smesherId", Value: in.Id}}
+	_, err := s.db.Collection("coinbases").UpdateOne(
+		ctx,
+		filter,
+		bson.D{{Key: "$set", Value: bson.D{{Key: "coinbase", Value: in.Coinbase}}}},
+		options.Update().SetUpsert(true))
 	if err != nil {
 		return fmt.Errorf("error insert smesher into `coinbases`: %w", err)
 	}
-	atxCount, err := s.db.Collection("activations").CountDocuments(ctx, &bson.D{{Key: "smesher", Value: smesher}})
+
+	atxCount, err := s.db.Collection("activations").CountDocuments(ctx, &bson.D{{Key: "smesher", Value: in.Id}})
 	if err != nil {
 		log.Info("UpdateSmesher: GetActivationsCount: %v", err)
 	}
-	_, err = s.db.Collection("smeshers").UpdateOne(ctx, bson.D{{Key: "id", Value: smesher}}, bson.D{
+
+	_, err = s.db.Collection("smeshers").UpdateOne(ctx, bson.D{{Key: "id", Value: in.Id}}, bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "cSize", Value: space},
-			{Key: "coinbase", Value: coinbase},
+			{Key: "id", Value: in.Id},
+			{Key: "cSize", Value: in.CommitmentSize},
+			{Key: "coinbase", Value: in.Coinbase},
+			{Key: "timestamp", Value: in.Timestamp},
 			{Key: "atxcount", Value: atxCount},
-			{Key: "timestamp", Value: timestamp},
 		}},
 		{Key: "$addToSet", Value: bson.M{"epochs": epoch}},
-	})
+	}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("UpdateSmesher: %v", err)
 	}
