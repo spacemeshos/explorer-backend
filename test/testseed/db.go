@@ -202,6 +202,10 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 	return nil
 }
 
+func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+	return nil
+}
+
 func mustParse(str string) []byte {
 	res, err := utils.StringToBytes(str)
 	if err != nil {

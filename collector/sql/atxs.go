@@ -70,3 +70,24 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 	}
 	return derr
 }
+
+func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+	var derr error
+	_, err := db.Exec(
+		fullQuery+` WHERE epoch = ?1 ORDER BY epoch asc, id asc`,
+		func(stmt *sql.Statement) {
+			stmt.BindInt64(1, epoch)
+		},
+		decoder(func(atx *types.VerifiedActivationTx, err error) bool {
+			if atx != nil {
+				return fn(atx)
+			}
+			derr = err
+			return derr == nil
+		}),
+	)
+	if err != nil {
+		return err
+	}
+	return derr
+}
