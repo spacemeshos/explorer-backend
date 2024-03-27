@@ -33,6 +33,7 @@ var (
 	syncMissingLayersBoolFlag     bool
 	sqlitePathStringFlag          string
 	metricsPortFlag               int
+	apiHostFlag                   string
 	apiPortFlag                   int
 	recalculateEpochStatsBoolFlag bool
 )
@@ -117,6 +118,14 @@ var flags = []cli.Flag{
 		Value:       false,
 		EnvVars:     []string{"SPACEMESH_RECALCULATE_EPOCH_STATS"},
 	},
+	&cli.StringFlag{
+		Name:        "apiHost",
+		Usage:       ``,
+		Required:    false,
+		Value:       "127.0.0.1",
+		Destination: &apiHostFlag,
+		EnvVars:     []string{"SPACEMESH_API_HOST"},
+	},
 	&cli.IntFlag{
 		Name:        "apiPort",
 		Usage:       ``,
@@ -195,7 +204,7 @@ func main() {
 			http.ListenAndServe(fmt.Sprintf(":%d", metricsPortFlag), nil)
 		}()
 
-		go c.StartHttpServer(apiPortFlag)
+		go c.StartHttpServer(apiHostFlag, apiPortFlag)
 
 		select {}
 	}
