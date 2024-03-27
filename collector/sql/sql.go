@@ -13,6 +13,7 @@ type DatabaseClient interface {
 	GetAllRewards(db *sql.Database) (rst []*types.Reward, err error)
 	AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*types.Account, err error)
 	GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.VerifiedActivationTx) bool) error
+	GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error
 }
 
 type Client struct{}
