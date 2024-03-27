@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func (c *Collector) StartHttpServer(apiPort int) {
+func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 	e := echo.New()
 	e.GET("/sync/atx/:epoch", func(ctx echo.Context) error {
 		epoch := ctx.Param("epoch")
@@ -88,5 +88,5 @@ func (c *Collector) StartHttpServer(apiPort int) {
 		return ctx.NoContent(http.StatusOK)
 	})
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", apiPort)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%d", apiHost, apiPort)))
 }
