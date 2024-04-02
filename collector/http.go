@@ -12,6 +12,29 @@ import (
 
 func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 	e := echo.New()
+
+	e.GET("/sync/atx/ts/:ts", func(ctx echo.Context) error {
+		ts := ctx.Param("ts")
+		timestamp, err := strconv.ParseInt(ts, 10, 64)
+		if err != nil {
+			return ctx.String(http.StatusBadRequest, "Invalid parameter")
+		}
+
+		log.Info("http syncing atxs from %d", timestamp)
+		go func() {
+			err = c.dbClient.GetAtxsReceivedAfter(c.db, timestamp, func(atx *types.VerifiedActivationTx) bool {
+				c.listener.OnActivation(atx)
+				return true
+			})
+			if err != nil {
+				log.Warning("syncing atxs from %s failed with error %d", ts, err)
+				return
+			}
+		}()
+
+		return ctx.NoContent(http.StatusOK)
+	})
+
 	e.GET("/sync/atx/:epoch", func(ctx echo.Context) error {
 		epoch := ctx.Param("epoch")
 		epochId, err := strconv.ParseInt(epoch, 10, 64)
@@ -19,6 +42,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 			return ctx.String(http.StatusBadRequest, "Invalid parameter")
 		}
 
+		log.Info("http syncing atxs for epoch %s", epoch)
 		go func() {
 			err = c.dbClient.GetAtxsByEpoch(c.db, epochId, func(atx *types.VerifiedActivationTx) bool {
 				c.listener.OnActivation(atx)
