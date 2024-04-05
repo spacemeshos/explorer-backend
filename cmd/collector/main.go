@@ -24,6 +24,7 @@ var (
 )
 
 var (
+	collectorName                 string
 	nodePublicAddressStringFlag   string
 	nodePrivateAddressStringFlag  string
 	mongoDbUrlStringFlag          string
@@ -39,6 +40,14 @@ var (
 )
 
 var flags = []cli.Flag{
+	&cli.StringFlag{
+		Name:        "name",
+		Usage:       "Collector name used to differentiate atx received timestamp",
+		Required:    false,
+		Destination: &collectorName,
+		Value:       "collector-1",
+		EnvVars:     []string{"SPACEMESH_COLLECTOR_NAME"},
+	},
 	&cli.StringFlag{
 		Name:        "node-public",
 		Usage:       "Spacemesh public node API address string in format <host>:<port>",
@@ -151,7 +160,7 @@ func main() {
 			log.Info(`Network HRP set to "stest"`)
 		}
 
-		mongoStorage, err := storage.New(context.Background(), mongoDbUrlStringFlag, mongoDbNameStringFlag)
+		mongoStorage, err := storage.New(context.Background(), collectorName, mongoDbUrlStringFlag, mongoDbNameStringFlag)
 		if err != nil {
 			log.Info("MongoDB storage open error %v", err)
 			return err
@@ -164,7 +173,7 @@ func main() {
 		}
 		dbClient := &sql.Client{}
 
-		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag,
+		c := collector.NewCollector(collectorName, nodePublicAddressStringFlag, nodePrivateAddressStringFlag,
 			syncMissingLayersBoolFlag, syncFromLayerFlag, recalculateEpochStatsBoolFlag, mongoStorage, db, dbClient)
 		mongoStorage.AccountUpdater = c
 

@@ -40,6 +40,12 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 		return nil, errors.New("empty result")
 	}
 	doc := cursor.Current
+	var received map[string]int64
+	err = doc.Lookup("received").Unmarshal(&received)
+	if err != nil {
+		return nil, err
+	}
+
 	account := &model.Activation{
 		Id:                utils.GetAsString(doc.Lookup("id")),
 		SmesherId:         utils.GetAsString(doc.Lookup("smesher")),
@@ -49,7 +55,7 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 		CommitmentSize:    utils.GetAsUInt64(doc.Lookup("commitmentSize")),
 		PublishEpoch:      utils.GetAsUInt32(doc.Lookup("publishEpoch")),
 		TargetEpoch:       utils.GetAsUInt32(doc.Lookup("targetEpoch")),
-		Received:          utils.GetAsInt64(doc.Lookup("received")),
+		Received:          received,
 		TickCount:         utils.GetAsUInt64(doc.Lookup("tickCount")),
 		Weight:            utils.GetAsUInt64(doc.Lookup("weight")),
 		EffectiveNumUnits: utils.GetAsUInt32(doc.Lookup("effectiveNumUnits")),
@@ -125,7 +131,7 @@ func (s *Storage) SaveOrUpdateActivation(parent context.Context, atx *model.Acti
 			{Key: "prevAtx", Value: atx.PrevAtx},
 			{Key: "numunits", Value: atx.NumUnits},
 			{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
-			{Key: "received", Value: atx.Received},
+			{Key: "received." + s.collectorName, Value: atx.Received[s.collectorName]},
 			{Key: "publishEpoch", Value: atx.PublishEpoch},
 			{Key: "targetEpoch", Value: atx.TargetEpoch},
 			{Key: "tickCount", Value: atx.TickCount},
@@ -144,7 +150,9 @@ func (s *Storage) SaveOrUpdateActivation(parent context.Context, atx *model.Acti
 }
 
 func (s *Storage) GetLastActivationReceived() int64 {
-	cursor, err := s.db.Collection("activations").Find(context.Background(), bson.D{}, options.Find().SetSort(bson.D{{Key: "received", Value: -1}}).SetLimit(1))
+	cursor, err := s.db.Collection("activations").Find(context.Background(),
+		bson.M{"received." + s.collectorName: bson.M{"$exists": true}},
+		options.Find().SetSort(bson.D{{Key: "received." + s.collectorName, Value: -1}}).SetLimit(1))
 	if err != nil {
 		log.Info("GetLastActivationReceived: %v", err)
 		return 0
@@ -153,6 +161,19 @@ func (s *Storage) GetLastActivationReceived() int64 {
 		log.Info("GetLastActivationReceived: Empty result", err)
 		return 0
 	}
+
 	doc := cursor.Current
-	return utils.GetAsInt64(doc.Lookup("received"))
+	var received map[string]int64
+	err = doc.Lookup("received").Unmarshal(&received)
+	if err != nil {
+		log.Info("GetLastActivationReceived: %v", err)
+		return 0
+	}
+
+	receivedTs, ok := received[s.collectorName]
+	if !ok {
+		return 0
+	}
+
+	return receivedTs
 }

@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 		}
 	}
 
-	storageDB, err = storage.New(context.TODO(), mongoURL, testAPIServiceDB)
+	storageDB, err = storage.New(context.TODO(), "collector-test", mongoURL, testAPIServiceDB)
 	if err != nil {
 		fmt.Println("failed to init storage to mongo", err)
 		os.Exit(1)
@@ -86,7 +86,7 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	collectorApp = collector.NewCollector(fmt.Sprintf("localhost:%d", node.NodePort),
+	collectorApp = collector.NewCollector("collector-test", fmt.Sprintf("localhost:%d", node.NodePort),
 		fmt.Sprintf("localhost:%d", privateNode.NodePort), false,
 		0, false, storageDB, sqlDb, dbClient)
 	storageDB.AccountUpdater = collectorApp
