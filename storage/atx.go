@@ -41,7 +41,7 @@ func (s *Storage) GetActivation(parent context.Context, query *bson.D) (*model.A
 	}
 	doc := cursor.Current
 	var received map[string]int64
-	err = doc.Lookup("received").Unmarshal(&received)
+	err = doc.Lookup("cReceived").Unmarshal(&received)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (s *Storage) SaveActivation(parent context.Context, in *model.Activation) e
 			{Key: "prevAtx", Value: in.PrevAtx},
 			{Key: "numunits", Value: in.NumUnits},
 			{Key: "commitmentSize", Value: int64(in.NumUnits) * int64(s.postUnitSize)},
-			{Key: "received", Value: in.Received},
+			{Key: "cReceived", Value: in.Received},
 			{Key: "publishEpoch", Value: in.PublishEpoch},
 			{Key: "targetEpoch", Value: in.TargetEpoch},
 			{Key: "tickCount", Value: in.TickCount},
@@ -131,7 +131,7 @@ func (s *Storage) SaveOrUpdateActivation(parent context.Context, atx *model.Acti
 			{Key: "prevAtx", Value: atx.PrevAtx},
 			{Key: "numunits", Value: atx.NumUnits},
 			{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
-			{Key: "received." + s.collectorName, Value: atx.Received[s.collectorName]},
+			{Key: "cReceived." + s.collectorName, Value: atx.Received[s.collectorName]},
 			{Key: "publishEpoch", Value: atx.PublishEpoch},
 			{Key: "targetEpoch", Value: atx.TargetEpoch},
 			{Key: "tickCount", Value: atx.TickCount},
@@ -151,8 +151,8 @@ func (s *Storage) SaveOrUpdateActivation(parent context.Context, atx *model.Acti
 
 func (s *Storage) GetLastActivationReceived() int64 {
 	cursor, err := s.db.Collection("activations").Find(context.Background(),
-		bson.M{"received." + s.collectorName: bson.M{"$exists": true}},
-		options.Find().SetSort(bson.D{{Key: "received." + s.collectorName, Value: -1}}).SetLimit(1))
+		bson.M{"cReceived." + s.collectorName: bson.M{"$exists": true}},
+		options.Find().SetSort(bson.D{{Key: "cReceived." + s.collectorName, Value: -1}}).SetLimit(1))
 	if err != nil {
 		log.Info("GetLastActivationReceived: %v", err)
 		return 0
@@ -164,7 +164,7 @@ func (s *Storage) GetLastActivationReceived() int64 {
 
 	doc := cursor.Current
 	var received map[string]int64
-	err = doc.Lookup("received").Unmarshal(&received)
+	err = doc.Lookup("cReceived").Unmarshal(&received)
 	if err != nil {
 		log.Info("GetLastActivationReceived: %v", err)
 		return 0
