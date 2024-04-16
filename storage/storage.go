@@ -445,6 +445,50 @@ func (s *Storage) OnActivation(atx *types.VerifiedActivationTx) {
 	}
 }
 
+func (s *Storage) OnActivations(atxs []*model.Activation) {
+	log.Info("OnActivations(%d)", len(atxs))
+
+	err := s.SaveOrUpdateActivations(context.Background(), atxs)
+	if err != nil {
+		log.Err(fmt.Errorf("OnActivation: error %v", err))
+	}
+
+	epochNumLayers := s.GetEpochNumLayers()
+
+	var coinbaseUpdateOps []mongo.WriteModel
+	var smesherUpdateOps []mongo.WriteModel
+	var accountsUpdateOps []mongo.WriteModel
+
+	for _, atx := range atxs {
+		smesherUpdateOps = append(smesherUpdateOps, s.SaveSmesherQuery(atx.GetSmesher(s.postUnitSize)))
+		coinbaseOp, smesherOp := s.UpdateSmesherQuery(atx.GetSmesher(s.postUnitSize), atx.TargetEpoch)
+		coinbaseUpdateOps = append(coinbaseUpdateOps, coinbaseOp)
+		smesherUpdateOps = append(smesherUpdateOps, smesherOp)
+		accountsUpdateOps = append(accountsUpdateOps, s.AddAccountQuery(epochNumLayers*atx.PublishEpoch, atx.Coinbase, 0))
+	}
+
+	if len(smesherUpdateOps) > 0 {
+		_, err = s.db.Collection("smeshers").BulkWrite(context.TODO(), smesherUpdateOps)
+		if err != nil {
+			log.Err(fmt.Errorf("OnActivations: error smeshers write %v", err))
+		}
+	}
+
+	if len(coinbaseUpdateOps) > 0 {
+		_, err = s.db.Collection("coinbases").BulkWrite(context.TODO(), coinbaseUpdateOps)
+		if err != nil {
+			log.Err(fmt.Errorf("OnActivations: error smeshers write %v", err))
+		}
+	}
+
+	if len(accountsUpdateOps) > 0 {
+		_, err = s.db.Collection("accounts").BulkWrite(context.TODO(), accountsUpdateOps)
+		if err != nil {
+			log.Err(fmt.Errorf("OnActivations: error accounts write %v", err))
+		}
+	}
+}
+
 func (s *Storage) updateTransactions(layer *model.Layer, txs map[string]*model.Transaction) {
 	log.Info("updateTransactions")
 	for _, tx := range txs {

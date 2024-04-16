@@ -48,6 +48,7 @@ type Listener interface {
 	OnActivation(atx *types.VerifiedActivationTx)
 	GetLastActivationReceived() int64
 	RecalculateEpochStats()
+	OnActivations(atxs []*model.Activation)
 }
 
 type Collector struct {

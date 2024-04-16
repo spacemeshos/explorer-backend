@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -138,6 +139,46 @@ func (s *Storage) SaveOrUpdateActivation(parent context.Context, atx *model.Acti
 	if err != nil {
 		log.Info("SaveOrUpdateActivation: %v", err)
 		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) SaveOrUpdateActivations(parent context.Context, atxs []*model.Activation) error {
+	var updateOps []mongo.WriteModel
+
+	for _, atx := range atxs {
+		filter := bson.D{{Key: "id", Value: atx.Id}}
+		update := bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "id", Value: atx.Id},
+				{Key: "smesher", Value: atx.SmesherId},
+				{Key: "coinbase", Value: atx.Coinbase},
+				{Key: "prevAtx", Value: atx.PrevAtx},
+				{Key: "numunits", Value: atx.NumUnits},
+				{Key: "commitmentSize", Value: int64(atx.NumUnits) * int64(s.postUnitSize)},
+				{Key: "received", Value: atx.Received},
+				{Key: "publishEpoch", Value: atx.PublishEpoch},
+				{Key: "targetEpoch", Value: atx.TargetEpoch},
+				{Key: "tickCount", Value: atx.TickCount},
+				{Key: "weight", Value: atx.Weight},
+				{Key: "effectiveNumUnits", Value: atx.EffectiveNumUnits},
+			}},
+		}
+
+		updateModel := mongo.NewUpdateOneModel()
+		updateModel.Filter = filter
+		updateModel.Update = update
+		updateModel.SetUpsert(true)
+
+		updateOps = append(updateOps, updateModel)
+	}
+
+	if len(updateOps) > 0 {
+		_, err := s.db.Collection("activations").BulkWrite(context.TODO(), updateOps)
+		if err != nil {
+			log.Err(fmt.Errorf("SaveOrUpdateActivations: error atxs write %v", err))
+		}
 	}
 
 	return nil

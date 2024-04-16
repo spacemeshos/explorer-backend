@@ -167,30 +167,32 @@ func (s *Storage) UpdateSmesher(parent context.Context, in *model.Smesher, epoch
 	return err
 }
 
-func (s *Storage) UpdateSmesherQuery(smesher string, coinbase string, space uint64, timestamp uint32) (*mongo.UpdateOneModel, *mongo.UpdateOneModel) {
-	coinbaseFilter := bson.D{{Key: "smesherId", Value: smesher}}
+func (s *Storage) UpdateSmesherQuery(in *model.Smesher, epoch uint32) (*mongo.UpdateOneModel, *mongo.UpdateOneModel) {
+	coinbaseFilter := bson.D{{Key: "smesherId", Value: in.Id}}
 	coinbaseUpdate := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "coinbase", Value: coinbase},
+			{Key: "coinbase", Value: in.Coinbase},
 		}}}
 	coinbaseModel := mongo.NewUpdateOneModel()
 	coinbaseModel.SetFilter(coinbaseFilter)
 	coinbaseModel.SetUpdate(coinbaseUpdate)
 	coinbaseModel.SetUpsert(true)
 
-	atxCount, err := s.db.Collection("activations").CountDocuments(context.TODO(), &bson.D{{Key: "smesher", Value: smesher}})
+	atxCount, err := s.db.Collection("activations").CountDocuments(context.TODO(), &bson.D{{Key: "smesher", Value: in.Id}})
 	if err != nil {
 		log.Info("UpdateSmesher: GetActivationsCount: %v", err)
 	}
 
-	smesherFilter := bson.D{{Key: "id", Value: smesher}}
+	smesherFilter := bson.D{{Key: "id", Value: in.Id}}
 	smesherUpdate := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "cSize", Value: space},
-			{Key: "coinbase", Value: coinbase},
+			{Key: "id", Value: in.Id},
+			{Key: "cSize", Value: in.CommitmentSize},
+			{Key: "coinbase", Value: in.Coinbase},
+			{Key: "timestamp", Value: in.Timestamp},
 			{Key: "atxcount", Value: atxCount},
-			{Key: "timestamp", Value: timestamp},
 		}},
+		{Key: "$addToSet", Value: bson.M{"epochs": epoch}},
 	}
 
 	smesherModel := mongo.NewUpdateOneModel()
