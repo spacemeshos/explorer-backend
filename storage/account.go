@@ -120,6 +120,34 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
 	return nil
 }
 
+func (s *Storage) AddAccountQuery(layer uint32, address string, balance uint64) *mongo.UpdateOneModel {
+	filter := bson.D{{Key: "address", Value: address}}
+	acc := bson.D{
+		{Key: "$set",
+			Value: bson.D{
+				{Key: "address", Value: address},
+				{Key: "layer", Value: layer},
+				{Key: "balance", Value: balance},
+				{Key: "counter", Value: uint64(0)},
+				{Key: "created",
+					Value: bson.D{{Key: "$cond", Value: bson.D{{Key: "if",
+						Value: bson.D{{Key: "$eq", Value: bson.A{0, "$created"}}}},
+						{Key: "then", Value: layer},
+						{Key: "else", Value: "$created"},
+					}}},
+				},
+			},
+		},
+	}
+
+	accountModel := mongo.NewUpdateOneModel()
+	accountModel.SetFilter(filter)
+	accountModel.SetUpdate(acc)
+	accountModel.SetUpsert(true)
+
+	return accountModel
+}
+
 func (s *Storage) SaveAccount(parent context.Context, layer uint32, in *model.Account) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
