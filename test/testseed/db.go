@@ -206,6 +206,14 @@ func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types
 	return nil
 }
 
+func (c *Client) CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error) {
+	return 0, nil
+}
+
+func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+	return nil
+}
+
 func mustParse(str string) []byte {
 	res, err := utils.StringToBytes(str)
 	if err != nil {

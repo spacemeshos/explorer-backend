@@ -57,6 +57,7 @@ type Collector struct {
 	syncMissingLayersFlag     bool
 	recalculateEpochStatsFlag bool
 	syncFromLayerFlag         uint32
+	atxSyncFlag               bool
 
 	listener Listener
 	db       *sql2.Database
@@ -79,7 +80,9 @@ type Collector struct {
 	notify chan int
 }
 
-func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool, syncFromLayerFlag int, recalculateEpochStatsFlag bool, listener Listener, db *sql2.Database, dbClient sql.DatabaseClient) *Collector {
+func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool,
+	syncFromLayerFlag int, recalculateEpochStatsFlag bool,
+	listener Listener, db *sql2.Database, dbClient sql.DatabaseClient, atxSyncFlag bool) *Collector {
 	return &Collector{
 		apiPublicUrl:              nodePublicAddress,
 		apiPrivateUrl:             nodePrivateAddress,
@@ -90,6 +93,7 @@ func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissi
 		notify:                    make(chan int),
 		db:                        db,
 		dbClient:                  dbClient,
+		atxSyncFlag:               atxSyncFlag,
 	}
 }
 
@@ -132,9 +136,11 @@ func (c *Collector) Run() error {
 		return errors.Join(errors.New("cannot get network info"), err)
 	}
 
-	err = c.syncActivations()
-	if err != nil {
-		return errors.Join(errors.New("cannot sync activations"), err)
+	if c.atxSyncFlag {
+		err = c.syncActivations()
+		if err != nil {
+			return errors.Join(errors.New("cannot sync activations"), err)
+		}
 	}
 
 	if c.syncMissingLayersFlag {

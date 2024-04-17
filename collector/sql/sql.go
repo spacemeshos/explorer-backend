@@ -14,6 +14,8 @@ type DatabaseClient interface {
 	AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*types.Account, err error)
 	GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.VerifiedActivationTx) bool) error
 	GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error
+	CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error)
+	GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.VerifiedActivationTx) bool) error
 }
 
 type Client struct{}

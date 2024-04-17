@@ -94,16 +94,27 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 
 		log.Info("http syncing atxs for epoch %s", epoch)
 		go func() {
-			var atxs []*model.Activation
-			err = c.dbClient.GetAtxsByEpoch(c.db, epochId, func(atx *types.VerifiedActivationTx) bool {
-				atxs = append(atxs, model.NewActivation(atx))
-				return true
-			})
+			count, err := c.dbClient.CountAtxsByEpoch(c.db, epochId)
 			if err != nil {
 				log.Warning("syncing atxs for %s failed with error %d", epoch, err)
 				return
 			}
-			c.listener.OnActivations(atxs)
+			batchSize := 100000
+			totalPages := (count + batchSize - 1) / batchSize
+			for page := 0; page < totalPages; page++ {
+				offset := page * batchSize
+				var atxs []*model.Activation
+				err = c.dbClient.GetAtxsByEpochPaginated(c.db, epochId, int64(batchSize), int64(offset), func(atx *types.VerifiedActivationTx) bool {
+					atxs = append(atxs, model.NewActivation(atx))
+					return true
+				})
+				if err != nil {
+					log.Warning("syncing atxs for %s failed with error %d", epoch, err)
+					return
+				}
+				c.listener.OnActivations(atxs)
+				atxs = nil
+			}
 			c.listener.RecalculateEpochStats()
 		}()
 
