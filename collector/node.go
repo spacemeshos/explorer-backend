@@ -54,9 +54,11 @@ func (c *Collector) syncStatusPump() error {
 					fmt.Errorf("syncNotProcessedTxs error: %v", err)
 				}
 
-				err = c.syncActivations()
-				if err != nil {
-					fmt.Errorf("syncActivations error: %v", err)
+				if c.atxSyncFlag {
+					err = c.syncActivations()
+					if err != nil {
+						fmt.Errorf("syncActivations error: %v", err)
+					}
 				}
 
 				err = c.createFutureEpoch()

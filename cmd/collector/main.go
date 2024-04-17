@@ -36,6 +36,7 @@ var (
 	apiHostFlag                   string
 	apiPortFlag                   int
 	recalculateEpochStatsBoolFlag bool
+	atxSyncFlag                   bool
 )
 
 var flags = []cli.Flag{
@@ -134,6 +135,14 @@ var flags = []cli.Flag{
 		Destination: &apiPortFlag,
 		EnvVars:     []string{"SPACEMESH_API_PORT"},
 	},
+	&cli.BoolFlag{
+		Name:        "atxSync",
+		Usage:       ``,
+		Required:    false,
+		Value:       true,
+		Destination: &atxSyncFlag,
+		EnvVars:     []string{"SPACEMESH_ATX_SYNC"},
+	},
 }
 
 func main() {
@@ -165,7 +174,7 @@ func main() {
 		dbClient := &sql.Client{}
 
 		c := collector.NewCollector(nodePublicAddressStringFlag, nodePrivateAddressStringFlag,
-			syncMissingLayersBoolFlag, syncFromLayerFlag, recalculateEpochStatsBoolFlag, mongoStorage, db, dbClient)
+			syncMissingLayersBoolFlag, syncFromLayerFlag, recalculateEpochStatsBoolFlag, mongoStorage, db, dbClient, atxSyncFlag)
 		mongoStorage.AccountUpdater = c
 
 		sigs := make(chan os.Signal, 1)

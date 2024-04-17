@@ -53,7 +53,7 @@ func decoder(fn decoderCallback) sql.Decoder {
 func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.VerifiedActivationTx) bool) error {
 	var derr error
 	_, err := db.Exec(
-		fullQuery+` WHERE received > ?1 ORDER BY epoch asc, id asc`,
+		fullQuery+` WHERE received > ?1`,
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, ts)
 		},
@@ -77,6 +77,45 @@ func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types
 		fullQuery+` WHERE epoch = ?1 ORDER BY epoch asc, id asc`,
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, epoch)
+		},
+		decoder(func(atx *types.VerifiedActivationTx, err error) bool {
+			if atx != nil {
+				return fn(atx)
+			}
+			derr = err
+			return derr == nil
+		}),
+	)
+	if err != nil {
+		return err
+	}
+	return derr
+}
+
+func (c *Client) CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error) {
+	var totalCount int
+	_, err := db.Exec(
+		`SELECT COUNT(*) FROM atxs WHERE epoch = ?1`,
+		func(stmt *sql.Statement) {
+			stmt.BindInt64(1, epoch)
+		}, func(stmt *sql.Statement) bool {
+			totalCount = stmt.ColumnInt(0)
+			return true
+		})
+	if err != nil {
+		return 0, err
+	}
+	return totalCount, nil
+}
+
+func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+	var derr error
+	_, err := db.Exec(
+		fullQuery+` WHERE epoch = ?1 ORDER BY epoch asc, id asc LIMIT ?2 OFFSET ?3`,
+		func(stmt *sql.Statement) {
+			stmt.BindInt64(1, epoch)
+			stmt.BindInt64(2, limit)
+			stmt.BindInt64(3, offset)
 		},
 		decoder(func(atx *types.VerifiedActivationTx, err error) bool {
 			if atx != nil {

@@ -3,6 +3,7 @@ package collector
 import (
 	"context"
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/model"
 	"github.com/spacemeshos/explorer-backend/utils"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"go.mongodb.org/mongo-driver/bson"
@@ -238,13 +239,16 @@ func (c *Collector) syncActivations() error {
 	received := c.listener.GetLastActivationReceived()
 	log.Info("Syncing activations from %d", received)
 
+	var atxs []*model.Activation
 	err := c.dbClient.GetAtxsReceivedAfter(c.db, received, func(atx *types.VerifiedActivationTx) bool {
-		c.listener.OnActivation(atx)
+		atxs = append(atxs, model.NewActivation(atx))
 		return true
 	})
 	if err != nil {
 		return err
 	}
+
+	c.listener.OnActivations(atxs)
 
 	return nil
 }
