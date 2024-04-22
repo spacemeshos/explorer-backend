@@ -19,7 +19,7 @@ type Activation struct {
 	TickCount         uint64           `json:"tickCount" bson:"tickCount"`
 	Weight            uint64           `json:"weight" bson:"weight"`
 	EffectiveNumUnits uint32           `json:"effectiveNumUnits" bson:"effectiveNumUnits"`
-	Received          map[string]int64 `json:"received" bson:"cReceived"`
+	Received          map[string]int64 `json:"received" bson:"received"`
 }
 
 type ActivationService interface {
