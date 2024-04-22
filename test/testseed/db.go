@@ -214,6 +214,10 @@ func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset 
 	return nil
 }
 
+func (c *Client) GetAtxById(db *sql.Database, id string) (*types.VerifiedActivationTx, error) {
+	return nil, nil
+}
+
 func mustParse(str string) []byte {
 	res, err := utils.StringToBytes(str)
 	if err != nil {

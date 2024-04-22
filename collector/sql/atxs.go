@@ -2,9 +2,11 @@ package sql
 
 import (
 	"fmt"
+	"github.com/spacemeshos/explorer-backend/utils"
 	"github.com/spacemeshos/go-spacemesh/codec"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
+	"github.com/spacemeshos/go-spacemesh/sql/atxs"
 	"time"
 )
 
@@ -129,4 +131,21 @@ func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset 
 		return err
 	}
 	return derr
+}
+
+func (c *Client) GetAtxById(db *sql.Database, id string) (*types.VerifiedActivationTx, error) {
+	idBytes, err := utils.StringToBytes(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var atxId types.ATXID
+	copy(atxId[:], idBytes)
+
+	atx, err := atxs.Get(db, atxId)
+	if err != nil {
+		return nil, err
+	}
+
+	return atx, nil
 }
