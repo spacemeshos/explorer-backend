@@ -2,6 +2,7 @@ package collector_test
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -18,10 +19,10 @@ func TestAtxs(t *testing.T) {
 	require.Equal(t, len(generator.Activations), len(atxs))
 	for _, atx := range atxs {
 		// temporary hack until storage return data as slice of bson.B, not an struct.
-		atxEncoded, err := bson.Marshal(atx)
+		atxEncoded, err := json.Marshal(atx.Map())
 		require.NoError(t, err)
 		var tmpAtx model.Activation
-		require.NoError(t, bson.Unmarshal(atxEncoded, &tmpAtx))
+		require.NoError(t, json.Unmarshal(atxEncoded, &tmpAtx))
 		atxGen, ok := generator.Activations[tmpAtx.Id]
 		require.True(t, ok)
 		tmpAtx.Coinbase = strings.ToLower(tmpAtx.Coinbase)

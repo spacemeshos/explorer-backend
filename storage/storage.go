@@ -52,9 +52,8 @@ type AccountUpdaterService interface {
 }
 
 type Storage struct {
-	collectorName string
-	NetworkInfo   model.NetworkInfo
-	postUnitSize  uint64
+	NetworkInfo  model.NetworkInfo
+	postUnitSize uint64
 
 	client *mongo.Client
 	db     *mongo.Database
@@ -74,7 +73,7 @@ type Storage struct {
 	accountsReady *sync.Cond
 }
 
-func New(parent context.Context, collectorName string, dbUrl string, dbName string) (*Storage, error) {
+func New(parent context.Context, dbUrl string, dbName string) (*Storage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbUrl))
@@ -90,7 +89,6 @@ func New(parent context.Context, collectorName string, dbUrl string, dbName stri
 	}
 
 	s := &Storage{
-		collectorName: collectorName,
 		client:        client,
 		layersQueue:   list.New(),
 		layersReady:   sync.NewCond(&sync.Mutex{}),
@@ -427,14 +425,14 @@ func (s *Storage) updateNetworkStatus(layer *model.Layer) {
 func (s *Storage) OnActivation(atx *types.VerifiedActivationTx) {
 	log.Info("OnActivation(%s)", atx.String())
 
-	activation := model.NewActivation(atx, s.collectorName)
+	activation := model.NewActivation(atx)
 
 	err := s.SaveOrUpdateActivation(context.Background(), activation)
 	if err != nil {
 		log.Err(fmt.Errorf("OnActivation: error %v", err))
 	}
 
-	err = s.UpdateSmesher(context.Background(), activation.GetSmesher(s.postUnitSize, s.collectorName), activation.TargetEpoch)
+	err = s.UpdateSmesher(context.Background(), activation.GetSmesher(s.postUnitSize), activation.TargetEpoch)
 	if err != nil {
 		log.Err(fmt.Errorf("OnActivation: update smesher error %v", err))
 	}

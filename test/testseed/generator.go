@@ -255,9 +255,7 @@ func (s *SeedGenerator) generateActivation(layerNum uint32, atxNumUnits uint32, 
 		CommitmentSize:    uint64(atxNumUnits) * postUnitSize,
 		PublishEpoch:      epoch - 1,
 		TargetEpoch:       epoch,
-		Received: map[string]int64{
-			"collector-test": int64(tx),
-		},
+		Received:          int64(tx),
 	}
 }
 
