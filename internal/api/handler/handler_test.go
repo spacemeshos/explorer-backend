@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 		}
 	}
 
-	db, err := storage.New(context.Background(), "collector-test", mongoURL, testAPIServiceDB)
+	db, err := storage.New(context.Background(), mongoURL, testAPIServiceDB)
 	if err != nil {
 		fmt.Println("failed to init storage to mongo", err)
 		os.Exit(1)
