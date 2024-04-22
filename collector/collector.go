@@ -51,7 +51,6 @@ type Listener interface {
 }
 
 type Collector struct {
-	Name                      string
 	apiPublicUrl              string
 	apiPrivateUrl             string
 	syncMissingLayersFlag     bool
@@ -79,9 +78,8 @@ type Collector struct {
 	notify chan int
 }
 
-func NewCollector(name string, nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool, syncFromLayerFlag int, recalculateEpochStatsFlag bool, listener Listener, db *sql2.Database, dbClient sql.DatabaseClient) *Collector {
+func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool, syncFromLayerFlag int, recalculateEpochStatsFlag bool, listener Listener, db *sql2.Database, dbClient sql.DatabaseClient) *Collector {
 	return &Collector{
-		Name:                      name,
 		apiPublicUrl:              nodePublicAddress,
 		apiPrivateUrl:             nodePrivateAddress,
 		syncMissingLayersFlag:     syncMissingLayersFlag,
