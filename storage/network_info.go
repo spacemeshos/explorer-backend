@@ -57,6 +57,7 @@ func (s *Storage) SaveOrUpdateNetworkInfo(parent context.Context, in *model.Netw
 			{Key: "layers", Value: in.EpochNumLayers},
 			{Key: "maxtx", Value: in.MaxTransactionsPerSecond},
 			{Key: "duration", Value: in.LayerDuration},
+			{Key: "postUnitSize", Value: in.PostUnitSize},
 			{Key: "lastlayer", Value: in.LastLayer},
 			{Key: "lastlayerts", Value: in.LastLayerTimestamp},
 			{Key: "lastapprovedlayer", Value: in.LastApprovedLayer},

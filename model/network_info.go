@@ -6,6 +6,7 @@ type NetworkInfo struct {
 	EpochNumLayers           uint32 `json:"layers" bson:"layers"`
 	MaxTransactionsPerSecond uint32 `json:"maxtx" bson:"maxtx"`
 	LayerDuration            uint32 `json:"duration" bson:"duration"`
+	PostUnitSize             uint64 `json:"postUnitSize" bson:"postUnitSize"`
 
 	LastLayer          uint32 `json:"lastlayer" bson:"lastlayer"`
 	LastLayerTimestamp uint32 `json:"lastlayerts" bson:"lastlayerts"`

@@ -155,6 +155,7 @@ func (s *Storage) OnNetworkInfo(genesisId string, genesisTime uint64, epochNumLa
 	s.NetworkInfo.EpochNumLayers = epochNumLayers
 	s.NetworkInfo.MaxTransactionsPerSecond = uint32(maxTransactionsPerSecond)
 	s.NetworkInfo.LayerDuration = uint32(layerDuration)
+	s.NetworkInfo.PostUnitSize = postUnitSize
 	s.postUnitSize = postUnitSize
 
 	err := s.SaveOrUpdateNetworkInfo(context.Background(), &s.NetworkInfo)

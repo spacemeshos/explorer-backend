@@ -16,6 +16,7 @@ type DatabaseClient interface {
 	GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error
 	CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error)
 	GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.VerifiedActivationTx) bool) error
+	GetAtxById(db *sql.Database, id string) (*types.VerifiedActivationTx, error)
 }
 
 type Client struct{}

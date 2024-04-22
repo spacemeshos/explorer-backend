@@ -14,7 +14,26 @@ import (
 func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 	e := echo.New()
 
-	e.GET("/sync/atx/ts/:ts", func(ctx echo.Context) error {
+	e.GET("/sync/atx/:id", func(ctx echo.Context) error {
+		id := ctx.Param("id")
+
+		log.Info("http syncing atx %s", id)
+		go func() {
+			atx, err := c.dbClient.GetAtxById(c.db, id)
+			if err != nil {
+				log.Warning("syncing atx %s failed with error %d", id, err)
+				return
+			}
+			if atx != nil {
+				c.listener.OnActivation(atx)
+				c.listener.RecalculateEpochStats()
+			}
+		}()
+
+		return ctx.NoContent(http.StatusOK)
+	})
+
+	e.GET("/sync/atxs/ts/:ts", func(ctx echo.Context) error {
 		ts := ctx.Param("ts")
 		timestamp, err := strconv.ParseInt(ts, 10, 64)
 		if err != nil {
@@ -37,7 +56,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 		return ctx.NoContent(http.StatusOK)
 	})
 
-	e.GET("/sync/bulk/atx/ts/:ts", func(ctx echo.Context) error {
+	e.GET("/sync/bulk/atxs/ts/:ts", func(ctx echo.Context) error {
 		ts := ctx.Param("ts")
 		timestamp, err := strconv.ParseInt(ts, 10, 64)
 		if err != nil {
@@ -62,7 +81,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 		return ctx.NoContent(http.StatusOK)
 	})
 
-	e.GET("/sync/atx/:epoch", func(ctx echo.Context) error {
+	e.GET("/sync/atxs/:epoch", func(ctx echo.Context) error {
 		epoch := ctx.Param("epoch")
 		epochId, err := strconv.ParseInt(epoch, 10, 64)
 		if err != nil {
@@ -85,7 +104,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 		return ctx.NoContent(http.StatusOK)
 	})
 
-	e.GET("/sync/bulk/atx/:epoch", func(ctx echo.Context) error {
+	e.GET("/sync/bulk/atxs/:epoch", func(ctx echo.Context) error {
 		epoch := ctx.Param("epoch")
 		epochId, err := strconv.ParseInt(epoch, 10, 64)
 		if err != nil {
