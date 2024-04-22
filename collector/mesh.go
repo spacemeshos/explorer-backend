@@ -85,7 +85,7 @@ func (c *Collector) syncMissingLayers() error {
 	for i := lastLayer + 1; i <= syncedLayerNum; i++ {
 		err := c.syncLayer(types.LayerID(i))
 		if err != nil {
-			fmt.Errorf("syncMissingLayers error: %v", err)
+			log.Warning("syncMissingLayers error: %v", err)
 		}
 	}
 
@@ -156,14 +156,14 @@ func (c *Collector) syncLayer(lid types.LayerID) error {
 	log.Info("syncing accounts for layer: %d", layer.Number.Number)
 	accounts, err := c.dbClient.AccountsSnapshot(c.db, lid)
 	if err != nil {
-		fmt.Errorf("%v\n", err)
+		log.Warning("%v\n", err)
 	}
 	c.listener.OnAccounts(accounts)
 
 	log.Info("syncing rewards for layer: %d", layer.Number.Number)
 	rewards, err := c.dbClient.GetLayerRewards(c.db, lid)
 	if err != nil {
-		fmt.Errorf("%v\n", err)
+		log.Warning("%v\n", err)
 	}
 
 	for _, reward := range rewards {
