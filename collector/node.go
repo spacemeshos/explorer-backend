@@ -46,24 +46,24 @@ func (c *Collector) syncStatusPump() error {
 			for i := lastLayer + 1; i <= status.GetVerifiedLayer().GetNumber(); i++ {
 				err := c.syncLayer(types.LayerID(i))
 				if err != nil {
-					fmt.Errorf("syncLayer error: %v", err)
+					log.Warning("syncLayer error: %v", err)
 				}
 
 				err = c.syncNotProcessedTxs()
 				if err != nil {
-					fmt.Errorf("syncNotProcessedTxs error: %v", err)
+					log.Warning("syncNotProcessedTxs error: %v", err)
 				}
 
 				if c.atxSyncFlag {
 					err = c.syncActivations()
 					if err != nil {
-						fmt.Errorf("syncActivations error: %v", err)
+						log.Warning("syncActivations error: %v", err)
 					}
 				}
 
 				err = c.createFutureEpoch()
 				if err != nil {
-					fmt.Errorf("createFutureEpoch error: %v", err)
+					log.Warning("createFutureEpoch error: %v", err)
 				}
 			}
 		}
