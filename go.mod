@@ -1,6 +1,6 @@
 module github.com/spacemeshos/explorer-backend
 
-go 1.21.8
+go 1.22.2
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.1
@@ -10,15 +10,15 @@ require (
 	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/prometheus/client_golang v1.19.0
 	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
-	github.com/spacemeshos/api/release/go v1.34.0
-	github.com/spacemeshos/go-scale v1.1.13
-	github.com/spacemeshos/go-spacemesh v1.4.2
+	github.com/spacemeshos/api/release/go v1.37.0
+	github.com/spacemeshos/go-scale v1.2.0
+	github.com/spacemeshos/go-spacemesh v1.5.0
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.1
 	go.mongodb.org/mongo-driver v1.10.1
 	golang.org/x/net v0.23.0
-	golang.org/x/sync v0.6.0
-	google.golang.org/grpc v1.62.1
+	golang.org/x/sync v0.7.0
+	google.golang.org/grpc v1.63.2
 )
 
 require (
@@ -52,14 +52,14 @@ require (
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_model v0.6.0 // indirect
-	github.com/prometheus/common v0.50.0 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.52.3 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spacemeshos/merkle-tree v0.2.3 // indirect
 	github.com/spacemeshos/poet v0.10.2 // indirect
-	github.com/spacemeshos/post v0.12.5 // indirect
+	github.com/spacemeshos/post v0.12.6 // indirect
 	github.com/spacemeshos/sha256-simd v0.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
@@ -78,8 +78,8 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240304161311-37d4d3c04a78 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
