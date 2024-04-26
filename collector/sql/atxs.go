@@ -3,6 +3,7 @@ package sql
 import (
 	"fmt"
 	"github.com/spacemeshos/explorer-backend/utils"
+	"github.com/spacemeshos/go-spacemesh/activation/wire"
 	"github.com/spacemeshos/go-spacemesh/codec"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
@@ -10,8 +11,11 @@ import (
 	"time"
 )
 
-const fullQuery = `select id, atx, base_tick_height, tick_count, pubkey,
-	effective_num_units, received, epoch, sequence, coinbase from atxs`
+const fullQuery = `select id,
+        (select atx from atx_blobs b where a.id = b.id) as atx,
+        base_tick_height, tick_count, pubkey,
+	effective_num_units, received, epoch, sequence, coinbase, validity
+	from atxs a`
 
 type decoderCallback func(*types.VerifiedActivationTx, error) bool
 
@@ -24,9 +28,11 @@ func decoder(fn decoderCallback) sql.Decoder {
 		stmt.ColumnBytes(0, id[:])
 		checkpointed := stmt.ColumnLen(1) == 0
 		if !checkpointed {
-			if _, err := codec.DecodeFrom(stmt.ColumnReader(1), &a); err != nil {
+			var atxV1 wire.ActivationTxV1
+			if _, err := codec.DecodeFrom(stmt.ColumnReader(1), &atxV1); err != nil {
 				return fn(nil, fmt.Errorf("decode %w", err))
 			}
+			a = *wire.ActivationTxFromWireV1(&atxV1)
 		}
 		a.SetID(id)
 		baseTickHeight := uint64(stmt.ColumnInt64(2))
@@ -44,6 +50,7 @@ func decoder(fn decoderCallback) sql.Decoder {
 		a.PublishEpoch = types.EpochID(uint32(stmt.ColumnInt(7)))
 		a.Sequence = uint64(stmt.ColumnInt64(8))
 		stmt.ColumnBytes(9, a.Coinbase[:])
+		a.SetValidity(types.Validity(stmt.ColumnInt(10)))
 		v, err := a.Verify(baseTickHeight, tickCount)
 		if err != nil {
 			return fn(nil, err)
