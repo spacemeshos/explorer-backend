@@ -8,6 +8,7 @@ import (
 	"github.com/spacemeshos/explorer-backend/collector"
 	"github.com/spacemeshos/explorer-backend/collector/sql"
 	"github.com/spacemeshos/explorer-backend/storage"
+	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/urfave/cli/v2"
 	"net/http"
@@ -157,6 +158,7 @@ func main() {
 
 		if testnetBoolFlag {
 			address.SetAddressConfig("stest")
+			types.SetNetworkHRP("stest")
 			log.Info(`Network HRP set to "stest"`)
 		}
 
