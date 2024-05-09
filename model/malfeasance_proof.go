@@ -6,15 +6,17 @@ import (
 )
 
 type MalfeasanceProof struct {
-	Smesher string `json:"smesher" bson:"smesher"`
-	Layer   uint32 `json:"layer" bson:"layer"`
-	Kind    string `json:"kind" bson:"kind"`
+	Smesher   string `json:"smesher" bson:"smesher"`
+	Layer     uint32 `json:"layer" bson:"layer"`
+	Kind      string `json:"kind" bson:"kind"`
+	DebugInfo string `json:"debugInfo" bson:"debugInfo"`
 }
 
 func NewMalfeasanceProof(in *pb.MalfeasanceProof) *MalfeasanceProof {
 	return &MalfeasanceProof{
-		Smesher: utils.BytesToHex(in.GetSmesherId().GetId()),
-		Layer:   in.Layer.GetNumber(),
-		Kind:    in.Kind.String(),
+		Smesher:   utils.BytesToHex(in.GetSmesherId().GetId()),
+		Layer:     in.Layer.GetNumber(),
+		Kind:      in.Kind.String(),
+		DebugInfo: in.DebugInfo,
 	}
 }

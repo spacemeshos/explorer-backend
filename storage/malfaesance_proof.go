@@ -21,6 +21,7 @@ func (s *Storage) SaveMalfeasanceProof(parent context.Context, in *model.Malfeas
 			{Key: "smesher", Value: in.Smesher},
 			{Key: "layer", Value: in.Layer},
 			{Key: "kind", Value: in.Kind},
+			{Key: "debugInfo", Value: in.DebugInfo},
 		}},
 	}, options.Update().SetUpsert(true))
 	if err != nil {
