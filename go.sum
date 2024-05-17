@@ -282,8 +282,8 @@ github.com/spacemeshos/fixed v0.1.1 h1:N1y4SUpq1EV+IdJrWJwUCt1oBFzeru/VKVcBsvPc2
 github.com/spacemeshos/fixed v0.1.1/go.mod h1:B/moObha9wGnwljZP+w/dYAwzv097aL9VV8Oyv2cM/E=
 github.com/spacemeshos/go-scale v1.2.0 h1:ZlA2L1ILym2gmyJUwUdLTiyP1ZIG0U4xE9nFVFLi83M=
 github.com/spacemeshos/go-scale v1.2.0/go.mod h1:HV6e3/X5h9u2aFpYKJxt7PY/fBuLBegEKWgeZJ+/5jE=
-github.com/spacemeshos/go-spacemesh v1.5.2-hotfix1 h1:olMmES1BgbkHJpkZbjKHRpb7NdDfzIYGShXrNbhpmNs=
-github.com/spacemeshos/go-spacemesh v1.5.2-hotfix1/go.mod h1:agJTs0XXtFUJgsz0mVV+oNHRILvwjiL4AzuB9z+L0zI=
+github.com/spacemeshos/go-spacemesh v1.5.3 h1:jOJuTIhkDKNkwu+kJnmypudO7aN9gjPEbBOsazSKtng=
+github.com/spacemeshos/go-spacemesh v1.5.3/go.mod h1:agJTs0XXtFUJgsz0mVV+oNHRILvwjiL4AzuB9z+L0zI=
 github.com/spacemeshos/merkle-tree v0.2.3 h1:zGEgOR9nxAzJr0EWjD39QFngwFEOxfxMloEJZtAysas=
 github.com/spacemeshos/merkle-tree v0.2.3/go.mod h1:VomOcQ5pCBXz7goiWMP5hReyqOfDXGSKbrH2GB9Htww=
 github.com/spacemeshos/poet v0.10.2 h1:FVb0xgCFcjZyIGBQ92SlOZVx4KCmlCRRL4JSHL6LMGU=
