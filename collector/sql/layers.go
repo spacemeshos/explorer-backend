@@ -34,6 +34,9 @@ func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32)
 	layer := types.NewExistingLayer(lid, blts, blks)
 
 	for _, b := range layer.Blocks() {
+		if b == nil {
+			continue
+		}
 		mtxs, missing := getMeshTransactions(db, b.TxIDs)
 		if len(missing) != 0 {
 			return nil, status.Errorf(codes.Internal, "error retrieving tx data")

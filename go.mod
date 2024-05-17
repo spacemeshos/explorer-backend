@@ -12,7 +12,7 @@ require (
 	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
 	github.com/spacemeshos/api/release/go v1.37.0
 	github.com/spacemeshos/go-scale v1.2.0
-	github.com/spacemeshos/go-spacemesh v1.5.2-hotfix1
+	github.com/spacemeshos/go-spacemesh v1.5.3
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.1
 	go.mongodb.org/mongo-driver v1.10.1
