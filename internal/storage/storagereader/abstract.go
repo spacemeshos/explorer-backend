@@ -46,6 +46,7 @@ type StorageReader interface {
 	CountCoinbaseRewards(ctx context.Context, coinbase string) (total, count int64, err error)
 	GetRewards(ctx context.Context, query *bson.D, opts ...*options.FindOptions) ([]*model.Reward, error)
 	GetReward(ctx context.Context, rewardID string) (*model.Reward, error)
+	GetRewardV2(ctx context.Context, smesherID string, layer uint32) (*model.Reward, error)
 	GetLatestReward(ctx context.Context, coinbase string) (*model.Reward, error)
 	GetTotalRewards(ctx context.Context, filter *bson.D) (total, count int64, err error)
 

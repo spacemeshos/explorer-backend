@@ -23,6 +23,7 @@ type Reward struct {
 
 type RewardService interface {
 	GetReward(ctx context.Context, rewardID string) (*Reward, error)
+	GetRewardV2(ctx context.Context, smesherID string, layer uint32) (*Reward, error)
 	GetRewards(ctx context.Context, page, perPage int64) ([]*Reward, int64, error)
 	GetTotalRewards(ctx context.Context, filter *bson.D) (int64, int64, error)
 }
