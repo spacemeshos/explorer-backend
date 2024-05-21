@@ -22,6 +22,17 @@ func (e *Service) GetReward(ctx context.Context, rewardID string) (*model.Reward
 	return reward, nil
 }
 
+func (e *Service) GetRewardV2(ctx context.Context, smesherID string, layer uint32) (*model.Reward, error) {
+	reward, err := e.storage.GetRewardV2(ctx, smesherID, layer)
+	if err != nil {
+		return nil, fmt.Errorf("error while getting reward: %w", err)
+	}
+	if reward == nil {
+		return nil, ErrNotFound
+	}
+	return reward, nil
+}
+
 // GetRewards returns rewards by filter.
 func (e *Service) GetRewards(ctx context.Context, page, perPage int64) ([]*model.Reward, int64, error) {
 	return e.getRewards(ctx, &bson.D{}, options.Find().SetSort(bson.D{{Key: "layer", Value: -1}}).SetLimit(perPage).SetSkip((page-1)*perPage))
