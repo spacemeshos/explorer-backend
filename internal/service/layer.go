@@ -45,11 +45,15 @@ func (e *Service) GetLayer(ctx context.Context, layerNum int) (*model.Layer, err
 		return nil, ErrNotFound
 	}
 
-	c, derr := e.storage.CountTransactions(ctx, &bson.D{{Key: "layer", Value: layer.Number}})
+	txs, derr := e.storage.GetTransactions(ctx, &bson.D{{Key: "layer", Value: layer.Number}})
 	if derr != nil {
 		return nil, fmt.Errorf("failed to count txs for layer %d: %w", layer.Number, derr)
 	}
-	layer.Txs = uint32(c)
+	layer.Txs = uint32(len(txs))
+	layer.TxsAmount = 0
+	for _, tx := range txs {
+		layer.TxsAmount += tx.Amount
+	}
 
 	return layer, nil
 }
@@ -78,11 +82,15 @@ func (e *Service) GetLayers(ctx context.Context, page, perPage int64) (layers []
 	}
 
 	for _, layer := range layers {
-		c, derr := e.storage.CountTransactions(ctx, &bson.D{{Key: "layer", Value: layer.Number}})
+		txs, derr := e.storage.GetTransactions(ctx, &bson.D{{Key: "layer", Value: layer.Number}})
 		if derr != nil {
 			return nil, 0, fmt.Errorf("failed to count txs for layer %d: %w", layer.Number, derr)
 		}
-		layer.Txs = uint32(c)
+		layer.Txs = uint32(len(txs))
+		layer.TxsAmount = 0
+		for _, tx := range txs {
+			layer.TxsAmount += tx.Amount
+		}
 	}
 	return layers, total, nil
 }
