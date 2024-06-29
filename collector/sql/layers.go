@@ -118,9 +118,9 @@ func getMeshTransactions(db *sql.Database, ids []types.TransactionID) ([]*types.
 	return mtxs, missing
 }
 
-func GetATXs(db *sql.Database, atxIds []types.ATXID) (map[types.ATXID]*types.VerifiedActivationTx, []types.ATXID) {
+func GetATXs(db *sql.Database, atxIds []types.ATXID) (map[types.ATXID]*types.ActivationTx, []types.ATXID) {
 	var mIds []types.ATXID
-	a := make(map[types.ATXID]*types.VerifiedActivationTx, len(atxIds))
+	a := make(map[types.ATXID]*types.ActivationTx, len(atxIds))
 	for _, id := range atxIds {
 		t, err := getFullAtx(db, id)
 		if err != nil {
@@ -132,7 +132,7 @@ func GetATXs(db *sql.Database, atxIds []types.ATXID) (map[types.ATXID]*types.Ver
 	return a, mIds
 }
 
-func getFullAtx(db *sql.Database, id types.ATXID) (*types.VerifiedActivationTx, error) {
+func getFullAtx(db *sql.Database, id types.ATXID) (*types.ActivationTx, error) {
 	if id == types.EmptyATXID {
 		return nil, errors.New("trying to fetch empty atx id")
 	}
@@ -172,7 +172,7 @@ func castTransaction(t *types.Transaction) *pb.Transaction {
 	return tx
 }
 
-func convertActivation(a *types.VerifiedActivationTx) *pb.Activation {
+func convertActivation(a *types.ActivationTx) *pb.Activation {
 	return &pb.Activation{
 		Id:        &pb.ActivationId{Id: a.ID().Bytes()},
 		Layer:     &pb.LayerNumber{Number: a.PublishEpoch.Uint32()},

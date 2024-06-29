@@ -27,7 +27,7 @@ type ActivationService interface {
 	GetActivation(ctx context.Context, activationID string) (*Activation, error)
 }
 
-func NewActivation(atx *types.VerifiedActivationTx) *Activation {
+func NewActivation(atx *types.ActivationTx) *Activation {
 	return &Activation{
 		Id:                utils.BytesToHex(atx.ID().Bytes()),
 		PublishEpoch:      atx.PublishEpoch.Uint32(),
@@ -36,9 +36,9 @@ func NewActivation(atx *types.VerifiedActivationTx) *Activation {
 		Coinbase:          atx.Coinbase.String(),
 		PrevAtx:           utils.BytesToHex(atx.PrevATXID.Bytes()),
 		NumUnits:          atx.NumUnits,
-		TickCount:         atx.TickCount(),
+		TickCount:         atx.TickCount,
 		Weight:            atx.GetWeight(),
-		EffectiveNumUnits: atx.EffectiveNumUnits(),
+		EffectiveNumUnits: atx.NumUnits,
 		Received:          atx.Received().UnixNano(),
 	}
 }

@@ -42,7 +42,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 
 		log.Info("http syncing atxs from %d", timestamp)
 		go func() {
-			err = c.dbClient.GetAtxsReceivedAfter(c.db, timestamp, func(atx *types.VerifiedActivationTx) bool {
+			err = c.dbClient.GetAtxsReceivedAfter(c.db, timestamp, func(atx *types.ActivationTx) bool {
 				c.listener.OnActivation(atx)
 				return true
 			})
@@ -66,7 +66,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 		log.Info("http syncing atxs from %d", timestamp)
 		go func() {
 			var atxs []*model.Activation
-			err = c.dbClient.GetAtxsReceivedAfter(c.db, timestamp, func(atx *types.VerifiedActivationTx) bool {
+			err = c.dbClient.GetAtxsReceivedAfter(c.db, timestamp, func(atx *types.ActivationTx) bool {
 				atxs = append(atxs, model.NewActivation(atx))
 				return true
 			})
@@ -90,7 +90,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 
 		log.Info("http syncing atxs for epoch %s", epoch)
 		go func() {
-			err = c.dbClient.GetAtxsByEpoch(c.db, epochId, func(atx *types.VerifiedActivationTx) bool {
+			err = c.dbClient.GetAtxsByEpoch(c.db, epochId, func(atx *types.ActivationTx) bool {
 				c.listener.OnActivation(atx)
 				return true
 			})
@@ -123,7 +123,7 @@ func (c *Collector) StartHttpServer(apiHost string, apiPort int) {
 			for page := 0; page < totalPages; page++ {
 				offset := page * batchSize
 				var atxs []*model.Activation
-				err = c.dbClient.GetAtxsByEpochPaginated(c.db, epochId, int64(batchSize), int64(offset), func(atx *types.VerifiedActivationTx) bool {
+				err = c.dbClient.GetAtxsByEpochPaginated(c.db, epochId, int64(batchSize), int64(offset), func(atx *types.ActivationTx) bool {
 					atxs = append(atxs, model.NewActivation(atx))
 					return true
 				})

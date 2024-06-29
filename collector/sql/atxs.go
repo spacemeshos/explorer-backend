@@ -1,23 +1,24 @@
 package sql
 
 import (
-	"fmt"
+	sqlite "github.com/go-llsqlite/crawshaw"
 	"github.com/spacemeshos/explorer-backend/utils"
-	"github.com/spacemeshos/go-spacemesh/activation/wire"
-	"github.com/spacemeshos/go-spacemesh/codec"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
 	"github.com/spacemeshos/go-spacemesh/sql/atxs"
 	"time"
 )
 
-const fullQuery = `select id,
-        (select atx from atx_blobs b where a.id = b.id) as atx,
-        base_tick_height, tick_count, pubkey,
-	effective_num_units, received, epoch, sequence, coinbase, validity
-	from atxs a`
+// Query to retrieve ATXs.
+// Can't use inner join for the ATX blob here b/c this will break
+// filters that refer to the id column.
+const fieldsQuery = `select
+atxs.id, atxs.nonce, atxs.base_tick_height, atxs.tick_count, atxs.pubkey, atxs.effective_num_units,
+atxs.received, atxs.epoch, atxs.sequence, atxs.coinbase, atxs.validity, atxs.prev_id, atxs.commitment_atx`
 
-type decoderCallback func(*types.VerifiedActivationTx, error) bool
+const fullQuery = fieldsQuery + ` from atxs`
+
+type decoderCallback func(*types.ActivationTx) bool
 
 func decoder(fn decoderCallback) sql.Decoder {
 	return func(stmt *sql.Statement) bool {
@@ -26,52 +27,49 @@ func decoder(fn decoderCallback) sql.Decoder {
 			id types.ATXID
 		)
 		stmt.ColumnBytes(0, id[:])
-		checkpointed := stmt.ColumnLen(1) == 0
-		if !checkpointed {
-			var atxV1 wire.ActivationTxV1
-			if _, err := codec.DecodeFrom(stmt.ColumnReader(1), &atxV1); err != nil {
-				return fn(nil, fmt.Errorf("decode %w", err))
-			}
-			a = *wire.ActivationTxFromWireV1(&atxV1)
-		}
 		a.SetID(id)
-		baseTickHeight := uint64(stmt.ColumnInt64(2))
-		tickCount := uint64(stmt.ColumnInt64(3))
+		a.VRFNonce = types.VRFPostIndex(stmt.ColumnInt64(1))
+		a.BaseTickHeight = uint64(stmt.ColumnInt64(2))
+		a.TickCount = uint64(stmt.ColumnInt64(3))
 		stmt.ColumnBytes(4, a.SmesherID[:])
-		effectiveNumUnits := uint32(stmt.ColumnInt32(5))
-		a.SetEffectiveNumUnits(effectiveNumUnits)
-		if checkpointed {
+		a.NumUnits = uint32(stmt.ColumnInt32(5))
+		// Note: received is assigned `0` for checkpointed ATXs.
+		// We treat `0` as 'zero time'.
+		// We could use `NULL` instead, but the column has "NOT NULL" constraint.
+		// In future, consider changing the schema to allow `NULL` for received.
+		if received := stmt.ColumnInt64(6); received == 0 {
 			a.SetGolden()
-			a.NumUnits = effectiveNumUnits
-			a.SetReceived(time.Time{})
 		} else {
-			a.SetReceived(time.Unix(0, stmt.ColumnInt64(6)).Local())
+			a.SetReceived(time.Unix(0, received).Local())
 		}
 		a.PublishEpoch = types.EpochID(uint32(stmt.ColumnInt(7)))
 		a.Sequence = uint64(stmt.ColumnInt64(8))
 		stmt.ColumnBytes(9, a.Coinbase[:])
 		a.SetValidity(types.Validity(stmt.ColumnInt(10)))
-		v, err := a.Verify(baseTickHeight, tickCount)
-		if err != nil {
-			return fn(nil, err)
+		if stmt.ColumnType(11) != sqlite.SQLITE_NULL {
+			stmt.ColumnBytes(11, a.PrevATXID[:])
 		}
-		return fn(v, nil)
+		if stmt.ColumnType(12) != sqlite.SQLITE_NULL {
+			a.CommitmentATX = new(types.ATXID)
+			stmt.ColumnBytes(12, a.CommitmentATX[:])
+		}
+
+		return fn(&a)
 	}
 }
 
-func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.ActivationTx) bool) error {
 	var derr error
 	_, err := db.Exec(
 		fullQuery+` WHERE received > ?1`,
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, ts)
 		},
-		decoder(func(atx *types.VerifiedActivationTx, err error) bool {
+		decoder(func(atx *types.ActivationTx) bool {
 			if atx != nil {
 				return fn(atx)
 			}
-			derr = err
-			return derr == nil
+			return true
 		}),
 	)
 	if err != nil {
@@ -80,19 +78,18 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 	return derr
 }
 
-func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.ActivationTx) bool) error {
 	var derr error
 	_, err := db.Exec(
 		fullQuery+` WHERE epoch = ?1 ORDER BY epoch asc, id asc`,
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, epoch)
 		},
-		decoder(func(atx *types.VerifiedActivationTx, err error) bool {
+		decoder(func(atx *types.ActivationTx) bool {
 			if atx != nil {
 				return fn(atx)
 			}
-			derr = err
-			return derr == nil
+			return true
 		}),
 	)
 	if err != nil {
@@ -117,7 +114,7 @@ func (c *Client) CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error) {
 	return totalCount, nil
 }
 
-func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.ActivationTx) bool) error {
 	var derr error
 	_, err := db.Exec(
 		fullQuery+` WHERE epoch = ?1 ORDER BY epoch asc, id asc LIMIT ?2 OFFSET ?3`,
@@ -126,12 +123,11 @@ func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset 
 			stmt.BindInt64(2, limit)
 			stmt.BindInt64(3, offset)
 		},
-		decoder(func(atx *types.VerifiedActivationTx, err error) bool {
+		decoder(func(atx *types.ActivationTx) bool {
 			if atx != nil {
 				return fn(atx)
 			}
-			derr = err
-			return derr == nil
+			return true
 		}),
 	)
 	if err != nil {
@@ -140,7 +136,7 @@ func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset 
 	return derr
 }
 
-func (c *Client) GetAtxById(db *sql.Database, id string) (*types.VerifiedActivationTx, error) {
+func (c *Client) GetAtxById(db *sql.Database, id string) (*types.ActivationTx, error) {
 	idBytes, err := utils.StringToBytes(id)
 	if err != nil {
 		return nil, err
