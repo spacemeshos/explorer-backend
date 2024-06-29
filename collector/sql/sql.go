@@ -12,11 +12,11 @@ type DatabaseClient interface {
 	GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*types.Reward, err error)
 	GetAllRewards(db *sql.Database) (rst []*types.Reward, err error)
 	AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*types.Account, err error)
-	GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.VerifiedActivationTx) bool) error
-	GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error
+	GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.ActivationTx) bool) error
+	GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.ActivationTx) bool) error
 	CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error)
-	GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.VerifiedActivationTx) bool) error
-	GetAtxById(db *sql.Database, id string) (*types.VerifiedActivationTx, error)
+	GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.ActivationTx) bool) error
+	GetAtxById(db *sql.Database, id string) (*types.ActivationTx, error)
 }
 
 type Client struct{}

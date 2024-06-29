@@ -45,7 +45,7 @@ type Listener interface {
 	GetTransactions(parent context.Context, query *bson.D, opts ...*options.FindOptions) ([]model.Transaction, error)
 	UpdateTransactionState(parent context.Context, id string, state int32) error
 	UpdateEpochStats(layer uint32)
-	OnActivation(atx *types.VerifiedActivationTx)
+	OnActivation(atx *types.ActivationTx)
 	GetLastActivationReceived() int64
 	RecalculateEpochStats()
 	OnActivations(atxs []*model.Activation)

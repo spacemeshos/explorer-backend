@@ -240,7 +240,7 @@ func (c *Collector) syncActivations() error {
 	log.Info("Syncing activations from %d", received)
 
 	var atxs []*model.Activation
-	err := c.dbClient.GetAtxsReceivedAfter(c.db, received, func(atx *types.VerifiedActivationTx) bool {
+	err := c.dbClient.GetAtxsReceivedAfter(c.db, received, func(atx *types.ActivationTx) bool {
 		atxs = append(atxs, model.NewActivation(atx))
 		return true
 	})

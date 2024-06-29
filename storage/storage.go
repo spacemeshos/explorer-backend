@@ -423,7 +423,7 @@ func (s *Storage) updateNetworkStatus(layer *model.Layer) {
 	}
 }
 
-func (s *Storage) OnActivation(atx *types.VerifiedActivationTx) {
+func (s *Storage) OnActivation(atx *types.ActivationTx) {
 	log.Info("OnActivation(%s)", atx.ShortString())
 
 	activation := model.NewActivation(atx)

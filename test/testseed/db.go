@@ -158,7 +158,7 @@ func (c *Client) AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*t
 	return rst, nil
 }
 
-func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.ActivationTx) bool) error {
 	for _, generatedAtx := range c.SeedGen.Activations {
 		smesherIdBytes, _ := utils.StringToBytes(generatedAtx.SmesherId)
 		var nodeId types.NodeID
@@ -177,23 +177,16 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 		var atxId types.ATXID
 		copy(atxId[:], atxIdBytes)
 
-		atx := &types.VerifiedActivationTx{
-			ActivationTx: &types.ActivationTx{
-				InnerActivationTx: types.InnerActivationTx{
-					NIPostChallenge: types.NIPostChallenge{
-						Sequence:     1,
-						PrevATXID:    prevAtx,
-						PublishEpoch: types.EpochID(generatedAtx.PublishEpoch),
-					},
-					Coinbase: addr,
-					NumUnits: generatedAtx.NumUnits,
-					NodeID:   &nodeId,
-				},
-				SmesherID: nodeId,
-			},
+		atx := &types.ActivationTx{
+			PrevATXID:    prevAtx,
+			PublishEpoch: types.EpochID(generatedAtx.PublishEpoch),
+			Sequence:     1,
+			Coinbase:     addr,
+			NumUnits:     generatedAtx.NumUnits,
+			SmesherID:    nodeId,
 		}
 
-		atx.SetEffectiveNumUnits(generatedAtx.NumUnits)
+		atx.NumUnits = generatedAtx.NumUnits
 		atx.SetID(atxId)
 		atx.SetReceived(time.Unix(0, generatedAtx.Received))
 
@@ -202,7 +195,7 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 	return nil
 }
 
-func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.ActivationTx) bool) error {
 	return nil
 }
 
@@ -210,11 +203,11 @@ func (c *Client) CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error) {
 	return 0, nil
 }
 
-func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.VerifiedActivationTx) bool) error {
+func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.ActivationTx) bool) error {
 	return nil
 }
 
-func (c *Client) GetAtxById(db *sql.Database, id string) (*types.VerifiedActivationTx, error) {
+func (c *Client) GetAtxById(db *sql.Database, id string) (*types.ActivationTx, error) {
 	return nil, nil
 }
 
