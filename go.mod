@@ -5,7 +5,8 @@ go 1.22.3
 toolchain go1.22.4
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.1
+	github.com/go-llsqlite/crawshaw v0.5.3
+	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.1
 	github.com/labstack/echo/v4 v4.9.1
@@ -35,7 +36,6 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/go-llsqlite/crawshaw v0.5.3 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
