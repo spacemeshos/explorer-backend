@@ -287,6 +287,7 @@ func (s *Storage) OnTransactionResult(res *pb.TransactionResult, state *pb.Trans
 	tx, err := model.NewTransactionResult(res, state, s.NetworkInfo)
 	if err != nil {
 		log.Err(fmt.Errorf("OnTransactionResult: error %v", err))
+		return
 	}
 
 	err = s.SaveTransactionResult(context.Background(), tx)
