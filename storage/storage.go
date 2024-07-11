@@ -228,6 +228,8 @@ func (s *Storage) OnAccounts(accounts []*types.Account) {
 			{Key: "$set", Value: bson.D{
 				{Key: "balance", Value: acc.Balance},
 				{Key: "counter", Value: acc.NextNonce},
+			}},
+			{Key: "$setOnInsert", Value: bson.D{
 				{Key: "created", Value: acc.Layer.Uint32()},
 			}},
 		}

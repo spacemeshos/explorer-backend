@@ -41,27 +41,50 @@ func (s *Storage) GetTransaction(parent context.Context, query *bson.D) (*model.
 		log.Info("GetTransaction: Empty result")
 		return nil, errors.New("empty result")
 	}
+
 	doc := cursor.Current
+
+	var signatures []model.SignaturePart
+	if doc.Lookup("signatures").Type == bson.TypeArray {
+		sigsArray, err := doc.Lookup("signatures").Array().Values()
+		if err != nil {
+			return nil, err
+		}
+		for _, sig := range sigsArray {
+			signatures = append(signatures, model.SignaturePart{
+				Ref:       utils.GetAsUInt32(sig.Document().Lookup("ref")),
+				Signature: utils.GetAsString(sig.Document().Lookup("signature")),
+			})
+		}
+	}
+
 	tx := &model.Transaction{
-		Id:         utils.GetAsString(doc.Lookup("id")),
-		Layer:      utils.GetAsUInt32(doc.Lookup("layer")),
-		Block:      utils.GetAsString(doc.Lookup("block")),
-		BlockIndex: utils.GetAsUInt32(doc.Lookup("blockIndex")),
-		Index:      utils.GetAsUInt32(doc.Lookup("index")),
-		State:      utils.GetAsInt(doc.Lookup("state")),
-		Timestamp:  utils.GetAsUInt32(doc.Lookup("timestamp")),
-		MaxGas:     utils.GetAsUInt64(doc.Lookup("maxGas")),
-		GasPrice:   utils.GetAsUInt64(doc.Lookup("gasPrice")),
-		GasUsed:    utils.GetAsUInt64(doc.Lookup("gasUsed")),
-		Fee:        utils.GetAsUInt64(doc.Lookup("fee")),
-		Amount:     utils.GetAsUInt64(doc.Lookup("amount")),
-		Counter:    utils.GetAsUInt64(doc.Lookup("counter")),
-		Type:       utils.GetAsInt(doc.Lookup("type")),
-		Signature:  utils.GetAsString(doc.Lookup("signature")),
-		PublicKey:  utils.GetAsString(doc.Lookup("pubKey")),
-		Sender:     utils.GetAsString(doc.Lookup("sender")),
-		Receiver:   utils.GetAsString(doc.Lookup("receiver")),
-		SvmData:    utils.GetAsString(doc.Lookup("svmData")),
+		Id:                       utils.GetAsString(doc.Lookup("id")),
+		Layer:                    utils.GetAsUInt32(doc.Lookup("layer")),
+		Block:                    utils.GetAsString(doc.Lookup("block")),
+		BlockIndex:               utils.GetAsUInt32(doc.Lookup("blockIndex")),
+		Index:                    utils.GetAsUInt32(doc.Lookup("index")),
+		State:                    utils.GetAsInt(doc.Lookup("state")),
+		Timestamp:                utils.GetAsUInt32(doc.Lookup("timestamp")),
+		MaxGas:                   utils.GetAsUInt64(doc.Lookup("maxGas")),
+		GasPrice:                 utils.GetAsUInt64(doc.Lookup("gasPrice")),
+		GasUsed:                  utils.GetAsUInt64(doc.Lookup("gasUsed")),
+		Fee:                      utils.GetAsUInt64(doc.Lookup("fee")),
+		Amount:                   utils.GetAsUInt64(doc.Lookup("amount")),
+		Counter:                  utils.GetAsUInt64(doc.Lookup("counter")),
+		Type:                     utils.GetAsInt(doc.Lookup("type")),
+		Signature:                utils.GetAsString(doc.Lookup("signature")),
+		Signatures:               signatures,
+		PublicKey:                utils.GetAsString(doc.Lookup("pubKey")),
+		Sender:                   utils.GetAsString(doc.Lookup("sender")),
+		Receiver:                 utils.GetAsString(doc.Lookup("receiver")),
+		SvmData:                  utils.GetAsString(doc.Lookup("svmData")),
+		Vault:                    utils.GetAsString(doc.Lookup("vault")),
+		VaultOwner:               utils.GetAsString(doc.Lookup("vaultOwner")),
+		VaultTotalAmount:         utils.GetAsUInt64(doc.Lookup("vaultTotalAmount")),
+		VaultInitialUnlockAmount: utils.GetAsUInt64(doc.Lookup("vaultInitialUnlockAmount")),
+		VaultVestingStart:        utils.GetAsUInt32(doc.Lookup("vaultVestingStart")),
+		VaultVestingEnd:          utils.GetAsUInt32(doc.Lookup("vaultVestingEnd")),
 	}
 	return tx, nil
 }
@@ -166,12 +189,19 @@ func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction)
 				{Key: "counter", Value: in.Counter},
 				{Key: "type", Value: in.Type},
 				{Key: "signature", Value: in.Signature},
+				{Key: "signatures", Value: in.Signatures},
 				{Key: "pubKey", Value: in.PublicKey},
 				{Key: "sender", Value: in.Sender},
 				{Key: "receiver", Value: in.Receiver},
 				{Key: "svmData", Value: in.SvmData},
 				{Key: "message", Value: in.Message},
 				{Key: "touchedAddresses", Value: in.TouchedAddresses},
+				{Key: "vault", Value: in.Vault},
+				{Key: "vaultOwner", Value: in.VaultOwner},
+				{Key: "vaultTotalAmount", Value: in.VaultTotalAmount},
+				{Key: "vaultInitialUnlockAmount", Value: in.VaultInitialUnlockAmount},
+				{Key: "vaultVestingStart", Value: in.VaultVestingStart},
+				{Key: "vaultVestingEnd", Value: in.VaultVestingEnd},
 			},
 		},
 	}
@@ -194,10 +224,17 @@ func (s *Storage) SaveTransaction(parent context.Context, in *model.Transaction)
 					{Key: "counter", Value: in.Counter},
 					{Key: "type", Value: in.Type},
 					{Key: "signature", Value: in.Signature},
+					{Key: "signatures", Value: in.Signatures},
 					{Key: "pubKey", Value: in.PublicKey},
 					{Key: "sender", Value: in.Sender},
 					{Key: "receiver", Value: in.Receiver},
 					{Key: "svmData", Value: in.SvmData},
+					{Key: "vault", Value: in.Vault},
+					{Key: "vaultOwner", Value: in.VaultOwner},
+					{Key: "vaultTotalAmount", Value: in.VaultTotalAmount},
+					{Key: "vaultInitialUnlockAmount", Value: in.VaultInitialUnlockAmount},
+					{Key: "vaultVestingStart", Value: in.VaultVestingStart},
+					{Key: "vaultVestingEnd", Value: in.VaultVestingEnd},
 				},
 			},
 		}
@@ -239,6 +276,7 @@ func (s *Storage) SaveTransactionResult(parent context.Context, in *model.Transa
 				{Key: "counter", Value: in.Counter},
 				{Key: "type", Value: in.Type},
 				{Key: "signature", Value: in.Signature},
+				{Key: "signatures", Value: in.Signatures},
 				{Key: "pubKey", Value: in.PublicKey},
 				{Key: "sender", Value: in.Sender},
 				{Key: "receiver", Value: in.Receiver},
@@ -246,6 +284,12 @@ func (s *Storage) SaveTransactionResult(parent context.Context, in *model.Transa
 				{Key: "message", Value: in.Message},
 				{Key: "touchedAddresses", Value: in.TouchedAddresses},
 				{Key: "result", Value: in.Result},
+				{Key: "vault", Value: in.Vault},
+				{Key: "vaultOwner", Value: in.VaultOwner},
+				{Key: "vaultTotalAmount", Value: in.VaultTotalAmount},
+				{Key: "vaultInitialUnlockAmount", Value: in.VaultInitialUnlockAmount},
+				{Key: "vaultVestingStart", Value: in.VaultVestingStart},
+				{Key: "vaultVestingEnd", Value: in.VaultVestingEnd},
 			},
 		},
 	}

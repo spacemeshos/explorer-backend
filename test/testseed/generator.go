@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/spacemeshos/go-spacemesh/genvm/templates/wallet"
 	"math/rand"
 	"strings"
 	"time"
@@ -385,7 +386,7 @@ func (s *SeedGenerator) generateAccount(layerNum uint32) (model.Account, *signin
 	signer, _ := signing.NewEdSigner()
 	copy(key[:], signer.PublicKey().Bytes())
 	return model.Account{
-		Address: v0.ComputePrincipal(v0.TemplateAddress, &v0.SpawnArguments{
+		Address: v0.ComputePrincipal(wallet.TemplateAddress, &v0.SpawnArguments{
 			PublicKey: key,
 		}).String(),
 		Balance: 0,
