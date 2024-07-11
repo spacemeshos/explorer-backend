@@ -261,12 +261,10 @@ func TestDrainVault(t *testing.T) {
 }
 
 func TestVaultSpawn(t *testing.T) {
-	pubs := make([][]byte, 0, 3)
 	pks := make([]ed25519.PrivateKey, 0, 3)
 	for i := 0; i < 3; i++ {
-		pub, pk, err := ed25519.GenerateKey(rand.New(rand.NewSource(time.Now().UnixNano())))
+		_, pk, err := ed25519.GenerateKey(rand.New(rand.NewSource(time.Now().UnixNano())))
 		require.NoError(t, err)
-		pubs = append(pubs, pub)
 		pks = append(pks, pk)
 	}
 	owner := types.GenerateAddress(generatePublicKey())
