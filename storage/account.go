@@ -101,19 +101,17 @@ func (s *Storage) AddAccount(parent context.Context, layer uint32, address strin
 				{Key: "layer", Value: layer},
 				{Key: "balance", Value: balance},
 				{Key: "counter", Value: uint64(0)},
-				{Key: "created",
-					Value: bson.D{{Key: "$cond", Value: bson.D{{Key: "if",
-						Value: bson.D{{Key: "$eq", Value: bson.A{0, "$created"}}}},
-						{Key: "then", Value: layer},
-						{Key: "else", Value: "$created"},
-					}}},
-				},
+			},
+		},
+		{Key: "$setOnInsert",
+			Value: bson.D{
+				{Key: "created", Value: layer},
 			},
 		},
 	}
 
 	opts := options.Update().SetUpsert(true)
-	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, bson.A{acc}, opts)
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: address}}, acc, opts)
 	if err != nil {
 		log.Info("AddAccount: %v", err)
 	}
@@ -129,13 +127,11 @@ func (s *Storage) AddAccountQuery(layer uint32, address string, balance uint64) 
 				{Key: "layer", Value: layer},
 				{Key: "balance", Value: balance},
 				{Key: "counter", Value: uint64(0)},
-				{Key: "created",
-					Value: bson.D{{Key: "$cond", Value: bson.D{{Key: "if",
-						Value: bson.D{{Key: "$eq", Value: bson.A{0, "$created"}}}},
-						{Key: "then", Value: layer},
-						{Key: "else", Value: "$created"},
-					}}},
-				},
+			},
+		},
+		{Key: "$setOnInsert",
+			Value: bson.D{
+				{Key: "created", Value: layer},
 			},
 		},
 	}
@@ -151,16 +147,20 @@ func (s *Storage) AddAccountQuery(layer uint32, address string, balance uint64) 
 func (s *Storage) SaveAccount(parent context.Context, layer uint32, in *model.Account) error {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
-	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: in.Address}}, bson.D{{
-		Key: "$set",
-		Value: bson.D{
-			{Key: "address", Value: in.Address},
-			{Key: "created", Value: layer},
-			{Key: "layer", Value: layer},
-			{Key: "balance", Value: in.Balance},
-			{Key: "counter", Value: in.Counter},
+	_, err := s.db.Collection("accounts").UpdateOne(ctx, bson.D{{Key: "address", Value: in.Address}}, bson.D{
+		{Key: "$set",
+			Value: bson.D{
+				{Key: "address", Value: in.Address},
+				{Key: "layer", Value: layer},
+				{Key: "balance", Value: in.Balance},
+				{Key: "counter", Value: in.Counter},
+			}},
+		{Key: "$setOnInsert",
+			Value: bson.D{
+				{Key: "created", Value: layer},
+			},
 		},
-	}}, options.Update().SetUpsert(true))
+	}, options.Update().SetUpsert(true))
 	if err != nil {
 		log.Info("SaveAccount: %v", err)
 	}

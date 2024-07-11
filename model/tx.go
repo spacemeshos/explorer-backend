@@ -1,16 +1,13 @@
 package model
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"strings"
-
 	pb "github.com/spacemeshos/api/release/go/spacemesh/v1"
-	"github.com/spacemeshos/go-scale"
-
 	"github.com/spacemeshos/explorer-backend/pkg/transactionparser"
+	"github.com/spacemeshos/explorer-backend/pkg/transactionparser/transaction"
 	"github.com/spacemeshos/explorer-backend/utils"
+	"strings"
 )
 
 type Transaction struct {
@@ -32,9 +29,10 @@ type Transaction struct {
 	Amount  uint64 `json:"amount" bson:"amount"`   // amount of coin transferred in this tx by sender
 	Counter uint64 `json:"counter" bson:"counter"` // tx counter aka nonce
 
-	Type      int    `json:"type" bson:"type"`
-	Signature string `json:"signature" bson:"signature"` // the signature itself
-	PublicKey string `json:"pubKey" bson:"pubKey"`       // included in schemes which require signer to provide a public key
+	Type       int             `json:"type" bson:"type"`
+	Signature  string          `json:"signature" bson:"signature"`   // the signature itself
+	Signatures []SignaturePart `json:"signatures" bson:"signatures"` // the signature itself
+	PublicKey  string          `json:"pubKey" bson:"pubKey"`         // included in schemes which require signer to provide a public key
 
 	Sender   string `json:"sender" bson:"sender"` // tx originator, should match signer inside Signature
 	Receiver string `json:"receiver" bson:"receiver"`
@@ -42,6 +40,18 @@ type Transaction struct {
 
 	Message          string   `json:"message" bson:"message"`
 	TouchedAddresses []string `json:"touchedAddresses" bson:"touchedAddresses"`
+
+	Vault                    string `json:"vault" bson:"vault"`
+	VaultOwner               string `json:"vaultOwner" bson:"vaultOwner"`
+	VaultTotalAmount         uint64 `json:"vaultTotalAmount" bson:"vaultTotalAmount"`
+	VaultInitialUnlockAmount uint64 `json:"vaultInitialUnlockAmount" bson:"vaultInitialUnlockAmount"`
+	VaultVestingStart        uint32 `json:"vaultVestingStart" bson:"vaultVestingStart"`
+	VaultVestingEnd          uint32 `json:"vaultVestingEnd" bson:"vaultVestingEnd"`
+}
+
+type SignaturePart struct {
+	Ref       uint32 `json:"ref" bson:"ref"`
+	Signature string `json:"signature" bson:"signature"`
 }
 
 type TransactionReceipt struct {
@@ -79,32 +89,54 @@ func NewTransactionResult(res *pb.TransactionResult, state *pb.TransactionState,
 
 // NewTransaction try to parse the transaction and return a new Transaction struct.
 func NewTransaction(in *pb.Transaction, layer uint32, blockID string, timestamp uint32, blockIndex uint32) (*Transaction, error) {
-	txDecoded, err := transactionparser.Parse(scale.NewDecoder(bytes.NewReader(in.GetRaw())), in.GetRaw(), in.Method)
+	txDecoded, err := transactionparser.Parse(in.GetRaw())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse transaction: %w", err)
 	}
 	tx := &Transaction{
 		Id:         utils.BytesToHex(in.GetId()),
-		Sender:     txDecoded.GetPrincipal().String(),
-		Amount:     txDecoded.GetAmount(),
-		Counter:    txDecoded.GetCounter(),
+		Sender:     txDecoded.Tx.GetPrincipal().String(),
+		Amount:     txDecoded.Tx.GetAmount(),
+		Counter:    txDecoded.Tx.GetCounter(),
 		Layer:      layer,
 		Block:      blockID,
 		BlockIndex: blockIndex,
 		State:      int(pb.TransactionState_TRANSACTION_STATE_UNSPECIFIED),
 		Timestamp:  timestamp,
 		MaxGas:     in.GetMaxGas(),
-		GasPrice:   txDecoded.GetGasPrice(),
-		Fee:        in.GetMaxGas() * txDecoded.GetGasPrice(),
-		Type:       int(txDecoded.GetType()),
-		Signature:  utils.BytesToHex(txDecoded.GetSignature()),
-		Receiver:   txDecoded.GetReceiver().String(),
+		GasPrice:   txDecoded.Tx.GetGasPrice(),
+		Fee:        in.GetMaxGas() * txDecoded.Tx.GetGasPrice(),
+		Type:       txDecoded.Type,
+		Receiver:   txDecoded.Tx.GetReceiver().String(),
 	}
-	keys := make([]string, 0, len(txDecoded.GetPublicKeys()))
-	for i := range txDecoded.GetPublicKeys() {
-		keys = append(keys, utils.BytesToHex(txDecoded.GetPublicKeys()[i]))
+	keys := make([]string, 0, len(txDecoded.Tx.GetPublicKeys()))
+	for i := range txDecoded.Tx.GetPublicKeys() {
+		keys = append(keys, utils.BytesToHex(txDecoded.Tx.GetPublicKeys()[i]))
 	}
 	tx.PublicKey = strings.Join(keys, ",")
+
+	if txDecoded.Signatures != nil {
+		for _, sig := range *txDecoded.Signatures {
+			tx.Signatures = append(tx.Signatures, SignaturePart{
+				Ref:       uint32(sig.Ref),
+				Signature: utils.BytesToHex(sig.Sig.Bytes()),
+			})
+		}
+	} else {
+		tx.Signature = utils.BytesToHex(txDecoded.Sig.Bytes())
+	}
+
+	if txDecoded.Type == transaction.TypeDrainVault {
+		tx.Vault = txDecoded.Vault.GetVault().String()
+	}
+
+	if txDecoded.Type == transaction.TypeVaultSpawn {
+		tx.VaultOwner = txDecoded.Vault.GetOwner().String()
+		tx.VaultTotalAmount = txDecoded.Vault.GetTotalAmount()
+		tx.VaultInitialUnlockAmount = txDecoded.Vault.GetInitialUnlockAmount()
+		tx.VaultVestingStart = txDecoded.Vault.GetVestingStart().Uint32()
+		tx.VaultVestingEnd = txDecoded.Vault.GetVestingEnd().Uint32()
+	}
 
 	return tx, nil
 }
