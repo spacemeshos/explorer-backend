@@ -9,7 +9,6 @@ import (
 // DecodedTransactioner is an interface for transaction decoded from raw bytes.
 type DecodedTransactioner interface {
 	GetType() uint8
-	SetType(txType uint8)
 	GetAmount() uint64
 	GetCounter() uint64
 	GetReceiver() address.Address
