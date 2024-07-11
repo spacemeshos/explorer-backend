@@ -62,11 +62,6 @@ func (t *SpawnTransaction) GetType() uint8 {
 	return transaction.TypeSpawn
 }
 
-// SetType sets type of the transaction.
-func (t *SpawnTransaction) SetType(txType uint8) {
-	t.Type = txType
-}
-
 // GetAmount returns amount of the transaction. Always zero for spawn transaction.
 func (t *SpawnTransaction) GetAmount() uint64 {
 	return 0
@@ -124,11 +119,6 @@ type SpawnMultisigArguments struct {
 // GetType returns type of the transaction.
 func (t *SpawnMultisigTransaction) GetType() uint8 {
 	return transaction.TypeMultisigSpawn
-}
-
-// SetType sets type of the transaction.
-func (t *SpawnMultisigTransaction) SetType(txType uint8) {
-	t.Type = txType
 }
 
 // GetAmount returns amount of the transaction. Always zero for spawn transaction.
@@ -195,11 +185,6 @@ func (t *SpendTransaction) GetType() uint8 {
 	return transaction.TypeSpend
 }
 
-// SetType sets type of the transaction.
-func (t *SpendTransaction) SetType(txType uint8) {
-	t.Type = txType
-}
-
 // GetAmount returns the amount of the transaction.
 func (t *SpendTransaction) GetAmount() uint64 {
 	return t.Payload.Arguments.Amount
@@ -258,11 +243,6 @@ type SpawnVaultArguments struct {
 // GetType returns type of the transaction.
 func (t *SpawnVaultTransaction) GetType() uint8 {
 	return transaction.TypeSpawn
-}
-
-// SetType sets type of the transaction.
-func (t *SpawnVaultTransaction) SetType(txType uint8) {
-	t.Type = txType
 }
 
 // GetAmount returns amount of the transaction. Always zero for spawn transaction.
@@ -343,11 +323,6 @@ type DrainVaultArguments struct {
 // GetType returns type of the transaction.
 func (t *DrainVaultTransaction) GetType() uint8 {
 	return transaction.TypeDrainVault
-}
-
-// SetType sets type of the transaction.
-func (t *DrainVaultTransaction) SetType(txType uint8) {
-	t.Type = txType
 }
 
 // GetAmount returns amount of the transaction. Always zero for spawn transaction.
