@@ -41,6 +41,9 @@ func (s *Reader) GetEpochs(ctx context.Context, query *bson.D, opts ...*options.
 		epoch.Stats.Current.RewardsNumber = count
 		epoch.Stats.Cumulative.Rewards = total
 		epoch.Stats.Cumulative.RewardsNumber = count
+
+		atxCount, err := s.CountActivations(context.Background(), &bson.D{{Key: "targetEpoch", Value: epoch.Number}})
+		epoch.Stats.Current.Smeshers = atxCount
 	}
 
 	return epochs, nil
@@ -68,6 +71,10 @@ func (s *Reader) GetEpoch(ctx context.Context, epochNumber int) (*model.Epoch, e
 	epoch.Stats.Current.RewardsNumber = count
 	epoch.Stats.Cumulative.Rewards = total
 	epoch.Stats.Cumulative.RewardsNumber = count
+
+	atxCount, err := s.CountActivations(context.Background(), &bson.D{{Key: "targetEpoch", Value: epoch.Number}})
+	epoch.Stats.Current.Smeshers = atxCount
+	epoch.Stats.Cumulative.Smeshers = atxCount
 
 	return epoch, nil
 }
