@@ -43,6 +43,9 @@ func (s *Reader) GetEpochs(ctx context.Context, query *bson.D, opts ...*options.
 		epoch.Stats.Cumulative.RewardsNumber = count
 
 		atxCount, err := s.CountActivations(context.Background(), &bson.D{{Key: "targetEpoch", Value: epoch.Number}})
+		if err != nil {
+			return nil, err
+		}
 		epoch.Stats.Current.Smeshers = atxCount
 	}
 
@@ -66,6 +69,9 @@ func (s *Reader) GetEpoch(ctx context.Context, epochNumber int) (*model.Epoch, e
 	total, count, err := s.GetTotalRewards(context.TODO(), &bson.D{{Key: "layer", Value: bson.D{
 		{Key: "$gte", Value: epoch.LayerStart}, {Key: "$lte", Value: epoch.LayerEnd}}},
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	epoch.Stats.Current.Rewards = total
 	epoch.Stats.Current.RewardsNumber = count
@@ -73,6 +79,9 @@ func (s *Reader) GetEpoch(ctx context.Context, epochNumber int) (*model.Epoch, e
 	epoch.Stats.Cumulative.RewardsNumber = count
 
 	atxCount, err := s.CountActivations(context.Background(), &bson.D{{Key: "targetEpoch", Value: epoch.Number}})
+	if err != nil {
+		return nil, err
+	}
 	epoch.Stats.Current.Smeshers = atxCount
 	epoch.Stats.Cumulative.Smeshers = atxCount
 
