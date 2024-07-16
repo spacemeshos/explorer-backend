@@ -176,3 +176,26 @@ func (s *Storage) SaveReward(parent context.Context, in *model.Reward) error {
 	}
 	return err
 }
+
+func (s *Storage) GetRewardsTotalSum(ctx context.Context) (int64, error) {
+	groupStage := bson.D{
+		{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: ""},
+			{Key: "totalRewards", Value: bson.D{
+				{Key: "$sum", Value: "$total"},
+			},
+			},
+		}},
+	}
+	cursor, err := s.db.Collection("rewards").Aggregate(ctx, mongo.Pipeline{groupStage})
+	if err != nil {
+		return 0, err
+	}
+
+	if !cursor.Next(ctx) {
+		log.Info("GetSmesherRewards: Empty result")
+		return 0, nil
+	}
+	doc := cursor.Current
+	return utils.GetAsInt64(doc.Lookup("totalRewards")), nil
+}
