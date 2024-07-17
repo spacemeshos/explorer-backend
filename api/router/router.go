@@ -8,6 +8,7 @@ import (
 func Init(e *echo.Echo) {
 	e.GET("/stats/layer/:id", handler.LayerStats)
 	e.GET("/stats/epoch/:id", handler.EpochStats)
+	e.GET("/stats/account/:address", handler.AccountStats)
 	e.GET("/smeshers/:epoch", handler.SmeshersByEpoch)
 	e.GET("/smeshers", handler.Smeshers)
 	e.GET("/smesher/:smesherId", handler.Smesher)
