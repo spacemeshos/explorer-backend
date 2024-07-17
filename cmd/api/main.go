@@ -6,6 +6,7 @@ import (
 	"github.com/spacemeshos/explorer-backend/api"
 	"github.com/spacemeshos/explorer-backend/api/cache"
 	"github.com/spacemeshos/explorer-backend/api/storage"
+	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -83,6 +84,7 @@ func main() {
 	app.Action = func(ctx *cli.Context) error {
 		if testnetBoolFlag {
 			address.SetAddressConfig("stest")
+			types.SetNetworkHRP("stest")
 			log.Info(`network HRP set to "stest"`)
 		}
 		log.Info("layers per epoch: %d", layersPerEpoch)

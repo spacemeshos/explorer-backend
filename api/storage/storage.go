@@ -2,21 +2,28 @@ package storage
 
 import (
 	"fmt"
+	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
 )
 
 type DatabaseClient interface {
 	GetLayerStats(db *sql.Database, lid int64) (*LayerStats, error)
+	GetLayersCount(db *sql.Database) (uint64, error)
+
 	GetEpochStats(db *sql.Database, epoch int64, layersPerEpoch int64) (*EpochStats, error)
+
 	GetSmeshers(db *sql.Database, limit, offset uint64) (*SmesherList, error)
 	GetSmeshersByEpoch(db *sql.Database, limit, offset, epoch uint64) (*SmesherList, error)
 	GetSmesher(db *sql.Database, pubkey []byte) (*Smesher, error)
 
 	GetAccountsCount(db *sql.Database) (uint64, error)
+	GetAccountsStats(db *sql.Database, addr types.Address) (*AccountStats, error)
+
 	GetSmeshersCount(db *sql.Database) (uint64, error)
 	GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (uint64, error)
-	GetLayersCount(db *sql.Database) (uint64, error)
+
 	GetRewardsSum(db *sql.Database) (uint64, uint64, error)
+
 	GetTransactionsCount(db *sql.Database) (uint64, error)
 	GetTotalNumUnits(db *sql.Database) (uint64, error)
 }
