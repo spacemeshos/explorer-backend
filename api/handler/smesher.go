@@ -64,6 +64,10 @@ func Smesher(c echo.Context) error {
 
 	smesher, err := cc.StorageClient.GetSmesher(cc.Storage, hash.Bytes())
 	if err != nil {
+		if err.Error() == "smesher not found" {
+			return c.NoContent(http.StatusNotFound)
+		}
+
 		log.Warning("failed to get smesher: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
