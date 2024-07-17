@@ -14,8 +14,9 @@ type DatabaseClient interface {
 
 	GetAccountsCount(db *sql.Database) (uint64, error)
 	GetSmeshersCount(db *sql.Database) (uint64, error)
+	GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (uint64, error)
 	GetLayersCount(db *sql.Database) (uint64, error)
-	GetRewardsCount(db *sql.Database) (uint64, error)
+	GetRewardsSum(db *sql.Database) (uint64, uint64, error)
 	GetTransactionsCount(db *sql.Database) (uint64, error)
 	GetTotalNumUnits(db *sql.Database) (uint64, error)
 }

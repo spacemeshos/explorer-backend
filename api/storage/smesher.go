@@ -78,6 +78,18 @@ func (c *Client) GetSmeshersCount(db *sql.Database) (count uint64, err error) {
 	return
 }
 
+func (c *Client) GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (count uint64, err error) {
+	_, err = db.Exec(`SELECT COUNT(*) FROM (SELECT DISTINCT pubkey FROM atxs WHERE epoch = ?1)`,
+		func(stmt *sql.Statement) {
+			stmt.BindInt64(1, int64(epoch-1))
+		},
+		func(stmt *sql.Statement) bool {
+			count = uint64(stmt.ColumnInt64(0))
+			return true
+		})
+	return
+}
+
 func (c *Client) GetSmesher(db *sql.Database, pubkey []byte) (smesher *Smesher, err error) {
 	smesher = &Smesher{}
 	_, err = db.Exec(`SELECT pubkey, coinbase, effective_num_units, COUNT(*) as atxs FROM atxs WHERE pubkey = ?1 GROUP BY pubkey ORDER BY epoch DESC LIMIT 1;`,

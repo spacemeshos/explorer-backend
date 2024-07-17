@@ -12,6 +12,7 @@ type OverviewResp struct {
 	SmeshersCount     uint64 `json:"smeshers_count"`
 	LayersCount       uint64 `json:"layers_count"`
 	RewardsCount      uint64 `json:"rewards_count"`
+	RewardsSum        uint64 `json:"rewards_sum"`
 	TransactionsCount uint64 `json:"transactions_count"`
 	NumUnits          uint64 `json:"num_units"`
 }
@@ -45,11 +46,12 @@ func Overview(c echo.Context) error {
 	}
 	overviewResp.LayersCount = layersCount
 
-	rewardsCount, err := cc.StorageClient.GetRewardsCount(cc.Storage)
+	rewardsSum, rewardsCount, err := cc.StorageClient.GetRewardsSum(cc.Storage)
 	if err != nil {
 		log.Warning("failed to get rewards count: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	overviewResp.RewardsSum = rewardsSum
 	overviewResp.RewardsCount = rewardsCount
 
 	transactionsCount, err := cc.StorageClient.GetTransactionsCount(cc.Storage)

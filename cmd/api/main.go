@@ -85,6 +85,9 @@ func main() {
 			address.SetAddressConfig("stest")
 			log.Info(`network HRP set to "stest"`)
 		}
+		log.Info("layers per epoch: %d", layersPerEpoch)
+		log.Info("debug: %v", debug)
+		log.Info("sqlite path: %s", sqlitePathStringFlag)
 
 		cache.Init()
 
