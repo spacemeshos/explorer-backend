@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
 )
@@ -91,12 +92,12 @@ func (c *Client) GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (count 
 }
 
 func (c *Client) GetSmesher(db *sql.Database, pubkey []byte) (smesher *Smesher, err error) {
-	smesher = &Smesher{}
 	_, err = db.Exec(`SELECT pubkey, coinbase, effective_num_units, COUNT(*) as atxs FROM atxs WHERE pubkey = ?1 GROUP BY pubkey ORDER BY epoch DESC LIMIT 1;`,
 		func(stmt *sql.Statement) {
 			stmt.BindBytes(1, pubkey)
 		},
 		func(stmt *sql.Statement) bool {
+			smesher = &Smesher{}
 			stmt.ColumnBytes(0, smesher.Pubkey[:])
 			var coinbase types.Address
 			stmt.ColumnBytes(1, coinbase[:])
@@ -107,6 +108,9 @@ func (c *Client) GetSmesher(db *sql.Database, pubkey []byte) (smesher *Smesher, 
 		})
 	if err != nil {
 		return
+	}
+	if smesher == nil {
+		return nil, fmt.Errorf("smesher not found")
 	}
 
 	_, err = db.Exec(`SELECT COUNT(*), SUM(total_reward) FROM rewards WHERE pubkey=?1`,
