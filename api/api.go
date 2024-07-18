@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spacemeshos/explorer-backend/api/handler"
@@ -20,8 +21,8 @@ type Api struct {
 	Echo *echo.Echo
 }
 
-func Init(db *sql.Database, dbClient storage.DatabaseClient,
-	allowedOrigins []string, debug bool, layersPerEpoch int64) *Api {
+func Init(db *sql.Database, dbClient storage.DatabaseClient, allowedOrigins []string, debug bool, layersPerEpoch int64,
+	marshaler *marshaler.Marshaler) *Api {
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -32,12 +33,12 @@ func Init(db *sql.Database, dbClient storage.DatabaseClient,
 				Storage:        db,
 				StorageClient:  dbClient,
 				LayersPerEpoch: layersPerEpoch,
+				Cache:          marshaler,
 			}
 			return next(cc)
 		}
 	})
 	e.HideBanner = true
-	e.HidePort = true
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: allowedOrigins,
 	}))
