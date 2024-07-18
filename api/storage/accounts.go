@@ -20,16 +20,22 @@ func (c *Client) GetAccountsCount(db *sql.Database) (uint64, error) {
 }
 
 type AccountStats struct {
-	Account  string `json:"account"`
-	Received uint64 `json:"received"`
-	Sent     uint64 `json:"sent"`
+	Account           string `json:"account"`
+	Received          uint64 `json:"received"`
+	Sent              uint64 `json:"sent"`
+	TransactionsCount uint64 `json:"transactions_count"`
+	RewardsCount      uint64 `json:"rewards_count"`
+	RewardsSum        uint64 `json:"rewards_sum"`
 }
 
 func (c *Client) GetAccountsStats(db *sql.Database, addr types.Address) (*AccountStats, error) {
 	stats := &AccountStats{
-		Account:  addr.String(),
-		Received: 0,
-		Sent:     0,
+		Account:           addr.String(),
+		Received:          0,
+		Sent:              0,
+		TransactionsCount: 0,
+		RewardsCount:      0,
+		RewardsSum:        0,
 	}
 
 	ops := builder.Operations{
@@ -66,11 +72,20 @@ func (c *Client) GetAccountsStats(db *sql.Database, addr types.Address) (*Accoun
 				stats.Sent += contents.GetSend().GetAmount()
 			}
 		}
+
+		stats.TransactionsCount++
 		return true
 	})
 	if err != nil {
 		return nil, err
 	}
+
+	sum, count, err := c.GetRewardsSumByAddress(db, addr)
+	if err != nil {
+		return nil, err
+	}
+	stats.RewardsSum = sum
+	stats.RewardsCount = count
 
 	return stats, nil
 }

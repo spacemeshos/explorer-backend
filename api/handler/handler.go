@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/sql"
@@ -12,6 +13,7 @@ type ApiContext struct {
 	Storage        *sql.Database
 	StorageClient  storage.DatabaseClient
 	LayersPerEpoch int64
+	Cache          *marshaler.Marshaler
 }
 
 func GetPagination(c echo.Context) (limit, offset int64) {

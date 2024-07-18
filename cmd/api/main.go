@@ -91,7 +91,7 @@ func main() {
 		log.Info("debug: %v", debug)
 		log.Info("sqlite path: %s", sqlitePathStringFlag)
 
-		cache.Init()
+		c := cache.New()
 
 		db, err := storage.Setup(sqlitePathStringFlag)
 		if err != nil {
@@ -100,7 +100,7 @@ func main() {
 		}
 		dbClient := &storage.Client{}
 
-		server := api.Init(db, dbClient, allowedOrigins.Value(), debug, layersPerEpoch)
+		server := api.Init(db, dbClient, allowedOrigins.Value(), debug, layersPerEpoch, c)
 
 		log.Info(fmt.Sprintf("starting server on %s", listenStringFlag))
 		server.Run(listenStringFlag)

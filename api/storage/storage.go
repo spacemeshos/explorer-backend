@@ -7,6 +7,8 @@ import (
 )
 
 type DatabaseClient interface {
+	Overview(db *sql.Database) (*Overview, error)
+
 	GetLayerStats(db *sql.Database, lid int64) (*LayerStats, error)
 	GetLayersCount(db *sql.Database) (uint64, error)
 
@@ -23,6 +25,7 @@ type DatabaseClient interface {
 	GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (uint64, error)
 
 	GetRewardsSum(db *sql.Database) (uint64, uint64, error)
+	GetRewardsSumByAddress(db *sql.Database, addr types.Address) (sum uint64, count uint64, err error)
 
 	GetTransactionsCount(db *sql.Database) (uint64, error)
 	GetTotalNumUnits(db *sql.Database) (uint64, error)

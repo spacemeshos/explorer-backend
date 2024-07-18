@@ -1,8 +1,9 @@
 package handler
 
 import (
+	"context"
 	"github.com/labstack/echo/v4"
-	"github.com/spacemeshos/explorer-backend/api/cache"
+	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"net/http"
 	"strconv"
@@ -15,7 +16,7 @@ func EpochStats(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	if cached, ok := cache.Cache.Get("epochStats" + c.Param("id")); ok {
+	if cached, err := cc.Cache.Get(context.Background(), "epochStats"+c.Param("id"), new(*storage.EpochStats)); err == nil {
 		return c.JSON(http.StatusOK, cached)
 	}
 
@@ -25,6 +26,10 @@ func EpochStats(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	cache.Cache.Set("epochStats"+c.Param("id"), epochStats, 0)
+	if err = cc.Cache.Set(context.Background(), "epochStats"+c.Param("id"), epochStats); err != nil {
+		log.Warning("failed to cache epoch stats: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
 	return c.JSON(http.StatusOK, epochStats)
 }
