@@ -7,7 +7,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spacemeshos/explorer-backend/api/handler"
-	"github.com/spacemeshos/explorer-backend/api/router"
 	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/sql"
@@ -22,7 +21,7 @@ type Api struct {
 }
 
 func Init(db *sql.Database, dbClient storage.DatabaseClient, allowedOrigins []string, debug bool, layersPerEpoch int64,
-	marshaler *marshaler.Marshaler) *Api {
+	marshaler *marshaler.Marshaler, routes func(e *echo.Echo)) *Api {
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -57,7 +56,7 @@ func Init(db *sql.Database, dbClient storage.DatabaseClient, allowedOrigins []st
 		e.Use(middleware.Logger())
 	}
 
-	router.Init(e)
+	routes(e)
 
 	return &Api{
 		Echo: e,

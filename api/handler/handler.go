@@ -19,12 +19,12 @@ type ApiContext struct {
 func GetPagination(c echo.Context) (limit, offset int64) {
 	limit = 20
 	offset = 0
-	if page := c.QueryParam("limit"); page != "" {
-		limit, _ = strconv.ParseInt(page, 10, 32)
-		if limit <= 0 {
-			limit = 0
-		}
-	}
+	//if page := c.QueryParam("limit"); page != "" {
+	//	limit, _ = strconv.ParseInt(page, 10, 32)
+	//	if limit <= 0 {
+	//		limit = 0
+	//	}
+	//}
 	if size := c.QueryParam("offset"); size != "" {
 		offset, _ = strconv.ParseInt(size, 10, 32)
 		if offset <= 0 {

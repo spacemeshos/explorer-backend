@@ -7,4 +7,5 @@ RUN go build -o explorer-custom-api ./cmd/api/
 FROM alpine:3.17
 COPY --from=build /src/explorer-custom-api /bin/
 EXPOSE 5000
+EXPOSE 5050
 ENTRYPOINT ["/bin/explorer-custom-api"]
