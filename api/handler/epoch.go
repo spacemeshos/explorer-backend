@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func EpochStats(c echo.Context) error {
+func Epoch(c echo.Context) error {
 	cc := c.(*ApiContext)
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -22,7 +22,7 @@ func EpochStats(c echo.Context) error {
 
 	epochStats, err := cc.StorageClient.GetEpochStats(cc.Storage, int64(id), cc.LayersPerEpoch)
 	if err != nil {
-		log.Warning("failed to get layer stats: %v", err)
+		log.Warning("failed to get epoch stats: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -32,4 +32,25 @@ func EpochStats(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, epochStats)
+}
+
+func EpochRefresh(c echo.Context) error {
+	cc := c.(*ApiContext)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.NoContent(http.StatusBadRequest)
+	}
+
+	epochStats, err := cc.StorageClient.GetEpochStats(cc.Storage, int64(id), cc.LayersPerEpoch)
+	if err != nil {
+		log.Warning("failed to get epoch stats: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	if err = cc.Cache.Set(context.Background(), "epochStats"+c.Param("id"), epochStats); err != nil {
+		log.Warning("failed to cache epoch stats: %v", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusOK)
 }

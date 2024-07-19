@@ -5,11 +5,13 @@ import (
 	"github.com/spacemeshos/address"
 	"github.com/spacemeshos/explorer-backend/api"
 	"github.com/spacemeshos/explorer-backend/api/cache"
+	"github.com/spacemeshos/explorer-backend/api/router"
 	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/urfave/cli/v2"
 	"os"
+	"sync"
 )
 
 var (
@@ -19,12 +21,13 @@ var (
 )
 
 var (
-	listenStringFlag     string
-	testnetBoolFlag      bool
-	allowedOrigins       = cli.NewStringSlice("*")
-	debug                bool
-	sqlitePathStringFlag string
-	layersPerEpoch       int64
+	listenStringFlag        string
+	refreshListenStringFlag string
+	testnetBoolFlag         bool
+	allowedOrigins          = cli.NewStringSlice("*")
+	debug                   bool
+	sqlitePathStringFlag    string
+	layersPerEpoch          int64
 )
 
 var flags = []cli.Flag{
@@ -35,6 +38,14 @@ var flags = []cli.Flag{
 		Destination: &listenStringFlag,
 		Value:       ":5000",
 		EnvVars:     []string{"SPACEMESH_API_LISTEN"},
+	},
+	&cli.StringFlag{
+		Name:        "listen-refresh",
+		Usage:       "Explorer refresh API listen string in format <host>:<port>",
+		Required:    false,
+		Destination: &refreshListenStringFlag,
+		Value:       ":5050",
+		EnvVars:     []string{"SPACEMESH_REFRESH_API_LISTEN"},
 	},
 	&cli.BoolFlag{
 		Name:        "testnet",
@@ -100,10 +111,24 @@ func main() {
 		}
 		dbClient := &storage.Client{}
 
-		server := api.Init(db, dbClient, allowedOrigins.Value(), debug, layersPerEpoch, c)
+		var wg sync.WaitGroup
+		wg.Add(2)
+		// start api server
+		server := api.Init(db, dbClient, allowedOrigins.Value(), debug, layersPerEpoch, c, router.Router)
+		go func() {
+			defer wg.Done()
+			log.Info(fmt.Sprintf("starting api server on %s", listenStringFlag))
+			server.Run(listenStringFlag)
+		}()
 
-		log.Info(fmt.Sprintf("starting server on %s", listenStringFlag))
-		server.Run(listenStringFlag)
+		// start refresh api server
+		refreshServer := api.Init(db, dbClient, allowedOrigins.Value(), debug, layersPerEpoch, c, router.RefreshRouter)
+		go func() {
+			defer wg.Done()
+			log.Info(fmt.Sprintf("starting refresh api server on %s", refreshListenStringFlag))
+			refreshServer.Run(refreshListenStringFlag)
+		}()
+		wg.Wait()
 
 		log.Info("server is shutdown")
 		return nil
