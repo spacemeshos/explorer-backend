@@ -69,7 +69,7 @@ func (s *SeedGenerator) GenerateEpoches(count int) error {
 			Transactions:       map[string]*model.Transaction{},
 			Rewards:            map[string]*model.Reward{},
 			Smeshers:           map[string]*model.Smesher{},
-			SmeshersCommitment: map[string]int64{},
+			SmeshersCommitment: map[string]uint64{},
 			Activations:        map[string]*model.Activation{},
 			Blocks:             map[string]*model.Block{},
 		}
@@ -211,7 +211,7 @@ func (s *SeedGenerator) fillLayer(layerID, epochID int32, seedEpoch *SeedEpoch) 
 		tmpSm := s.generateSmesher(tmpLayer.Number, from, uint64(atxNumUnits)*s.seed.GetPostUnitsSize())
 		layerContainer.Smeshers[tmpSm.Id] = &tmpSm
 		seedEpoch.Epoch.Stats.Current.Smeshers++
-		seedEpoch.SmeshersCommitment[tmpSm.Id] += int64(tmpSm.CommitmentSize)
+		seedEpoch.SmeshersCommitment[tmpSm.Id] += tmpSm.CommitmentSize
 
 		tmpAtx := s.generateActivation(tmpLayer.Number, atxNumUnits, &tmpSm, s.seed.GetPostUnitsSize(), uint32(epochID))
 		seedEpoch.Activations[tmpAtx.Id] = &tmpAtx

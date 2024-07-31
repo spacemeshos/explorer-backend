@@ -20,9 +20,7 @@ type Api struct {
 	Echo *echo.Echo
 }
 
-func Init(db *sql.Database, dbClient storage.DatabaseClient, allowedOrigins []string, debug bool, layersPerEpoch int64,
-	marshaler *marshaler.Marshaler, routes func(e *echo.Echo)) *Api {
-
+func Init(db *sql.Database, dbClient storage.DatabaseClient, allowedOrigins []string, debug bool, layersPerEpoch int64, marshaler *marshaler.Marshaler, routes func(e *echo.Echo)) *Api {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {

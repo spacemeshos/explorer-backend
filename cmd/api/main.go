@@ -9,9 +9,12 @@ import (
 	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
+	"github.com/spacemeshos/go-spacemesh/timesync"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 	"os"
 	"sync"
+	"time"
 )
 
 var (
@@ -28,6 +31,10 @@ var (
 	debug                   bool
 	sqlitePathStringFlag    string
 	layersPerEpoch          int64
+	genesisTimeStringFlag   string
+	layerDuration           time.Duration
+	labelsPerUnit           uint64
+	bitsPerLabel            uint64
 )
 
 var flags = []cli.Flag{
@@ -83,6 +90,38 @@ var flags = []cli.Flag{
 		Value:       4032,
 		EnvVars:     []string{"SPACEMESH_LAYERS_PER_EPOCH"},
 	},
+	&cli.StringFlag{
+		Name:        "genesis-time",
+		Usage:       "Genesis time in RFC3339 format",
+		Required:    true,
+		Destination: &genesisTimeStringFlag,
+		Value:       "2024-06-21T13:00:00.000Z",
+		EnvVars:     []string{"SPACEMESH_GENESIS_TIME"},
+	},
+	&cli.DurationFlag{
+		Name:        "layer-duration",
+		Usage:       "Duration of a single layer",
+		Required:    false,
+		Destination: &layerDuration,
+		Value:       30 * time.Second,
+		EnvVars:     []string{"SPACEMESH_LAYER_DURATION"},
+	},
+	&cli.Uint64Flag{
+		Name:        "labels-per-unit",
+		Usage:       "Number of labels per unit",
+		Required:    false,
+		Destination: &labelsPerUnit,
+		Value:       1024,
+		EnvVars:     []string{"SPACEMESH_LABELS_PER_UNIT"},
+	},
+	&cli.Uint64Flag{
+		Name:        "bits-per-label",
+		Usage:       "Number of bits per label",
+		Required:    false,
+		Destination: &bitsPerLabel,
+		Value:       128,
+		EnvVars:     []string{"SPACEMESH_BITS_PER_LABEL"},
+	},
 }
 
 func main() {
@@ -104,17 +143,43 @@ func main() {
 
 		c := cache.New()
 
+		gTime, err := time.Parse(time.RFC3339, genesisTimeStringFlag)
+		if err != nil {
+			return fmt.Errorf("cannot parse genesis time %s: %w", genesisTimeStringFlag, err)
+		}
+
+		clock, err := timesync.NewClock(
+			timesync.WithLayerDuration(layerDuration),
+			timesync.WithTickInterval(1*time.Second),
+			timesync.WithGenesisTime(gTime),
+			timesync.WithLogger(zap.NewNop()),
+		)
+		if err != nil {
+			return fmt.Errorf("cannot create clock: %w", err)
+		}
+
 		db, err := storage.Setup(sqlitePathStringFlag)
 		if err != nil {
 			log.Info("SQLite storage open error %v", err)
 			return err
 		}
-		dbClient := &storage.Client{}
+		dbClient := &storage.Client{
+			NodeClock:     clock,
+			Testnet:       testnetBoolFlag,
+			LabelsPerUnit: labelsPerUnit,
+			BitsPerLabel:  bitsPerLabel,
+		}
 
 		var wg sync.WaitGroup
 		wg.Add(2)
 		// start api server
-		server := api.Init(db, dbClient, allowedOrigins.Value(), debug, layersPerEpoch, c, router.Router)
+		server := api.Init(db,
+			dbClient,
+			allowedOrigins.Value(),
+			debug,
+			layersPerEpoch,
+			c,
+			router.Router)
 		go func() {
 			defer wg.Done()
 			log.Info(fmt.Sprintf("starting api server on %s", listenStringFlag))
@@ -122,7 +187,13 @@ func main() {
 		}()
 
 		// start refresh api server
-		refreshServer := api.Init(db, dbClient, allowedOrigins.Value(), debug, layersPerEpoch, c, router.RefreshRouter)
+		refreshServer := api.Init(db,
+			dbClient,
+			allowedOrigins.Value(),
+			debug,
+			layersPerEpoch,
+			c,
+			router.RefreshRouter)
 		go func() {
 			defer wg.Done()
 			log.Info(fmt.Sprintf("starting refresh api server on %s", refreshListenStringFlag))

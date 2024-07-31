@@ -48,7 +48,7 @@ type SeedEpoch struct {
 	Rewards            map[string]*model.Reward
 	Blocks             map[string]*model.Block
 	Smeshers           map[string]*model.Smesher
-	SmeshersCommitment map[string]int64
+	SmeshersCommitment map[string]uint64
 	Activations        map[string]*model.Activation
 }
 
