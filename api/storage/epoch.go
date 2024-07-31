@@ -1,19 +1,23 @@
 package storage
 
 import (
+	"github.com/spacemeshos/explorer-backend/utils"
+	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/sql"
 	"github.com/spacemeshos/go-spacemesh/sql/atxs"
 	"github.com/spacemeshos/go-spacemesh/sql/builder"
+	"math"
 )
 
 type EpochStats struct {
-	TransactionsCount uint64 `json:"transactions_count"`
-	ActivationsCount  uint64 `json:"activations_count"`
-	RewardsCount      uint64 `json:"rewards_count"`
-	RewardsSum        uint64 `json:"rewards_sum"`
-	NumUnits          uint64 `json:"num_units"`
-	SmeshersCount     uint64 `json:"smeshers_count"`
+	TransactionsCount uint64 `json:"transactions_count,omitempty"`
+	ActivationsCount  uint64 `json:"activations_count,omitempty"`
+	RewardsCount      uint64 `json:"rewards_count,omitempty"`
+	RewardsSum        uint64 `json:"rewards_sum,omitempty"`
+	NumUnits          uint64 `json:"num_units,omitempty"`
+	SmeshersCount     uint64 `json:"smeshers_count,omitempty"`
+	Decentral         uint64 `json:"decentral,omitempty"`
 }
 
 func (c *Client) GetEpochStats(db *sql.Database, epoch int64, layersPerEpoch int64) (*EpochStats, error) {
@@ -99,4 +103,44 @@ FROM (
 		})
 
 	return stats, err
+}
+
+func (c *Client) GetEpochDecentralRatio(db *sql.Database, epoch int64) (*EpochStats, error) {
+	stats := &EpochStats{
+		Decentral: 0,
+	}
+
+	_, err := db.Exec(`SELECT COUNT(*) FROM (SELECT DISTINCT pubkey FROM atxs WHERE epoch = ?1)`,
+		func(stmt *sql.Statement) {
+			stmt.BindInt64(1, epoch-1)
+		},
+		func(stmt *sql.Statement) bool {
+			stats.SmeshersCount = uint64(stmt.ColumnInt64(0))
+			return true
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	a := math.Min(float64(stats.SmeshersCount), 1e4)
+	// pubkey: commitment size
+	smeshers := make(map[string]uint64)
+	_, err = db.Exec(`SELECT pubkey, effective_num_units FROM atxs WHERE epoch = ?1`,
+		func(stmt *sql.Statement) {
+			stmt.BindInt64(1, epoch-1)
+		},
+		func(stmt *sql.Statement) bool {
+			var smesher types.NodeID
+			stmt.ColumnBytes(0, smesher[:])
+			smeshers[smesher.String()] = uint64(stmt.ColumnInt64(1)) * ((c.BitsPerLabel * c.LabelsPerUnit) / 8)
+			return true
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	stats.Decentral = uint64(100.0 * (0.5*(a*a)/1e8 + 0.5*(1.0-utils.Gini(smeshers))))
+
+	return stats, nil
+
 }

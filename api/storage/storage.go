@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
+	"github.com/spacemeshos/go-spacemesh/timesync"
 )
 
 type DatabaseClient interface {
@@ -13,6 +14,7 @@ type DatabaseClient interface {
 	GetLayersCount(db *sql.Database) (uint64, error)
 
 	GetEpochStats(db *sql.Database, epoch int64, layersPerEpoch int64) (*EpochStats, error)
+	GetEpochDecentralRatio(db *sql.Database, epoch int64) (*EpochStats, error)
 
 	GetSmeshers(db *sql.Database, limit, offset uint64) (*SmesherList, error)
 	GetSmeshersByEpoch(db *sql.Database, limit, offset, epoch uint64) (*SmesherList, error)
@@ -29,9 +31,16 @@ type DatabaseClient interface {
 
 	GetTransactionsCount(db *sql.Database) (uint64, error)
 	GetTotalNumUnits(db *sql.Database) (uint64, error)
+
+	GetCirculation(db *sql.Database) (*Circulation, error)
 }
 
-type Client struct{}
+type Client struct {
+	NodeClock     *timesync.NodeClock
+	Testnet       bool
+	LabelsPerUnit uint64
+	BitsPerLabel  uint64
+}
 
 func Setup(path string) (db *sql.Database, err error) {
 	db, err = sql.Open(fmt.Sprintf("file:%s?mode=ro", path),
