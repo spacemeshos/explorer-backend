@@ -1,11 +1,13 @@
 package router
 
 import (
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/explorer-backend/api/handler"
 )
 
 func Router(e *echo.Echo) {
+	e.Use(echoprometheus.NewMiddleware("spacemesh_explorer_stats_api"))
 	e.GET("/layer/:id", handler.Layer)
 	e.GET("/epoch/:id", handler.Epoch)
 	e.GET("/epoch/:id/decentral", handler.EpochDecentral)
@@ -18,6 +20,7 @@ func Router(e *echo.Echo) {
 }
 
 func RefreshRouter(e *echo.Echo) {
+	e.Use(echoprometheus.NewMiddleware("spacemesh_explorer_stats_api_refresh"))
 	g := e.Group("/refresh")
 	g.GET("/epoch/:id", handler.EpochRefresh)
 	e.GET("/epoch/:id/decentral", handler.EpochDecentralRefresh)

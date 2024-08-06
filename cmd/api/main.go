@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/labstack/echo-contrib/echoprometheus"
+	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/address"
 	"github.com/spacemeshos/explorer-backend/api"
 	"github.com/spacemeshos/explorer-backend/api/cache"
@@ -12,6 +15,7 @@ import (
 	"github.com/spacemeshos/go-spacemesh/timesync"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -35,6 +39,7 @@ var (
 	layerDuration           time.Duration
 	labelsPerUnit           uint64
 	bitsPerLabel            uint64
+	metricsPortFlag         string
 )
 
 var flags = []cli.Flag{
@@ -122,6 +127,14 @@ var flags = []cli.Flag{
 		Value:       128,
 		EnvVars:     []string{"SPACEMESH_BITS_PER_LABEL"},
 	},
+	&cli.StringFlag{
+		Name:        "metricsPort",
+		Usage:       ``,
+		Required:    false,
+		Value:       ":5070",
+		Destination: &metricsPortFlag,
+		EnvVars:     []string{"SPACEMESH_METRICS_PORT"},
+	},
 }
 
 func main() {
@@ -171,7 +184,7 @@ func main() {
 		}
 
 		var wg sync.WaitGroup
-		wg.Add(2)
+		wg.Add(3)
 		// start api server
 		server := api.Init(db,
 			dbClient,
@@ -199,6 +212,16 @@ func main() {
 			log.Info(fmt.Sprintf("starting refresh api server on %s", refreshListenStringFlag))
 			refreshServer.Run(refreshListenStringFlag)
 		}()
+
+		go func() {
+			defer wg.Done()
+			metrics := echo.New()
+			metrics.GET("/metrics", echoprometheus.NewHandler())
+			if err := metrics.Start(metricsPortFlag); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Fatal("%v", err)
+			}
+		}()
+
 		wg.Wait()
 
 		log.Info("server is shutdown")
