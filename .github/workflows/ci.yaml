@@ -102,11 +102,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Docker meta custom api
-        id: meta_customapi
+      - name: Docker meta stats api
+        id: meta_statsapi
         uses: docker/metadata-action@v4
         with:
-          images: spacemeshos/explorer-custom-api-dev
+          images: spacemeshos/explorer-stats-api-dev
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -117,7 +117,7 @@ jobs:
       - uses: docker/build-push-action@v2
         with:
           context: .
-          repository: spacemeshos/explorer-custom-api-dev
+          repository: spacemeshos/explorer-stats-api-dev
           file: ./Dockerfile.api
           push: true
-          tags: ${{ steps.meta_customapi.outputs.tags }}
+          tags: ${{ steps.meta_statsapi.outputs.tags }}
