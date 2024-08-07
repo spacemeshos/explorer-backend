@@ -135,6 +135,22 @@ var flags = []cli.Flag{
 		Destination: &metricsPortFlag,
 		EnvVars:     []string{"SPACEMESH_METRICS_PORT"},
 	},
+	&cli.DurationFlag{
+		Name:        "cache-ttl",
+		Usage:       "Cache TTL for resources like overview, epochs, cumulative stats etc.",
+		Required:    false,
+		Value:       0,
+		Destination: &cache.Expiration,
+		EnvVars:     []string{"SPACEMESH_CACHE_TTL"},
+	},
+	&cli.DurationFlag{
+		Name:        "short-cache-ttl",
+		Usage:       "Short Cache TTL for resources like layers, accounts etc.",
+		Required:    false,
+		Value:       5 * time.Minute,
+		Destination: &cache.ShortExpiration,
+		EnvVars:     []string{"SPACEMESH_SHORT_CACHE_TTL"},
+	},
 }
 
 func main() {

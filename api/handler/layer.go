@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/explorer-backend/api/cache"
 	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func Layer(c echo.Context) error {
@@ -30,7 +30,7 @@ func Layer(c echo.Context) error {
 	}
 
 	if err = cc.Cache.Set(context.Background(), "layerStats"+c.Param("id"),
-		layerStats, store.WithExpiration(2*time.Minute)); err != nil {
+		layerStats, store.WithExpiration(cache.ShortExpiration)); err != nil {
 		log.Warning("failed to cache layer stats: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}

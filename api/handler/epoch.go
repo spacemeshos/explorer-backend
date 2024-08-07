@@ -2,13 +2,11 @@ package handler
 
 import (
 	"context"
-	"github.com/eko/gocache/lib/v4/store"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func Epoch(c echo.Context) error {
@@ -18,7 +16,8 @@ func Epoch(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	if cached, err := cc.Cache.Get(context.Background(), "epochStats"+c.Param("id"), new(*storage.EpochStats)); err == nil {
+	if cached, err := cc.Cache.Get(context.Background(), "epochStats"+c.Param("id"),
+		new(*storage.EpochStats)); err == nil {
 		return c.JSON(http.StatusOK, cached)
 	}
 
@@ -28,7 +27,7 @@ func Epoch(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	if err = cc.Cache.Set(context.Background(), "epochStats"+c.Param("id"), epochStats, store.WithExpiration(1*time.Minute)); err != nil {
+	if err = cc.Cache.Set(context.Background(), "epochStats"+c.Param("id"), epochStats); err != nil {
 		log.Warning("failed to cache epoch stats: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -64,7 +63,8 @@ func EpochDecentral(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	if cached, err := cc.Cache.Get(context.Background(), "epochStatsDecentral"+c.Param("id"), new(*storage.EpochStats)); err == nil {
+	if cached, err := cc.Cache.Get(context.Background(), "epochStatsDecentral"+c.Param("id"),
+		new(*storage.EpochStats)); err == nil {
 		return c.JSON(http.StatusOK, cached)
 	}
 
@@ -74,7 +74,7 @@ func EpochDecentral(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	if err = cc.Cache.Set(context.Background(), "epochStatsDecentral"+c.Param("id"), epochStats, store.WithExpiration(1*time.Minute)); err != nil {
+	if err = cc.Cache.Set(context.Background(), "epochStatsDecentral"+c.Param("id"), epochStats); err != nil {
 		log.Warning("failed to cache epoch stats: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/explorer-backend/api/cache"
 	"github.com/spacemeshos/explorer-backend/api/storage"
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func Smeshers(c echo.Context) error {
@@ -78,7 +78,8 @@ func SmeshersByEpoch(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	if err = cc.Cache.Set(context.Background(), fmt.Sprintf("smeshers-epoch-%d-%d-%d", epochId, limit, offset), smeshers); err != nil {
+	if err = cc.Cache.Set(context.Background(),
+		fmt.Sprintf("smeshers-epoch-%d-%d-%d", epochId, limit, offset), smeshers); err != nil {
 		log.Warning("failed to cache smeshers: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
@@ -101,9 +102,10 @@ func SmeshersByEpochRefresh(c echo.Context) error {
 	}
 
 	for i := 0; i < len(smeshers.Smeshers); i += 20 {
-		if err = cc.Cache.Set(context.Background(), fmt.Sprintf("smeshers-epoch-%d-%d-%d", epochId, 20, i), &storage.SmesherList{
-			Smeshers: smeshers.Smeshers[i : i+20],
-		}); err != nil {
+		if err = cc.Cache.Set(context.Background(),
+			fmt.Sprintf("smeshers-epoch-%d-%d-%d", epochId, 20, i), &storage.SmesherList{
+				Smeshers: smeshers.Smeshers[i : i+20],
+			}); err != nil {
 			log.Warning("failed to cache smeshers: %v", err)
 			return c.NoContent(http.StatusInternalServerError)
 		}
@@ -133,7 +135,7 @@ func Smesher(c echo.Context) error {
 	}
 
 	if err = cc.Cache.Set(context.Background(), "smesher-"+smesherId, smesher,
-		store.WithExpiration(10*time.Minute)); err != nil {
+		store.WithExpiration(cache.ShortExpiration)); err != nil {
 		log.Warning("failed to cache smesher: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
