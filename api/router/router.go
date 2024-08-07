@@ -27,4 +27,5 @@ func RefreshRouter(e *echo.Echo) {
 	g.GET("/overview", handler.OverviewRefresh)
 	g.GET("/smeshers/:epoch", handler.SmeshersByEpochRefresh)
 	g.GET("/smeshers", handler.SmeshersRefresh)
+	g.GET("/circulation", handler.CirculationRefresh)
 }
