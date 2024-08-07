@@ -13,6 +13,7 @@ import (
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/timesync"
+	"github.com/spacemeshos/post/config"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 	"net/http"
@@ -38,7 +39,6 @@ var (
 	genesisTimeStringFlag   string
 	layerDuration           time.Duration
 	labelsPerUnit           uint64
-	bitsPerLabel            uint64
 	metricsPortFlag         string
 )
 
@@ -119,14 +119,6 @@ var flags = []cli.Flag{
 		Value:       1024,
 		EnvVars:     []string{"SPACEMESH_LABELS_PER_UNIT"},
 	},
-	&cli.Uint64Flag{
-		Name:        "bits-per-label",
-		Usage:       "Number of bits per label",
-		Required:    false,
-		Destination: &bitsPerLabel,
-		Value:       128,
-		EnvVars:     []string{"SPACEMESH_BITS_PER_LABEL"},
-	},
 	&cli.StringFlag{
 		Name:        "metricsPort",
 		Usage:       ``,
@@ -196,7 +188,7 @@ func main() {
 			NodeClock:     clock,
 			Testnet:       testnetBoolFlag,
 			LabelsPerUnit: labelsPerUnit,
-			BitsPerLabel:  bitsPerLabel,
+			BitsPerLabel:  config.BitsPerLabel,
 		}
 
 		var wg sync.WaitGroup
