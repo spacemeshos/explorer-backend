@@ -13,7 +13,6 @@ import (
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/timesync"
-	"github.com/spacemeshos/post/config"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 	"net/http"
@@ -172,7 +171,7 @@ func main() {
 			NodeClock:     clock,
 			Testnet:       testnetBoolFlag,
 			LabelsPerUnit: labelsPerUnit,
-			BitsPerLabel:  config.BitsPerLabel,
+			BitsPerLabel:  128,
 		}
 
 		var wg sync.WaitGroup
