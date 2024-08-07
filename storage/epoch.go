@@ -378,9 +378,9 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 	}
 	atxs, _ := s.GetActivations(context.Background(), &bson.D{{Key: "targetEpoch", Value: epoch.Number}})
 	if atxs != nil {
-		smeshers := make(map[string]int64)
+		smeshers := make(map[string]uint64)
 		for _, atx := range atxs {
-			var commitmentSize int64
+			var commitmentSize uint64
 			var smesher string
 			for _, e := range atx {
 				if e.Key == "smesher" {
@@ -389,15 +389,15 @@ func (s *Storage) computeStatistics(epoch *model.Epoch) {
 				}
 				if e.Key == "commitmentSize" {
 					if value, ok := e.Value.(int64); ok {
-						commitmentSize = value
+						commitmentSize = uint64(value)
 					} else if value, ok := e.Value.(int32); ok {
-						commitmentSize = int64(value)
+						commitmentSize = uint64(value)
 					}
 				}
 			}
 			if smesher != "" {
 				smeshers[smesher] += commitmentSize
-				epoch.Stats.Current.Security += commitmentSize
+				epoch.Stats.Current.Security += int64(commitmentSize)
 			}
 		}
 		epoch.Stats.Current.Smeshers = int64(len(smeshers))
