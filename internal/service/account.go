@@ -85,6 +85,7 @@ func (e *Service) GetAccountTransactions(ctx context.Context, accountID string, 
 		{Key: "$or", Value: bson.A{
 			bson.D{{Key: "sender", Value: addr.String()}},
 			bson.D{{Key: "receiver", Value: addr.String()}},
+			bson.D{{Key: "vault", Value: addr.String()}},
 		}},
 	}
 
