@@ -1,8 +1,14 @@
 version: '3'
 
 services:
-  dbMongo:
-    image: mongo:5
-    container_name: sm_explorer_db
+  redis:
+    image: redis:6
+    restart: always
     ports:
-      - "27017-27019:27017-27019"
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+    driver: local

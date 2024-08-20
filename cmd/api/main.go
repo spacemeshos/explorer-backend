@@ -142,6 +142,14 @@ var flags = []cli.Flag{
 		Destination: &cache.ShortExpiration,
 		EnvVars:     []string{"SPACEMESH_SHORT_CACHE_TTL"},
 	},
+	&cli.StringFlag{
+		Name:        "redis",
+		Usage:       "Redis address for cache / if not set memory cache will be used",
+		Required:    false,
+		Value:       "",
+		Destination: &cache.RedisAddress,
+		EnvVars:     []string{"SPACEMESH_REDIS"},
+	},
 }
 
 func main() {
