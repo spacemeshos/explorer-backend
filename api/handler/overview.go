@@ -2,10 +2,12 @@ package handler
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/explorer-backend/api/storage"
+
 	"github.com/spacemeshos/go-spacemesh/log"
-	"net/http"
 )
 
 func Overview(c echo.Context) error {

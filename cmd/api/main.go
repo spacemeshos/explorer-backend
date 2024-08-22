@@ -3,6 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/address"
@@ -10,15 +15,12 @@ import (
 	"github.com/spacemeshos/explorer-backend/api/cache"
 	"github.com/spacemeshos/explorer-backend/api/router"
 	"github.com/spacemeshos/explorer-backend/api/storage"
+	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
+
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/timesync"
-	"github.com/urfave/cli/v2"
-	"go.uber.org/zap"
-	"net/http"
-	"os"
-	"sync"
-	"time"
 )
 
 var (

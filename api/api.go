@@ -3,24 +3,28 @@ package api
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spacemeshos/explorer-backend/api/handler"
 	"github.com/spacemeshos/explorer-backend/api/storage"
+
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/sql"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 type Api struct {
 	Echo *echo.Echo
 }
 
-func Init(db *sql.Database, dbClient storage.DatabaseClient, allowedOrigins []string, debug bool, layersPerEpoch int64, marshaler *marshaler.Marshaler, routes func(e *echo.Echo)) *Api {
+func Init(db *sql.Database, dbClient storage.DatabaseClient, allowedOrigins []string,
+	debug bool, layersPerEpoch int64, marshaler *marshaler.Marshaler, routes func(e *echo.Echo),
+) *Api {
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {

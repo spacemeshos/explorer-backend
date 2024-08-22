@@ -74,5 +74,4 @@ func (c *Client) GetLayersCount(db *sql.Database) (count uint64, err error) {
 			return true
 		})
 	return
-
 }

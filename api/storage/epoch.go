@@ -1,13 +1,15 @@
 package storage
 
 import (
+	"math"
+
 	"github.com/spacemeshos/explorer-backend/utils"
+
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/sql"
 	"github.com/spacemeshos/go-spacemesh/sql/atxs"
 	"github.com/spacemeshos/go-spacemesh/sql/builder"
-	"math"
 )
 
 type EpochStats struct {
@@ -20,7 +22,7 @@ type EpochStats struct {
 	Decentral         uint64 `json:"decentral,omitempty"`
 }
 
-func (c *Client) GetEpochStats(db *sql.Database, epoch int64, layersPerEpoch int64) (*EpochStats, error) {
+func (c *Client) GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*EpochStats, error) {
 	stats := &EpochStats{
 		TransactionsCount: 0,
 		ActivationsCount:  0,
@@ -142,5 +144,4 @@ func (c *Client) GetEpochDecentralRatio(db *sql.Database, epoch int64) (*EpochSt
 	stats.Decentral = uint64(100.0 * (0.5*(a*a)/1e8 + 0.5*(1.0-utils.Gini(smeshers))))
 
 	return stats, nil
-
 }

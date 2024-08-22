@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/spacemeshos/economics/vesting"
+
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/sql"
 )
