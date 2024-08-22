@@ -178,7 +178,6 @@ func convertActivation(a *types.ActivationTx) *pb.Activation {
 		Layer:     &pb.LayerNumber{Number: a.PublishEpoch.Uint32()},
 		SmesherId: &pb.SmesherId{Id: a.SmesherID.Bytes()},
 		Coinbase:  &pb.AccountId{Address: a.Coinbase.String()},
-		PrevAtx:   &pb.ActivationId{Id: a.PrevATXID.Bytes()},
 		NumUnits:  a.NumUnits,
 		Sequence:  a.Sequence,
 	}

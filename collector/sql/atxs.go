@@ -14,7 +14,8 @@ import (
 // filters that refer to the id column.
 const fieldsQuery = `select
 atxs.id, atxs.nonce, atxs.base_tick_height, atxs.tick_count, atxs.pubkey, atxs.effective_num_units,
-atxs.received, atxs.epoch, atxs.sequence, atxs.coinbase, atxs.validity, atxs.prev_id, atxs.commitment_atx`
+atxs.received, atxs.epoch, atxs.sequence, atxs.coinbase, atxs.validity, atxs.commitment_atx, atxs.weight,
+atxs.marriage_atx`
 
 const fullQuery = fieldsQuery + ` from atxs`
 
@@ -47,11 +48,13 @@ func decoder(fn decoderCallback) sql.Decoder {
 		stmt.ColumnBytes(9, a.Coinbase[:])
 		a.SetValidity(types.Validity(stmt.ColumnInt(10)))
 		if stmt.ColumnType(11) != sqlite.SQLITE_NULL {
-			stmt.ColumnBytes(11, a.PrevATXID[:])
-		}
-		if stmt.ColumnType(12) != sqlite.SQLITE_NULL {
 			a.CommitmentATX = new(types.ATXID)
-			stmt.ColumnBytes(12, a.CommitmentATX[:])
+			stmt.ColumnBytes(11, a.CommitmentATX[:])
+		}
+		a.Weight = uint64(stmt.ColumnInt64(12))
+		if stmt.ColumnType(13) != sqlite.SQLITE_NULL {
+			a.MarriageATX = new(types.ATXID)
+			stmt.ColumnBytes(13, a.MarriageATX[:])
 		}
 
 		return fn(&a)
