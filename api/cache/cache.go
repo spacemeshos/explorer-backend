@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"time"
+
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/eko/gocache/lib/v4/store"
@@ -8,13 +10,15 @@ import (
 	redis_store "github.com/eko/gocache/store/redis/v4"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/redis/go-redis/v9"
+
 	"github.com/spacemeshos/go-spacemesh/log"
-	"time"
 )
 
-var RedisAddress = ""
-var Expiration time.Duration = 0
-var ShortExpiration = 5 * time.Minute
+var (
+	RedisAddress                  = ""
+	Expiration      time.Duration = 0
+	ShortExpiration               = 5 * time.Minute
+)
 
 func New() *marshaler.Marshaler {
 	var manager *cache.Cache[any]

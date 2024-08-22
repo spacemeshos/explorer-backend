@@ -3,14 +3,16 @@ package handler
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/eko/gocache/lib/v4/store"
 	"github.com/labstack/echo/v4"
 	"github.com/spacemeshos/explorer-backend/api/cache"
 	"github.com/spacemeshos/explorer-backend/api/storage"
+
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
-	"net/http"
-	"strconv"
 )
 
 func Smeshers(c echo.Context) error {

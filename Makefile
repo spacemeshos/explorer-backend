@@ -1,4 +1,4 @@
-VERSION := 0.1.0
+VERSION ?= $(shell git describe --tags)
 COMMIT = $(shell git rev-parse HEAD)
 SHA = $(shell git rev-parse --short HEAD)
 CURR_DIR = $(shell pwd)
@@ -7,7 +7,9 @@ BIN_DIR = $(CURR_DIR)/build
 BIN_DIR_WIN = $(CURR_DIR_WIN)/build
 export GO111MODULE = on
 
-BRANCH := $(shell bash -c 'if [ "$$TRAVIS_PULL_REQUEST" == "false" ]; then echo $$TRAVIS_BRANCH; else echo $$TRAVIS_PULL_REQUEST_BRANCH; fi')
+BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
+
+GOLANGCI_LINT_VERSION := v1.59.0
 
 # Set BRANCH when running make manually
 ifeq ($(BRANCH),)
@@ -16,31 +18,18 @@ endif
 
 # Setup the -ldflags option to pass vars defined here to app vars
 LDFLAGS = -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.branch=${BRANCH}"
-
 PKGS = $(shell go list ./...)
 
 PLATFORMS := windows linux darwin
 os = $(word 1, $@)
 
+.PHONY: install
+install:
+	go mod download
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
+
 .PHONY: all
 all:
-
-.PHONY: apiserver
-apiserver:
-ifeq ($(OS),Windows_NT)
-	cd cmd/apiserver ; go build -o $(BIN_DIR_WIN)/apiserver.exe; cd ..
-else
-	cd cmd/apiserver ; go build -o $(BIN_DIR)/apiserver; cd ..
-endif
-
-
-.PHONY: collector
-collector:
-ifeq ($(OS),Windows_NT)
-	cd cmd/collector ; go build -o $(BIN_DIR_WIN)/collector.exe; cd ..
-else
-	cd cmd/collector ; go build -o $(BIN_DIR)/collector; cd ..
-endif
 
 .PHONY: lint-ci
 lint-ci:
@@ -48,26 +37,14 @@ lint-ci:
 
 .PHONY: lint
 lint:
-	golangci-lint run --timeout=3m ./...
+	./bin/golangci-lint run --config .golangci.yml
 
 .PHONY: lint-fix
 lint-fix:
-	golangci-lint run --fix
-
-.PHONY: test_collector
-test_collector:
-	go test ./collector/...
-
-.PHONY: test_api
-test_api:
-	go test ./internal/api/...
-
-.PHONY: test_pkg
-test_pkg:
-	go test ./pkg/...
+	./bin/golangci-lint run --config .golangci.yml --fix
 
 .PHONY: test
-test: vet lint test_api test_collector test_pkg
+test: vet lint
 
 .PHONY: vet
 vet:

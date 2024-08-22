@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
 	"github.com/spacemeshos/go-spacemesh/timesync"
@@ -13,7 +14,7 @@ type DatabaseClient interface {
 	GetLayerStats(db *sql.Database, lid int64) (*LayerStats, error)
 	GetLayersCount(db *sql.Database) (uint64, error)
 
-	GetEpochStats(db *sql.Database, epoch int64, layersPerEpoch int64) (*EpochStats, error)
+	GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*EpochStats, error)
 	GetEpochDecentralRatio(db *sql.Database, epoch int64) (*EpochStats, error)
 
 	GetSmeshers(db *sql.Database, limit, offset uint64) (*SmesherList, error)
@@ -27,7 +28,7 @@ type DatabaseClient interface {
 	GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (uint64, error)
 
 	GetRewardsSum(db *sql.Database) (uint64, uint64, error)
-	GetRewardsSumByAddress(db *sql.Database, addr types.Address) (sum uint64, count uint64, err error)
+	GetRewardsSumByAddress(db *sql.Database, addr types.Address) (sum, count uint64, err error)
 
 	GetTransactionsCount(db *sql.Database) (uint64, error)
 	GetTotalNumUnits(db *sql.Database) (uint64, error)

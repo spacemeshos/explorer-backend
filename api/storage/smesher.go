@@ -1,7 +1,8 @@
 package storage
 
 import (
-	"fmt"
+	"errors"
+
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
 )
@@ -24,7 +25,8 @@ func (c *Client) GetSmeshers(db *sql.Database, limit, offset uint64) (*SmesherLi
 		Smeshers: []Smesher{},
 	}
 
-	_, err := db.Exec(`SELECT pubkey, COUNT(*) as atxs FROM atxs GROUP BY pubkey ORDER BY pubkey ASC, epoch DESC LIMIT ?1 OFFSET ?2;`,
+	_, err := db.Exec(`SELECT pubkey, COUNT(*) as atxs FROM atxs 
+                                GROUP BY pubkey ORDER BY pubkey ASC, epoch DESC LIMIT ?1 OFFSET ?2;`,
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, int64(limit))
 			stmt.BindInt64(2, int64(offset))
@@ -48,7 +50,9 @@ func (c *Client) GetSmeshersByEpoch(db *sql.Database, limit, offset, epoch uint6
 		Smeshers: []Smesher{},
 	}
 
-	_, err := db.Exec(`SELECT DISTINCT pubkey, COUNT(*) as atxs FROM atxs WHERE epoch = ?1 GROUP BY pubkey ORDER BY pubkey ASC, epoch DESC LIMIT ?2 OFFSET ?3;`,
+	_, err := db.Exec(`SELECT DISTINCT pubkey, COUNT(*) as atxs FROM atxs 
+                                         WHERE epoch = ?1 GROUP BY pubkey 
+                                                          ORDER BY pubkey ASC, epoch DESC LIMIT ?2 OFFSET ?3;`,
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, int64(epoch-1))
 			stmt.BindInt64(2, int64(limit))
@@ -92,7 +96,9 @@ func (c *Client) GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (count 
 }
 
 func (c *Client) GetSmesher(db *sql.Database, pubkey []byte) (smesher *Smesher, err error) {
-	_, err = db.Exec(`SELECT pubkey, coinbase, effective_num_units, COUNT(*) as atxs FROM atxs WHERE pubkey = ?1 GROUP BY pubkey ORDER BY epoch DESC LIMIT 1;`,
+	_, err = db.Exec(`SELECT pubkey, coinbase, effective_num_units, COUNT(*) as atxs FROM atxs 
+                                                               WHERE pubkey = ?1 GROUP BY pubkey 
+                                                                                 ORDER BY epoch DESC LIMIT 1;`,
 		func(stmt *sql.Statement) {
 			stmt.BindBytes(1, pubkey)
 		},
@@ -107,10 +113,10 @@ func (c *Client) GetSmesher(db *sql.Database, pubkey []byte) (smesher *Smesher, 
 			return true
 		})
 	if err != nil {
-		return
+		return smesher, err
 	}
 	if smesher == nil {
-		return nil, fmt.Errorf("smesher not found")
+		return nil, errors.New("smesher not found")
 	}
 
 	_, err = db.Exec(`SELECT COUNT(*), SUM(total_reward) FROM rewards WHERE pubkey=?1`,
@@ -122,5 +128,5 @@ func (c *Client) GetSmesher(db *sql.Database, pubkey []byte) (smesher *Smesher, 
 			smesher.RewardsSum = uint64(stmt.ColumnInt64(1))
 			return true
 		})
-	return
+	return smesher, err
 }
