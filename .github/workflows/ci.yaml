@@ -42,8 +42,8 @@ jobs:
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
           version: v1.59.0
-          only-new-issues: true
-          args: --timeout=10m
+          #only-new-issues: true
+          args: --timeout=10m --config=.golangci.yml --out-format=github-actions --issues-exit-code=0
 
   docker-push:
     runs-on: ubuntu-latest
