@@ -23,7 +23,7 @@ func RefreshRouter(e *echo.Echo) {
 	e.Use(echoprometheus.NewMiddleware("spacemesh_explorer_stats_api_refresh"))
 	g := e.Group("/refresh")
 	g.GET("/epoch/:id", handler.EpochRefresh)
-	e.GET("/epoch/:id/decentral", handler.EpochDecentralRefresh)
+	g.GET("/epoch/:id/decentral", handler.EpochDecentralRefresh)
 	g.GET("/overview", handler.OverviewRefresh)
 	g.GET("/smeshers/:epoch", handler.SmeshersByEpochRefresh)
 	g.GET("/smeshers", handler.SmeshersRefresh)

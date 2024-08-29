@@ -41,20 +41,24 @@ func Smeshers(c echo.Context) error {
 func SmeshersRefresh(c echo.Context) error {
 	cc := c.(*ApiContext)
 
-	smeshers, err := cc.StorageClient.GetSmeshers(cc.Storage, 1000, 0)
-	if err != nil {
-		log.Warning("failed to get smeshers: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	for i := 0; i < len(smeshers.Smeshers); i += 20 {
-		if err = cc.Cache.Set(context.Background(), fmt.Sprintf("smeshers-%d-%d", 20, i), &storage.SmesherList{
-			Smeshers: smeshers.Smeshers[i : i+20],
-		}); err != nil {
-			log.Warning("failed to cache smeshers: %v", err)
-			return c.NoContent(http.StatusInternalServerError)
+	go func() {
+		smeshers, err := cc.StorageClient.GetSmeshers(cc.Storage, 1000, 0)
+		if err != nil {
+			log.Warning("failed to get smeshers: %v", err)
+			return
 		}
-	}
+
+		for i := 0; i < len(smeshers.Smeshers); i += 20 {
+			if err = cc.Cache.Set(context.Background(), fmt.Sprintf("smeshers-%d-%d", 20, i), &storage.SmesherList{
+				Smeshers: smeshers.Smeshers[i : i+20],
+			}); err != nil {
+				log.Warning("failed to cache smeshers: %v", err)
+				return
+			}
+		}
+
+		log.Info("smeshers refreshed")
+	}()
 
 	return c.NoContent(http.StatusOK)
 }
@@ -97,23 +101,27 @@ func SmeshersByEpochRefresh(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	smeshers, err := cc.StorageClient.GetSmeshersByEpoch(cc.Storage, 1000, 0, uint64(epochId))
-	if err != nil {
-		log.Warning("failed to get smeshers: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	for i := 0; i < len(smeshers.Smeshers); i += 20 {
-		if err = cc.Cache.Set(context.Background(),
-			fmt.Sprintf("smeshers-epoch-%d-%d-%d", epochId, 20, i), &storage.SmesherList{
-				Smeshers: smeshers.Smeshers[i : i+20],
-			}); err != nil {
-			log.Warning("failed to cache smeshers: %v", err)
-			return c.NoContent(http.StatusInternalServerError)
+	go func() {
+		smeshers, err := cc.StorageClient.GetSmeshersByEpoch(cc.Storage, 1000, 0, uint64(epochId))
+		if err != nil {
+			log.Warning("failed to get smeshers: %v", err)
+			return
 		}
-	}
 
-	return c.JSON(http.StatusOK, smeshers)
+		for i := 0; i < len(smeshers.Smeshers); i += 20 {
+			if err = cc.Cache.Set(context.Background(),
+				fmt.Sprintf("smeshers-epoch-%d-%d-%d", epochId, 20, i), &storage.SmesherList{
+					Smeshers: smeshers.Smeshers[i : i+20],
+				}); err != nil {
+				log.Warning("failed to cache smeshers: %v", err)
+				return
+			}
+		}
+
+		log.Info("smeshers by epoch %d refreshed", epochId)
+	}()
+
+	return c.NoContent(http.StatusOK)
 }
 
 func Smesher(c echo.Context) error {

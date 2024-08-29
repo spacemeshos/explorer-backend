@@ -44,16 +44,20 @@ func EpochRefresh(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	epochStats, err := cc.StorageClient.GetEpochStats(cc.Storage, int64(id), cc.LayersPerEpoch)
-	if err != nil {
-		log.Warning("failed to get epoch stats: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+	go func() {
+		epochStats, err := cc.StorageClient.GetEpochStats(cc.Storage, int64(id), cc.LayersPerEpoch)
+		if err != nil {
+			log.Warning("failed to get epoch stats: %v", err)
+			return
+		}
 
-	if err = cc.Cache.Set(context.Background(), "epochStats"+c.Param("id"), epochStats); err != nil {
-		log.Warning("failed to cache epoch stats: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+		if err = cc.Cache.Set(context.Background(), "epochStats"+c.Param("id"), epochStats); err != nil {
+			log.Warning("failed to cache epoch stats: %v", err)
+			return
+		}
+
+		log.Info("epoch %d refreshed", id)
+	}()
 
 	return c.NoContent(http.StatusOK)
 }
@@ -91,16 +95,20 @@ func EpochDecentralRefresh(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	epochStats, err := cc.StorageClient.GetEpochDecentralRatio(cc.Storage, int64(id))
-	if err != nil {
-		log.Warning("failed to get epoch stats: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+	go func() {
+		epochStats, err := cc.StorageClient.GetEpochDecentralRatio(cc.Storage, int64(id))
+		if err != nil {
+			log.Warning("failed to get epoch stats: %v", err)
+			return
+		}
 
-	if err = cc.Cache.Set(context.Background(), "epochStatsDecentral"+c.Param("id"), epochStats); err != nil {
-		log.Warning("failed to cache epoch stats: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+		if err = cc.Cache.Set(context.Background(), "epochStatsDecentral"+c.Param("id"), epochStats); err != nil {
+			log.Warning("failed to cache epoch stats: %v", err)
+			return
+		}
+
+		log.Info("epoch decentral refreshed")
+	}()
 
 	return c.NoContent(http.StatusOK)
 }
