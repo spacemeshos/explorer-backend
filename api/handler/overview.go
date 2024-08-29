@@ -34,16 +34,20 @@ func Overview(c echo.Context) error {
 func OverviewRefresh(c echo.Context) error {
 	cc := c.(*ApiContext)
 
-	overview, err := cc.StorageClient.Overview(cc.Storage)
-	if err != nil {
-		log.Warning("failed to get overview: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+	go func() {
+		overview, err := cc.StorageClient.Overview(cc.Storage)
+		if err != nil {
+			log.Warning("failed to get overview: %v", err)
+			return
+		}
 
-	if err = cc.Cache.Set(context.Background(), "overview", overview); err != nil {
-		log.Warning("failed to cache overview: %v", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
+		if err = cc.Cache.Set(context.Background(), "overview", overview); err != nil {
+			log.Warning("failed to cache overview: %v", err)
+			return
+		}
+
+		log.Info("overview refreshed")
+	}()
 
 	return c.NoContent(http.StatusOK)
 }
