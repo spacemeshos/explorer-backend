@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"github.com/spacemeshos/explorer-backend/api/cache"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -27,6 +28,7 @@ func Circulation(c echo.Context) error {
 		log.Warning("failed to cache circulation: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	cache.LastUpdated.WithLabelValues("/circulation").SetToCurrentTime()
 
 	return c.JSON(http.StatusOK, circulation)
 }
@@ -47,6 +49,7 @@ func CirculationRefresh(c echo.Context) error {
 		}
 
 		log.Info("circulation refreshed")
+		cache.LastUpdated.WithLabelValues("/refresh/circulation").SetToCurrentTime()
 	}()
 
 	return c.NoContent(http.StatusOK)

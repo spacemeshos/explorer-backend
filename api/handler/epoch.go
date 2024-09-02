@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"fmt"
+	"github.com/spacemeshos/explorer-backend/api/cache"
 	"net/http"
 	"strconv"
 
@@ -34,6 +36,8 @@ func Epoch(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	cache.LastUpdated.WithLabelValues("/epoch/" + c.Param("id")).SetToCurrentTime()
+
 	return c.JSON(http.StatusOK, epochStats)
 }
 
@@ -57,6 +61,7 @@ func EpochRefresh(c echo.Context) error {
 		}
 
 		log.Info("epoch %d refreshed", id)
+		cache.LastUpdated.WithLabelValues("/refresh/epoch/" + c.Param("id")).SetToCurrentTime()
 	}()
 
 	return c.NoContent(http.StatusOK)
@@ -85,6 +90,8 @@ func EpochDecentral(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	cache.LastUpdated.WithLabelValues(fmt.Sprintf("/epoch/%s/decentral", c.Param("id"))).SetToCurrentTime()
+
 	return c.JSON(http.StatusOK, epochStats)
 }
 
@@ -107,7 +114,8 @@ func EpochDecentralRefresh(c echo.Context) error {
 			return
 		}
 
-		log.Info("epoch decentral refreshed")
+		log.Info("epoch %d decentral refreshed", id)
+		cache.LastUpdated.WithLabelValues(fmt.Sprintf("/refresh/epoch/%s/decentral", c.Param("id"))).SetToCurrentTime()
 	}()
 
 	return c.NoContent(http.StatusOK)

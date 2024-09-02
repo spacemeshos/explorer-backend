@@ -35,6 +35,8 @@ func Smeshers(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	cache.LastUpdated.WithLabelValues(fmt.Sprintf("/smeshers?limit=%d&offset=%d", limit, offset)).SetToCurrentTime()
+
 	return c.JSON(http.StatusOK, smeshers)
 }
 
@@ -58,6 +60,7 @@ func SmeshersRefresh(c echo.Context) error {
 		}
 
 		log.Info("smeshers refreshed")
+		cache.LastUpdated.WithLabelValues("/refresh/smeshers").SetToCurrentTime()
 	}()
 
 	return c.NoContent(http.StatusOK)
@@ -90,6 +93,9 @@ func SmeshersByEpoch(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	cache.LastUpdated.WithLabelValues(
+		fmt.Sprintf("/smeshers/%s?limit=%d&offset=%d", c.Param("epoch"), limit, offset)).SetToCurrentTime()
+
 	return c.JSON(http.StatusOK, smeshers)
 }
 
@@ -119,6 +125,7 @@ func SmeshersByEpochRefresh(c echo.Context) error {
 		}
 
 		log.Info("smeshers by epoch %d refreshed", epochId)
+		cache.LastUpdated.WithLabelValues("/refresh/smeshers/" + c.Param("epoch")).SetToCurrentTime()
 	}()
 
 	return c.NoContent(http.StatusOK)
@@ -149,6 +156,8 @@ func Smesher(c echo.Context) error {
 		log.Warning("failed to cache smesher: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+
+	cache.LastUpdated.WithLabelValues("/smesher/" + smesherId).SetToCurrentTime()
 
 	return c.JSON(http.StatusOK, smesher)
 }

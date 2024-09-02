@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"github.com/eko/gocache/lib/v4/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/eko/gocache/lib/v4/cache"
@@ -18,21 +20,37 @@ var (
 	RedisAddress                  = ""
 	Expiration      time.Duration = 0
 	ShortExpiration               = 5 * time.Minute
+	promMetrics                   = metrics.NewPrometheus("explorer_cache")
+	LastUpdated                   = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "explorer_cache_last_updated",
+			Help: "The last time the cache was updated, labeled by endpoint and id",
+		},
+		[]string{"endpoint"},
+	)
 )
 
 func New() *marshaler.Marshaler {
-	var manager *cache.Cache[any]
+	prometheus.MustRegister(LastUpdated)
+	var manager *cache.MetricCache[any]
 	if RedisAddress != "" {
 		log.Info("using redis cache")
 		redisStore := redis_store.NewRedis(redis.NewClient(&redis.Options{
 			Addr: RedisAddress,
 		}), store.WithExpiration(Expiration))
-		manager = cache.New[any](redisStore)
+		manager = cache.NewMetric[any](
+			promMetrics,
+			cache.New[any](redisStore),
+		)
 	} else {
 		log.Info("using memory cahe")
 		client := gocache.New(Expiration, 6*time.Hour)
 		s := gocacheStore.NewGoCache(client)
-		manager = cache.New[any](s)
+		manager = cache.NewMetric[any](
+			promMetrics,
+			cache.New[any](s),
+		)
 	}
+
 	return marshaler.New(manager)
 }

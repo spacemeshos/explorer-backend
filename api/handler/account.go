@@ -39,6 +39,7 @@ func Account(c echo.Context) error {
 		log.Warning("failed to cache account stats: %v", err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+	cache.LastUpdated.WithLabelValues("/account/" + address).SetToCurrentTime()
 
 	return c.JSON(http.StatusOK, accountStats)
 }
