@@ -37,5 +37,7 @@ func Layer(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	cache.LastUpdated.WithLabelValues("/layer/" + c.Param("id")).SetToCurrentTime()
+
 	return c.JSON(http.StatusOK, layerStats)
 }
