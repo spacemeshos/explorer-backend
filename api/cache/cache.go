@@ -24,7 +24,7 @@ var (
 	LastUpdated                   = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "explorer_cache_last_updated",
-			Help: "The last time the cache was updated, labeled by endpoint and id",
+			Help: "The last time the cache was updated, labeled by endpoint",
 		},
 		[]string{"endpoint"},
 	)
