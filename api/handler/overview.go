@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
-	"github.com/spacemeshos/explorer-backend/api/cache"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/explorer-backend/api/cache"
 	"github.com/spacemeshos/explorer-backend/api/storage"
 
 	"github.com/spacemeshos/go-spacemesh/log"

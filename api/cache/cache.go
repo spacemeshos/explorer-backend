@@ -1,16 +1,16 @@
 package cache
 
 import (
-	"github.com/eko/gocache/lib/v4/metrics"
-	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/eko/gocache/lib/v4/cache"
 	"github.com/eko/gocache/lib/v4/marshaler"
+	"github.com/eko/gocache/lib/v4/metrics"
 	"github.com/eko/gocache/lib/v4/store"
 	gocacheStore "github.com/eko/gocache/store/go_cache/v4"
 	redis_store "github.com/eko/gocache/store/redis/v4"
 	gocache "github.com/patrickmn/go-cache"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/spacemeshos/go-spacemesh/log"
