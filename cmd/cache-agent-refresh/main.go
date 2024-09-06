@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -19,12 +20,12 @@ import (
  */
 
 var (
-	// Metadata
+	// Metadata.
 	version string
 	commit  string
 	branch  string
 
-	// All max_interval_ must be in minutes
+	// All max_interval_ must be in minutes.
 	max_interval_epoch_current    int = 30   // 30 minutes
 	max_interval_epoch_past       int = 1440 // 1 day
 	max_interval_overview         int = 60   // 1 hour
@@ -34,7 +35,7 @@ var (
 	max_interval_circulation      int = 30   // 30 minutes
 
 	// App settings
-	// metricsPortFlag              string
+	// metricsPortFlag              string.
 	layersPerEpoch               int
 	targetNodesFlag              string // comma separated list of target nodes
 	targetNodesJsonPortFlag      int
@@ -43,27 +44,25 @@ var (
 )
 
 const (
-	refresh_path_epoch           string = "/refresh/epoch/:id"
-	refresh_path_epoch_decentral string = "/refresh/epoch/:id/decentral"
-	// refresh_path_account            string = "/refresh/account/:address" // TODO: review with @kacpersaw, if we can remove this from metrics, that can blow the prometheus metrics
+	refresh_path_epoch              string = "/refresh/epoch/:id"
+	refresh_path_epoch_decentral    string = "/refresh/epoch/:id/decentral"
 	refresh_path_smeshers_per_epoch string = "/refresh/smeshers/:epoch"
 	refresh_path_smeshers           string = "/refresh/smeshers"
-	// refresh_path_smesher            string = "/refresh/smesher/:smesherId" // TODO: review with @kacpersaw, if we can remove this from metrics, that can blow the prometheus metrics
-	refresh_path_overview    string = "/refresh/overview"
-	refresh_path_circulation string = "/refresh/circulation"
+	refresh_path_overview           string = "/refresh/overview"
+	refresh_path_circulation        string = "/refresh/circulation"
 )
 
-func is_sync(latest_layer int, processed_layer int, tolerance int) bool {
+func is_sync(latest_layer, processed_layer, tolerance int) bool {
 	// Check if the node is synced
 	return processed_layer >= latest_layer-tolerance
 }
 
-func get_current_epoch(leyers_per_epoch int, current_layer int) int {
+func get_current_epoch(leyers_per_epoch, current_layer int) int {
 	// Current_Layer / Layers_Per_Epoch, if the decimal part is greater than 0.5, we are in the next epoch
 	return int(math.Floor(float64(current_layer) / float64(leyers_per_epoch)))
 }
 
-func prometheus_metrics_parcer(prometheus_metric_scrape string, metric_name string, label_value string) float64 {
+func prometheus_metrics_parcer(prometheus_metric_scrape, metric_name, label_value string) float64 {
 	// Get all the lines with the metric name
 	// the will get the first line with contains the label value
 	// will split the line by the space and get the last element
@@ -89,7 +88,6 @@ func prometheus_metrics_parcer(prometheus_metric_scrape string, metric_name stri
 		return 0
 	}
 	return result
-
 }
 
 type NodeStatus struct {
@@ -109,7 +107,7 @@ func get_status(node string, port int) (status NodeStatus, err error) {
 	defer resp.Body.Close()
 
 	// Read and parse response JSON
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Error reading response from node %s:%d\n", node, port)
 		return
@@ -126,12 +124,10 @@ func get_status(node string, port int) (status NodeStatus, err error) {
 	return
 }
 
-// checkNodeStatus checks the status of a node and whether it's synced
+// checkNodeStatus checks the status of a node and whether it's synced.
 func checkNodeStatus(node string, port int) (bool, string) {
-
 	// Parse the response into NodeStatus struct
 	status, err := get_status(node, port)
-
 	if err != nil {
 		fmt.Printf("Error getting status from node %s:%d\n", node, port)
 		return false, ""
@@ -146,7 +142,6 @@ func checkNodeStatus(node string, port int) (bool, string) {
 }
 
 func refresh_cache(node string, port int, path string, interval int, prometheus string) error {
-
 	log.Printf("Refreshing cache for %s:%d%s\n", node, port, path)
 
 	last_refresh := prometheus_metrics_parcer(prometheus, "cache_agent_last_refresh", path)
@@ -215,7 +210,6 @@ var flags = []cli.Flag{
 }
 
 func main() {
-
 	app := cli.NewApp()
 	app.Name = "cache-agent-refresh"
 	app.Version = fmt.Sprintf("%s, commit '%s', branch '%s'", version, commit, branch)
@@ -223,7 +217,6 @@ func main() {
 	app.Writer = os.Stderr
 
 	app.Action = func(ctx *cli.Context) error {
-
 		nodes := strings.Split(targetNodesFlag, ",")
 		var targetNode string
 		// Check if the nodes are synced
@@ -238,18 +231,18 @@ func main() {
 
 		if targetNode == "" {
 			fmt.Println("No synced nodes found")
-			return fmt.Errorf("No synced nodes found")
+			return errors.New("no synced nodes found")
 		}
 
 		// Get the prometheus metrics
-		prometheus_url := fmt.Sprintf("http://%s:%d/metrics", targetNode, targetNodesRefreshMetricFlag)
+		prometheus_url := fmt.Sprintf("http://%s:%s/metrics", targetNode, targetNodesRefreshMetricFlag)
 		resp, err := http.Get(prometheus_url)
 		if err != nil {
 			log.Fatalf("Error getting prometheus metrics: %v", err)
 		}
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatalf("Error reading prometheus metrics: %v", err)
 		}
@@ -266,17 +259,20 @@ func main() {
 		wg.Add(3)
 		go func() {
 			defer wg.Done()
-			refresh_cache(targetNode, targetNodesRefreshPortFlag, refresh_path_overview, max_interval_overview, string(body))
+			refresh_cache(targetNode, targetNodesRefreshPortFlag, refresh_path_overview, max_interval_overview,
+				string(body))
 		}()
 
 		go func() {
 			defer wg.Done()
-			refresh_cache(targetNode, targetNodesRefreshPortFlag, refresh_path_circulation, max_interval_circulation, string(body))
+			refresh_cache(targetNode, targetNodesRefreshPortFlag, refresh_path_circulation, max_interval_circulation,
+				string(body))
 		}()
 
 		go func() {
 			defer wg.Done()
-			refresh_cache(targetNode, targetNodesRefreshPortFlag, refresh_path_smeshers, max_interval_smeshers, string(body))
+			refresh_cache(targetNode, targetNodesRefreshPortFlag, refresh_path_smeshers, max_interval_smeshers,
+				string(body))
 		}()
 
 		wg.Wait()
@@ -331,5 +327,4 @@ func main() {
 
 	log.Println("Cache refresh completed")
 	os.Exit(0)
-
 }
