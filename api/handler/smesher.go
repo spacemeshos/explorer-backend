@@ -157,7 +157,5 @@ func Smesher(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	cache.LastUpdated.WithLabelValues("/smesher/" + smesherId).SetToCurrentTime()
-
 	return c.JSON(http.StatusOK, smesher)
 }
