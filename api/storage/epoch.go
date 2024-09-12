@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/spacemeshos/economics/constants"
 	"math"
 
 	"github.com/spacemeshos/explorer-backend/utils"
@@ -20,6 +21,8 @@ type EpochStats struct {
 	NumUnits          uint64 `json:"num_units,omitempty"`
 	SmeshersCount     uint64 `json:"smeshers_count,omitempty"`
 	Decentral         uint64 `json:"decentral,omitempty"`
+	VestedAmount      uint64 `json:"vested_amount,omitempty"`
+	AccountsCount     uint64 `json:"accounts_count,omitempty"`
 }
 
 func (c *Client) GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*EpochStats, error) {
@@ -32,6 +35,15 @@ func (c *Client) GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*
 
 	start := epoch * layersPerEpoch
 	end := start + layersPerEpoch - 1
+	currentEpoch := c.NodeClock.CurrentLayer().Uint32() / uint32(layersPerEpoch)
+
+	if !c.Testnet && start >= constants.VestStart && start <= constants.VestEnd {
+		if epoch == int64(currentEpoch) {
+			stats.VestedAmount = (uint64(c.NodeClock.CurrentLayer().Uint32()) - uint64(start-1)) * constants.VestPerLayer
+		} else {
+			stats.VestedAmount = uint64(layersPerEpoch) * constants.VestPerLayer
+		}
+	}
 
 	_, err := db.Exec(`SELECT COUNT(*)
 FROM (
@@ -101,6 +113,19 @@ FROM (
 		},
 		func(stmt *sql.Statement) bool {
 			stats.SmeshersCount = uint64(stmt.ColumnInt64(0))
+			return true
+		})
+
+	_, err = db.Exec(`SELECT COUNT(DISTINCT address)
+								FROM transactions_results_addresses
+								WHERE tid IN (
+									SELECT id FROM transactions WHERE layer >= ?1 AND layer <= ?2)`,
+		func(statement *sql.Statement) {
+			statement.BindInt64(1, start)
+			statement.BindInt64(2, end)
+		},
+		func(statement *sql.Statement) bool {
+			stats.AccountsCount = uint64(statement.ColumnInt64(0))
 			return true
 		})
 
