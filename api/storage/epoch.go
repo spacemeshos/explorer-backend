@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"github.com/spacemeshos/economics/constants"
 	"math"
 
+	"github.com/spacemeshos/economics/constants"
 	"github.com/spacemeshos/explorer-backend/utils"
 
 	"github.com/spacemeshos/go-spacemesh/common/types"
@@ -39,7 +39,8 @@ func (c *Client) GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*
 
 	if !c.Testnet && start >= constants.VestStart && start <= constants.VestEnd {
 		if epoch == int64(currentEpoch) {
-			stats.VestedAmount = (uint64(c.NodeClock.CurrentLayer().Uint32()) - uint64(start-1)) * constants.VestPerLayer
+			stats.VestedAmount = (uint64(c.NodeClock.CurrentLayer().Uint32()) -
+				uint64(start-1)) * constants.VestPerLayer
 		} else {
 			stats.VestedAmount = uint64(layersPerEpoch) * constants.VestPerLayer
 		}
@@ -115,6 +116,9 @@ FROM (
 			stats.SmeshersCount = uint64(stmt.ColumnInt64(0))
 			return true
 		})
+	if err != nil {
+		return nil, err
+	}
 
 	_, err = db.Exec(`SELECT COUNT(DISTINCT address)
 								FROM transactions_results_addresses
