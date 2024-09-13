@@ -37,10 +37,13 @@ func (c *Client) GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*
 	end := start + layersPerEpoch - 1
 	currentEpoch := c.NodeClock.CurrentLayer().Uint32() / uint32(layersPerEpoch)
 
-	if !c.Testnet && start >= constants.VestStart && start <= constants.VestEnd {
+	if !c.Testnet && end >= constants.VestStart {
+		vestStartEpoch := constants.VestStart / layersPerEpoch
 		if epoch == int64(currentEpoch) {
 			stats.VestedAmount = (uint64(c.NodeClock.CurrentLayer().Uint32()) -
 				uint64(start-1)) * constants.VestPerLayer
+		} else if epoch == vestStartEpoch {
+			stats.VestedAmount = uint64(end-constants.VestStart) * constants.VestPerLayer
 		} else {
 			stats.VestedAmount = uint64(layersPerEpoch) * constants.VestPerLayer
 		}
