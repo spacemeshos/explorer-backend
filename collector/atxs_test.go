@@ -27,6 +27,7 @@ func TestAtxs(t *testing.T) {
 		require.True(t, ok)
 		tmpAtx.Coinbase = strings.ToLower(tmpAtx.Coinbase)
 		atxGen.Coinbase = strings.ToLower(atxGen.Coinbase)
+		atxGen.PrevAtx = ""
 		require.Equal(t, *atxGen, tmpAtx)
 	}
 }
