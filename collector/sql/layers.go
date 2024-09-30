@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer, error) {
+func (c *Client) GetLayer(db sql.Executor, lid types.LayerID, numLayers uint32) (*pb.Layer, error) {
 	var bs []*pb.Block
 	var activations []types.ATXID
 
@@ -98,7 +98,7 @@ func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32)
 	}, nil
 }
 
-func getMeshTransactions(db *sql.Database, ids []types.TransactionID) ([]*types.MeshTransaction, map[types.TransactionID]struct{}) {
+func getMeshTransactions(db sql.Executor, ids []types.TransactionID) ([]*types.MeshTransaction, map[types.TransactionID]struct{}) {
 	if ids == nil {
 		return []*types.MeshTransaction{}, map[types.TransactionID]struct{}{}
 	}
@@ -118,7 +118,7 @@ func getMeshTransactions(db *sql.Database, ids []types.TransactionID) ([]*types.
 	return mtxs, missing
 }
 
-func GetATXs(db *sql.Database, atxIds []types.ATXID) (map[types.ATXID]*types.ActivationTx, []types.ATXID) {
+func GetATXs(db sql.Executor, atxIds []types.ATXID) (map[types.ATXID]*types.ActivationTx, []types.ATXID) {
 	var mIds []types.ATXID
 	a := make(map[types.ATXID]*types.ActivationTx, len(atxIds))
 	for _, id := range atxIds {
@@ -132,7 +132,7 @@ func GetATXs(db *sql.Database, atxIds []types.ATXID) (map[types.ATXID]*types.Act
 	return a, mIds
 }
 
-func getFullAtx(db *sql.Database, id types.ATXID) (*types.ActivationTx, error) {
+func getFullAtx(db sql.Executor, id types.ATXID) (*types.ActivationTx, error) {
 	if id == types.EmptyATXID {
 		return nil, errors.New("trying to fetch empty atx id")
 	}
@@ -178,7 +178,6 @@ func convertActivation(a *types.ActivationTx) *pb.Activation {
 		Layer:     &pb.LayerNumber{Number: a.PublishEpoch.Uint32()},
 		SmesherId: &pb.SmesherId{Id: a.SmesherID.Bytes()},
 		Coinbase:  &pb.AccountId{Address: a.Coinbase.String()},
-		PrevAtx:   &pb.ActivationId{Id: a.PrevATXID.Bytes()},
 		NumUnits:  a.NumUnits,
 		Sequence:  a.Sequence,
 	}

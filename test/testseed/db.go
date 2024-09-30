@@ -178,7 +178,6 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 		copy(atxId[:], atxIdBytes)
 
 		atx := &types.ActivationTx{
-			PrevATXID:    prevAtx,
 			PublishEpoch: types.EpochID(generatedAtx.PublishEpoch),
 			Sequence:     1,
 			Coinbase:     addr,

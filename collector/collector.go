@@ -60,7 +60,7 @@ type Collector struct {
 	atxSyncFlag               bool
 
 	listener Listener
-	db       *sql2.Database
+	db       sql2.StateDatabase
 	dbClient sql.DatabaseClient
 
 	nodeClient         pb.NodeServiceClient
@@ -82,7 +82,7 @@ type Collector struct {
 
 func NewCollector(nodePublicAddress string, nodePrivateAddress string, syncMissingLayersFlag bool,
 	syncFromLayerFlag int, recalculateEpochStatsFlag bool,
-	listener Listener, db *sql2.Database, dbClient sql.DatabaseClient, atxSyncFlag bool) *Collector {
+	listener Listener, db sql2.StateDatabase, dbClient sql.DatabaseClient, atxSyncFlag bool) *Collector {
 	return &Collector{
 		apiPublicUrl:              nodePublicAddress,
 		apiPrivateUrl:             nodePrivateAddress,

@@ -14,7 +14,8 @@ import (
 // filters that refer to the id column.
 const fieldsQuery = `select
 atxs.id, atxs.nonce, atxs.base_tick_height, atxs.tick_count, atxs.pubkey, atxs.effective_num_units,
-atxs.received, atxs.epoch, atxs.sequence, atxs.coinbase, atxs.validity, atxs.prev_id, atxs.commitment_atx`
+atxs.received, atxs.epoch, atxs.sequence, atxs.coinbase, atxs.validity, atxs.commitment_atx, atxs.weight,
+atxs.marriage_atx`
 
 const fullQuery = fieldsQuery + ` from atxs`
 
@@ -47,18 +48,20 @@ func decoder(fn decoderCallback) sql.Decoder {
 		stmt.ColumnBytes(9, a.Coinbase[:])
 		a.SetValidity(types.Validity(stmt.ColumnInt(10)))
 		if stmt.ColumnType(11) != sqlite.SQLITE_NULL {
-			stmt.ColumnBytes(11, a.PrevATXID[:])
-		}
-		if stmt.ColumnType(12) != sqlite.SQLITE_NULL {
 			a.CommitmentATX = new(types.ATXID)
-			stmt.ColumnBytes(12, a.CommitmentATX[:])
+			stmt.ColumnBytes(11, a.CommitmentATX[:])
+		}
+		a.Weight = uint64(stmt.ColumnInt64(12))
+		if stmt.ColumnType(13) != sqlite.SQLITE_NULL {
+			a.MarriageATX = new(types.ATXID)
+			stmt.ColumnBytes(13, a.MarriageATX[:])
 		}
 
 		return fn(&a)
 	}
 }
 
-func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.ActivationTx) bool) error {
+func (c *Client) GetAtxsReceivedAfter(db sql.Executor, ts int64, fn func(tx *types.ActivationTx) bool) error {
 	var derr error
 	_, err := db.Exec(
 		fullQuery+` WHERE received > ?1`,
@@ -78,7 +81,7 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 	return derr
 }
 
-func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.ActivationTx) bool) error {
+func (c *Client) GetAtxsByEpoch(db sql.Executor, epoch int64, fn func(tx *types.ActivationTx) bool) error {
 	var derr error
 	_, err := db.Exec(
 		fullQuery+` WHERE epoch = ?1 ORDER BY epoch asc, id asc`,
@@ -98,7 +101,7 @@ func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types
 	return derr
 }
 
-func (c *Client) CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error) {
+func (c *Client) CountAtxsByEpoch(db sql.Executor, epoch int64) (int, error) {
 	var totalCount int
 	_, err := db.Exec(
 		`SELECT COUNT(*) FROM atxs WHERE epoch = ?1`,
@@ -114,7 +117,7 @@ func (c *Client) CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error) {
 	return totalCount, nil
 }
 
-func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.ActivationTx) bool) error {
+func (c *Client) GetAtxsByEpochPaginated(db sql.Executor, epoch, limit, offset int64, fn func(tx *types.ActivationTx) bool) error {
 	var derr error
 	_, err := db.Exec(
 		fullQuery+` WHERE epoch = ?1 ORDER BY epoch asc, id asc LIMIT ?2 OFFSET ?3`,
@@ -136,7 +139,7 @@ func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset 
 	return derr
 }
 
-func (c *Client) GetAtxById(db *sql.Database, id string) (*types.ActivationTx, error) {
+func (c *Client) GetAtxById(db sql.Executor, id string) (*types.ActivationTx, error) {
 	idBytes, err := utils.StringToBytes(id)
 	if err != nil {
 		return nil, err
