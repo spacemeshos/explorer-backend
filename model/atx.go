@@ -34,10 +34,9 @@ func NewActivation(atx *types.ActivationTx) *Activation {
 		TargetEpoch:       atx.PublishEpoch.Uint32() + 1,
 		SmesherId:         utils.BytesToHex(atx.SmesherID.Bytes()),
 		Coinbase:          atx.Coinbase.String(),
-		PrevAtx:           utils.BytesToHex(atx.PrevATXID.Bytes()),
 		NumUnits:          atx.NumUnits,
 		TickCount:         atx.TickCount,
-		Weight:            atx.GetWeight(),
+		Weight:            atx.Weight,
 		EffectiveNumUnits: atx.NumUnits,
 		Received:          atx.Received().UnixNano(),
 	}
