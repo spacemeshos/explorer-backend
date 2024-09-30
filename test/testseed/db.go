@@ -21,7 +21,7 @@ const (
 	methodSend = 16
 )
 
-func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32) (*pb.Layer, error) {
+func (c *Client) GetLayer(db sql.Executor, lid types.LayerID, numLayers uint32) (*pb.Layer, error) {
 	for _, epoch := range c.SeedGen.Epochs {
 		for _, layerContainer := range epoch.Layers {
 			if layerContainer.Layer.Number != lid.Uint32() {
@@ -90,7 +90,7 @@ func (c *Client) GetLayer(db *sql.Database, lid types.LayerID, numLayers uint32)
 	return nil, errors.New("could not find layer")
 }
 
-func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*types.Reward, err error) {
+func (c *Client) GetLayerRewards(db sql.Executor, lid types.LayerID) (rst []*types.Reward, err error) {
 	for _, epoch := range c.SeedGen.Epochs {
 		for _, reward := range epoch.Rewards {
 			if reward.Layer != lid.Uint32() {
@@ -116,7 +116,7 @@ func (c *Client) GetLayerRewards(db *sql.Database, lid types.LayerID) (rst []*ty
 	return rst, nil
 }
 
-func (c *Client) GetAllRewards(db *sql.Database) (rst []*types.Reward, err error) {
+func (c *Client) GetAllRewards(db sql.Executor) (rst []*types.Reward, err error) {
 	for _, epoch := range c.SeedGen.Epochs {
 		for _, reward := range epoch.Rewards {
 			coinbase, _ := types.StringToAddress(reward.Coinbase)
@@ -138,7 +138,7 @@ func (c *Client) GetAllRewards(db *sql.Database) (rst []*types.Reward, err error
 	return rst, nil
 }
 
-func (c *Client) AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*types.Account, err error) {
+func (c *Client) AccountsSnapshot(db sql.Executor, lid types.LayerID) (rst []*types.Account, err error) {
 	for _, accountContainer := range c.SeedGen.Accounts {
 		if accountContainer.layerID != lid.Uint32() {
 			continue
@@ -158,7 +158,7 @@ func (c *Client) AccountsSnapshot(db *sql.Database, lid types.LayerID) (rst []*t
 	return rst, nil
 }
 
-func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *types.ActivationTx) bool) error {
+func (c *Client) GetAtxsReceivedAfter(db sql.Executor, ts int64, fn func(tx *types.ActivationTx) bool) error {
 	for _, generatedAtx := range c.SeedGen.Activations {
 		smesherIdBytes, _ := utils.StringToBytes(generatedAtx.SmesherId)
 		var nodeId types.NodeID
@@ -194,19 +194,19 @@ func (c *Client) GetAtxsReceivedAfter(db *sql.Database, ts int64, fn func(tx *ty
 	return nil
 }
 
-func (c *Client) GetAtxsByEpoch(db *sql.Database, epoch int64, fn func(tx *types.ActivationTx) bool) error {
+func (c *Client) GetAtxsByEpoch(db sql.Executor, epoch int64, fn func(tx *types.ActivationTx) bool) error {
 	return nil
 }
 
-func (c *Client) CountAtxsByEpoch(db *sql.Database, epoch int64) (int, error) {
+func (c *Client) CountAtxsByEpoch(db sql.Executor, epoch int64) (int, error) {
 	return 0, nil
 }
 
-func (c *Client) GetAtxsByEpochPaginated(db *sql.Database, epoch, limit, offset int64, fn func(tx *types.ActivationTx) bool) error {
+func (c *Client) GetAtxsByEpochPaginated(db sql.Executor, epoch, limit, offset int64, fn func(tx *types.ActivationTx) bool) error {
 	return nil
 }
 
-func (c *Client) GetAtxById(db *sql.Database, id string) (*types.ActivationTx, error) {
+func (c *Client) GetAtxById(db sql.Executor, id string) (*types.ActivationTx, error) {
 	return nil, nil
 }
 

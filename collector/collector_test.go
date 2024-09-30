@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spacemeshos/explorer-backend/collector"
 	"github.com/spacemeshos/go-spacemesh/sql"
+	"github.com/spacemeshos/go-spacemesh/sql/statesql"
 	"os"
 	"testing"
 	"time"
@@ -50,7 +51,8 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	sqlDb, err := sql.Open("file:test.db?cache=shared&mode=memory", sql.WithConnections(16), sql.WithMigrations(nil))
+	sqlDb, err := statesql.Open("file:test.db?cache=shared&mode=memory", sql.WithConnections(16),
+		sql.WithMigrationsDisabled())
 	seed := testseed.GetServerSeed()
 	generator = testseed.NewSeedGenerator(seed)
 	if err = generator.GenerateEpoches(10); err != nil {
