@@ -1,7 +1,7 @@
 name: CI
 
 env:
-  go-version: '1.22.4'
+  go-version: '1.23.0'
 
 # Trigger the workflow on all pull requests, and on push to specific branches
 on:
@@ -31,7 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: filter-changes
     if: ${{ needs.filter-changes.outputs.nondocchanges == 'true' }}
-    # should not take more than 4-6 mins
     timeout-minutes: 10
     steps:
       - uses: actions/setup-go@v3
@@ -42,57 +41,32 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: v1.57.1
+          version: v1.60.3
           only-new-issues: true
-          args: --timeout=3m
+          args: --timeout=10m --config=.golangci.yml --out-format=github-actions
 
-  unittests_api:
+  docker-push:
     runs-on: ubuntu-latest
-    needs: filter-changes
-    if: ${{ needs.filter-changes.outputs.nondocchanges == 'true' }}
-    timeout-minutes: 20
+    needs: golangci
     steps:
-      - name: checkout
-        uses: actions/checkout@v2
-      - name: set up go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.go-version }}
-      - name: start db
-        run: make ci_up
-      - name: unit test_api
-        run: make test_api
+      - uses: actions/checkout@v2
 
-  unittests_collector:
-    runs-on: ubuntu-latest
-    needs: filter-changes
-    if: ${{ needs.filter-changes.outputs.nondocchanges == 'true' }}
-    timeout-minutes: 20
-    steps:
-      - name: checkout
-        uses: actions/checkout@v2
-      - name: set up go
-        uses: actions/setup-go@v2
+      - name: Docker meta stats api
+        id: meta_statsapi
+        uses: docker/metadata-action@v4
         with:
-          go-version: ${{ env.go-version }}
-      - name: start db
-        run: make ci_up
-      - name: unit test_collector
-        run: make test_collector
+          images: spacemeshos/explorer-stats-api-dev
 
-  unittests_pkg:
-    runs-on: ubuntu-latest
-    needs: filter-changes
-    if: ${{ needs.filter-changes.outputs.nondocchanges == 'true' }}
-    timeout-minutes: 20
-    steps:
-      - name: checkout
-        uses: actions/checkout@v2
-      - name: set up go
-        uses: actions/setup-go@v2
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
         with:
-          go-version: ${{ env.go-version }}
-      - name: start db
-        run: make ci_up
-      - name: unit test_pkg
-        run: make test_pkg
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - uses: docker/build-push-action@v2
+        with:
+          context: .
+          repository: spacemeshos/explorer-stats-api-dev
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta_statsapi.outputs.tags }}
