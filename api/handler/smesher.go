@@ -51,9 +51,15 @@ func SmeshersRefresh(c echo.Context) error {
 		}
 
 		for i := 0; i < len(smeshers.Smeshers); i += 20 {
-			if err = cc.Cache.Set(context.Background(), fmt.Sprintf("smeshers-%d-%d", 20, i), &storage.SmesherList{
-				Smeshers: smeshers.Smeshers[i : i+20],
-			}); err != nil {
+			end := i + 20
+			if end > len(smeshers.Smeshers) {
+				end = len(smeshers.Smeshers)
+			}
+			if err = cc.Cache.Set(
+				context.Background(),
+				fmt.Sprintf("smeshers-%d-%d", 20, i),
+				&storage.SmesherList{Smeshers: smeshers.Smeshers[i:end]},
+			); err != nil {
 				log.Warning("failed to cache smeshers: %v", err)
 				return
 			}
@@ -115,10 +121,15 @@ func SmeshersByEpochRefresh(c echo.Context) error {
 		}
 
 		for i := 0; i < len(smeshers.Smeshers); i += 20 {
-			if err = cc.Cache.Set(context.Background(),
-				fmt.Sprintf("smeshers-epoch-%d-%d-%d", epochId, 20, i), &storage.SmesherList{
-					Smeshers: smeshers.Smeshers[i : i+20],
-				}); err != nil {
+			end := i + 20
+			if end > len(smeshers.Smeshers) {
+				end = len(smeshers.Smeshers)
+			}
+			if err = cc.Cache.Set(
+				context.Background(),
+				fmt.Sprintf("smeshers-%d-%d", 20, i),
+				&storage.SmesherList{Smeshers: smeshers.Smeshers[i:end]},
+			); err != nil {
 				log.Warning("failed to cache smeshers: %v", err)
 				return
 			}
