@@ -33,3 +33,23 @@ The API is not properly documented yet. The best way to identity the supported A
 - Get mainnet current network info: https://mainnet-explorer-api.spacemesh.network/
 
 
+### Explorer Stats API
+
+```shell
+GLOBAL OPTIONS:
+   --listen value                                       Explorer API listen string in format <host>:<port> (default: ":5000") [$SPACEMESH_API_LISTEN]
+   --listen-refresh value                               Explorer refresh API listen string in format <host>:<port> (default: ":5050") [$SPACEMESH_REFRESH_API_LISTEN]
+   --testnet                                            Use this flag to enable testnet preset ("stest" instead of "sm" for wallet addresses) (default: false) [$SPACEMESH_TESTNET]
+   --allowed-origins value [ --allowed-origins value ]  Use this flag to set allowed origins for CORS (default: "*") [$ALLOWED_ORIGINS]
+   --debug                                              Use this flag to enable echo debug option along with logger middleware (default: false) [$DEBUG]
+   --sqlite value                                       Path to node sqlite file (default: "explorer.sql") [$SPACEMESH_SQLITE]
+   --layers-per-epoch value                             Number of layers per epoch (default: 4032) [$SPACEMESH_LAYERS_PER_EPOCH]
+   --genesis-time value                                 Genesis time in RFC3339 format (default: "2024-06-21T13:00:00.000Z") [$SPACEMESH_GENESIS_TIME]
+   --layer-duration value                               Duration of a single layer (default: 30s) [$SPACEMESH_LAYER_DURATION]
+   --labels-per-unit value                              Number of labels per unit (default: 1024) [$SPACEMESH_LABELS_PER_UNIT]
+   --bits-per-label value                               Number of bits per label (default: 128) [$SPACEMESH_BITS_PER_LABEL]
+   --metricsPort value                                  (default: ":5070") [$SPACEMESH_METRICS_PORT]
+   --help, -h                                           show help
+   --version, -v                                        print the version
+
+```
