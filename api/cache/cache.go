@@ -35,7 +35,7 @@ func New() *marshaler.Marshaler {
 	var manager *cache.MetricCache[any]
 	if RedisAddress != "" {
 		log.Info("using redis cache")
-		opt, err := redis.ParseURL("redis://:qwerty@localhost:6379/1")
+		opt, err := redis.ParseURL(RedisAddress)
 		if err != nil {
 			panic(err)
 		}
