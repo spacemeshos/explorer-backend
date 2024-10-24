@@ -35,9 +35,11 @@ func New() *marshaler.Marshaler {
 	var manager *cache.MetricCache[any]
 	if RedisAddress != "" {
 		log.Info("using redis cache")
-		redisStore := redis_store.NewRedis(redis.NewClient(&redis.Options{
-			Addr: RedisAddress,
-		}), store.WithExpiration(Expiration))
+		opt, err := redis.ParseURL("redis://:qwerty@localhost:6379/1")
+		if err != nil {
+			panic(err)
+		}
+		redisStore := redis_store.NewRedis(redis.NewClient(opt), store.WithExpiration(Expiration))
 		manager = cache.NewMetric[any](
 			promMetrics,
 			cache.New[any](redisStore),
