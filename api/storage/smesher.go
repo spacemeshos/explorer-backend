@@ -20,7 +20,7 @@ type Smesher struct {
 	RewardsSum   uint64       `json:"rewards_sum,omitempty"`
 }
 
-func (c *Client) GetSmeshers(db *sql.Database, limit, offset uint64) (*SmesherList, error) {
+func (c *Client) GetSmeshers(db sql.Executor, limit, offset uint64) (*SmesherList, error) {
 	smesherList := &SmesherList{
 		Smeshers: []Smesher{},
 	}
@@ -45,7 +45,7 @@ func (c *Client) GetSmeshers(db *sql.Database, limit, offset uint64) (*SmesherLi
 	return smesherList, err
 }
 
-func (c *Client) GetSmeshersByEpoch(db *sql.Database, limit, offset, epoch uint64) (*SmesherList, error) {
+func (c *Client) GetSmeshersByEpoch(db sql.Executor, limit, offset, epoch uint64) (*SmesherList, error) {
 	smesherList := &SmesherList{
 		Smeshers: []Smesher{},
 	}
@@ -72,7 +72,7 @@ func (c *Client) GetSmeshersByEpoch(db *sql.Database, limit, offset, epoch uint6
 	return smesherList, err
 }
 
-func (c *Client) GetSmeshersCount(db *sql.Database) (count uint64, err error) {
+func (c *Client) GetSmeshersCount(db sql.Executor) (count uint64, err error) {
 	_, err = db.Exec(`SELECT COUNT(*) FROM (SELECT DISTINCT pubkey FROM atxs)`,
 		func(stmt *sql.Statement) {
 		},
@@ -83,7 +83,7 @@ func (c *Client) GetSmeshersCount(db *sql.Database) (count uint64, err error) {
 	return
 }
 
-func (c *Client) GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (count uint64, err error) {
+func (c *Client) GetSmeshersByEpochCount(db sql.Executor, epoch uint64) (count uint64, err error) {
 	_, err = db.Exec(`SELECT COUNT(*) FROM (SELECT DISTINCT pubkey FROM atxs WHERE epoch = ?1)`,
 		func(stmt *sql.Statement) {
 			stmt.BindInt64(1, int64(epoch-1))
@@ -95,7 +95,7 @@ func (c *Client) GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (count 
 	return
 }
 
-func (c *Client) GetSmesher(db *sql.Database, pubkey []byte) (smesher *Smesher, err error) {
+func (c *Client) GetSmesher(db sql.Executor, pubkey []byte) (smesher *Smesher, err error) {
 	_, err = db.Exec(`SELECT pubkey, coinbase, effective_num_units, COUNT(*) as atxs FROM atxs 
                                                                WHERE pubkey = ?1 GROUP BY pubkey 
                                                                                  ORDER BY epoch DESC LIMIT 1;`,

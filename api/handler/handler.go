@@ -12,7 +12,7 @@ import (
 
 type ApiContext struct {
 	echo.Context
-	Storage        *sql.Database
+	Storage        sql.StateDatabase
 	StorageClient  storage.DatabaseClient
 	LayersPerEpoch int64
 	Cache          *marshaler.Marshaler

@@ -5,7 +5,7 @@ import (
 	"github.com/spacemeshos/go-spacemesh/sql"
 )
 
-func (c *Client) GetRewardsSum(db *sql.Database) (sum, count uint64, err error) {
+func (c *Client) GetRewardsSum(db sql.Executor) (sum, count uint64, err error) {
 	_, err = db.Exec(`SELECT COUNT(*), SUM(total_reward) FROM rewards`,
 		func(stmt *sql.Statement) {
 		},
@@ -17,7 +17,7 @@ func (c *Client) GetRewardsSum(db *sql.Database) (sum, count uint64, err error) 
 	return
 }
 
-func (c *Client) GetRewardsSumByAddress(db *sql.Database, addr types.Address) (sum, count uint64, err error) {
+func (c *Client) GetRewardsSumByAddress(db sql.Executor, addr types.Address) (sum, count uint64, err error) {
 	_, err = db.Exec(`SELECT COUNT(*), SUM(total_reward) FROM rewards WHERE coinbase = ?1`,
 		func(stmt *sql.Statement) {
 			stmt.BindBytes(1, addr.Bytes())

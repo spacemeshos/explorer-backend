@@ -5,35 +5,36 @@ import (
 
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/sql"
+	"github.com/spacemeshos/go-spacemesh/sql/statesql"
 	"github.com/spacemeshos/go-spacemesh/timesync"
 )
 
 type DatabaseClient interface {
-	Overview(db *sql.Database) (*Overview, error)
+	Overview(db sql.Executor) (*Overview, error)
 
-	GetLayerStats(db *sql.Database, lid int64) (*LayerStats, error)
-	GetLayersCount(db *sql.Database) (uint64, error)
+	GetLayerStats(db sql.Executor, lid int64) (*LayerStats, error)
+	GetLayersCount(db sql.Executor) (uint64, error)
 
-	GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*EpochStats, error)
-	GetEpochDecentralRatio(db *sql.Database, epoch int64) (*EpochStats, error)
+	GetEpochStats(db sql.Executor, epoch, layersPerEpoch int64) (*EpochStats, error)
+	GetEpochDecentralRatio(db sql.Executor, epoch int64) (*EpochStats, error)
 
-	GetSmeshers(db *sql.Database, limit, offset uint64) (*SmesherList, error)
-	GetSmeshersByEpoch(db *sql.Database, limit, offset, epoch uint64) (*SmesherList, error)
-	GetSmesher(db *sql.Database, pubkey []byte) (*Smesher, error)
+	GetSmeshers(db sql.Executor, limit, offset uint64) (*SmesherList, error)
+	GetSmeshersByEpoch(db sql.Executor, limit, offset, epoch uint64) (*SmesherList, error)
+	GetSmesher(db sql.Executor, pubkey []byte) (*Smesher, error)
 
-	GetAccountsCount(db *sql.Database) (uint64, error)
-	GetAccountsStats(db *sql.Database, addr types.Address) (*AccountStats, error)
+	GetAccountsCount(db sql.Executor) (uint64, error)
+	GetAccountsStats(db sql.Executor, addr types.Address) (*AccountStats, error)
 
-	GetSmeshersCount(db *sql.Database) (uint64, error)
-	GetSmeshersByEpochCount(db *sql.Database, epoch uint64) (uint64, error)
+	GetSmeshersCount(db sql.Executor) (uint64, error)
+	GetSmeshersByEpochCount(db sql.Executor, epoch uint64) (uint64, error)
 
-	GetRewardsSum(db *sql.Database) (uint64, uint64, error)
-	GetRewardsSumByAddress(db *sql.Database, addr types.Address) (sum, count uint64, err error)
+	GetRewardsSum(db sql.Executor) (uint64, uint64, error)
+	GetRewardsSumByAddress(db sql.Executor, addr types.Address) (sum, count uint64, err error)
 
-	GetTransactionsCount(db *sql.Database) (uint64, error)
-	GetTotalNumUnits(db *sql.Database) (uint64, error)
+	GetTransactionsCount(db sql.Executor) (uint64, error)
+	GetTotalNumUnits(db sql.Executor) (uint64, error)
 
-	GetCirculation(db *sql.Database) (*Circulation, error)
+	GetCirculation(db sql.Executor) (*Circulation, error)
 }
 
 type Client struct {
@@ -43,8 +44,6 @@ type Client struct {
 	BitsPerLabel  uint64
 }
 
-func Setup(path string) (db *sql.Database, err error) {
-	db, err = sql.Open(fmt.Sprintf("file:%s?mode=ro", path),
-		sql.WithConnections(16), sql.WithMigrations(nil))
-	return
+func Setup(path string) (db sql.StateDatabase, err error) {
+	return statesql.Open(fmt.Sprintf("file:%s?mode=ro", path), sql.WithConnections(16))
 }

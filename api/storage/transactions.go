@@ -17,7 +17,7 @@ import (
 	"github.com/spacemeshos/go-spacemesh/sql"
 )
 
-func (c *Client) GetTransactionsCount(db *sql.Database) (count uint64, err error) {
+func (c *Client) GetTransactionsCount(db sql.Executor) (count uint64, err error) {
 	_, err = db.Exec(`SELECT COUNT(*)
 FROM (
   SELECT distinct id
