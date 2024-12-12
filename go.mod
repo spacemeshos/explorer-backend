@@ -1,6 +1,6 @@
 module github.com/spacemeshos/explorer-backend
 
-go 1.23.0
+go 1.23.4
 
 require (
 	github.com/eko/gocache/lib/v4 v4.1.6
@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
-	github.com/spacemeshos/api/release/go v1.50.0
+	github.com/spacemeshos/api/release/go v1.57.0
 	github.com/spacemeshos/economics v0.1.3
 	github.com/spacemeshos/go-scale v1.2.0
 	github.com/spacemeshos/go-spacemesh v1.6.2
@@ -35,7 +35,7 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
@@ -69,8 +69,8 @@ require (
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240617180043-68d350f18fd4 // indirect
-	google.golang.org/grpc v1.65.0 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20241021214115-324edc3d5d38 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
+	google.golang.org/grpc v1.68.0 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 )
