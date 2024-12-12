@@ -4,7 +4,7 @@ COPY . .
 RUN apk add --no-cache gcc musl-dev
 RUN go build -o explorer-stats-api ./cmd/api/
 
-FROM alpine:3.17
+FROM alpine:3.21
 COPY --from=build /src/explorer-stats-api /bin/
 EXPOSE 5000
 EXPOSE 5050
