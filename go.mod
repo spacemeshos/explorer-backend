@@ -11,7 +11,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redis/go-redis/v9 v9.7.0
-	github.com/spacemeshos/address v0.0.0-20220829090052-44ab32617871
+	github.com/spacemeshos/address v1.1.0
 	github.com/spacemeshos/api/release/go v1.57.0
 	github.com/spacemeshos/economics v0.1.4
 	github.com/spacemeshos/go-scale v1.2.1
