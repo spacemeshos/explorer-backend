@@ -15,7 +15,7 @@ type Overview struct {
 	NumUnits          uint64 `json:"num_units"`
 }
 
-func (c *Client) Overview(db *sql.Database) (*Overview, error) {
+func (c *Client) Overview(db sql.Executor) (*Overview, error) {
 	overview := &Overview{}
 	accountsCount, err := c.GetAccountsCount(db)
 	if err != nil {

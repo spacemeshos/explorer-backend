@@ -11,7 +11,7 @@ type Circulation struct {
 	Circulation uint64 `json:"circulation"`
 }
 
-func (c *Client) GetCirculation(db *sql.Database) (*Circulation, error) {
+func (c *Client) GetCirculation(db sql.Executor) (*Circulation, error) {
 	circulation := &Circulation{
 		Circulation: 0,
 	}

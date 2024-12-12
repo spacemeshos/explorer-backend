@@ -25,7 +25,7 @@ type EpochStats struct {
 	AccountsCount     uint64 `json:"accounts_count,omitempty"`
 }
 
-func (c *Client) GetEpochStats(db *sql.Database, epoch, layersPerEpoch int64) (*EpochStats, error) {
+func (c *Client) GetEpochStats(db sql.Executor, epoch, layersPerEpoch int64) (*EpochStats, error) {
 	stats := &EpochStats{
 		TransactionsCount: 0,
 		ActivationsCount:  0,
@@ -139,7 +139,7 @@ FROM (
 	return stats, err
 }
 
-func (c *Client) GetEpochDecentralRatio(db *sql.Database, epoch int64) (*EpochStats, error) {
+func (c *Client) GetEpochDecentralRatio(db sql.Executor, epoch int64) (*EpochStats, error) {
 	stats := &EpochStats{
 		Decentral: 0,
 	}

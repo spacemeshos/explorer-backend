@@ -235,7 +235,7 @@ func main() {
 			metrics := echo.New()
 			metrics.GET("/metrics", echoprometheus.NewHandler())
 			if err := metrics.Start(metricsPortFlag); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				log.Fatal("%v", err)
+				log.Panic("%v", err)
 			}
 		}()
 

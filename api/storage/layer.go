@@ -14,7 +14,7 @@ type LayerStats struct {
 	RewardsSum        uint64 `json:"rewards_sum"`
 }
 
-func (c *Client) GetLayerStats(db *sql.Database, lid int64) (*LayerStats, error) {
+func (c *Client) GetLayerStats(db sql.Executor, lid int64) (*LayerStats, error) {
 	stats := &LayerStats{
 		TransactionsCount: 0,
 		TransactionsSum:   0,
@@ -65,7 +65,7 @@ func (c *Client) GetLayerStats(db *sql.Database, lid int64) (*LayerStats, error)
 	return stats, err
 }
 
-func (c *Client) GetLayersCount(db *sql.Database) (count uint64, err error) {
+func (c *Client) GetLayersCount(db sql.Executor) (count uint64, err error) {
 	_, err = db.Exec(`SELECT COUNT(*) FROM layers`,
 		func(stmt *sql.Statement) {
 		},

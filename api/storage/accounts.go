@@ -7,7 +7,7 @@ import (
 	"github.com/spacemeshos/go-spacemesh/sql/transactions"
 )
 
-func (c *Client) GetAccountsCount(db *sql.Database) (uint64, error) {
+func (c *Client) GetAccountsCount(db sql.Executor) (uint64, error) {
 	var total uint64
 	_, err := db.Exec(`SELECT COUNT(DISTINCT address) FROM accounts`,
 		func(stmt *sql.Statement) {
@@ -28,7 +28,7 @@ type AccountStats struct {
 	RewardsSum        uint64 `json:"rewards_sum"`
 }
 
-func (c *Client) GetAccountsStats(db *sql.Database, addr types.Address) (*AccountStats, error) {
+func (c *Client) GetAccountsStats(db sql.Executor, addr types.Address) (*AccountStats, error) {
 	stats := &AccountStats{
 		Account:           addr.String(),
 		Received:          0,
