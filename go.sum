@@ -129,8 +129,8 @@ github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1
 github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c/go.mod h1:XDJAKZRPZ1CvBcN2aX5YOUTYGHki24fSF0Iv48Ibg0s=
 github.com/spacemeshos/address v1.1.0 h1:L9R9yarwGke0MUd5Pv/N7v3q7UYpcCwGUWzGOwtQpbg=
 github.com/spacemeshos/address v1.1.0/go.mod h1:nS77SE0VUvdPhc1Feitvvb9+6uA8+FHIOom9D/f4GXE=
-github.com/spacemeshos/api/release/go v1.61.0 h1:Jdni0kODbpDL/F7MkbNN1R4ioVC3lHk3TA8E04p/ENc=
-github.com/spacemeshos/api/release/go v1.61.0/go.mod h1:uBm4XPydRb5emOW6TckYzXcSQDyAv4q6Z4ud7HaLzxI=
+github.com/spacemeshos/api/release/go v1.62.0 h1:re2aTHwpiCbxO/SVJEpHItVW298s0X0bwlgf8h3bcEU=
+github.com/spacemeshos/api/release/go v1.62.0/go.mod h1:rpNrbXOosY/TVr/2Yvdrw27l6MrarKd0HkFptJSFDMA=
 github.com/spacemeshos/economics v0.1.4 h1:twlawrcQhYNqPgyDv08+24EL/OgUKz3d7q+PvJIAND0=
 github.com/spacemeshos/economics v0.1.4/go.mod h1:6HKWKiKdxjVQcGa2z/wA0LR4M/DzKib856bP16yqNmQ=
 github.com/spacemeshos/go-scale v1.2.1 h1:+IJ6KmFl9tF1Om8B1NvEwilGpBG1ebr4Se8A0Fe4puE=
