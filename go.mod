@@ -15,7 +15,7 @@ require (
 	github.com/spacemeshos/api/release/go v1.61.0
 	github.com/spacemeshos/economics v0.1.4
 	github.com/spacemeshos/go-scale v1.2.1
-	github.com/spacemeshos/go-spacemesh v1.7.12
+	github.com/spacemeshos/go-spacemesh v1.7.13
 	github.com/urfave/cli/v2 v2.27.5
 	go.uber.org/zap v1.27.0
 )
@@ -66,12 +66,12 @@ require (
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/time v0.9.0 // indirect
+	golang.org/x/time v0.10.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/grpc v1.70.0 // indirect
-	google.golang.org/protobuf v1.36.4 // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
 )
