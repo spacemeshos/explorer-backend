@@ -1,55 +1,93 @@
-# Explorer-backend
-Spacemesh explorer backend designed to provide data for explorer-frontends
+# Explorer Stats API
 
-## Explorer Software Architecture
-![](https://raw.githubusercontent.com/spacemeshos/product/master/resources/explorer_arch_chart.png)
+Explorer Stats API is a backend service designed to provide cumulative statistics and additional data for the Spacemesh explorer frontend. It supplements API v2 of a Spacemesh node by caching data in Redis and utilizing SQLite to extract data from the node.
 
-## Using the Explorer Backend API
-The explorer backend provides a public REST API that can be used to get data about a Spacemesh network.
-Follow these steps to use the API for a public Spacemesh network:
+## Features
 
-1. Obtain a currently available explorer API endpoint from the [Spacemesh public web services](https://configs.spacemesh.network/networks.json) endpoint. This endpoint lists all available Spacemesh networks.
-1. Build a REST request using the endpoint. For example, explorer api url for mainnet is `https://mainnet-explorer-api.spacemesh.network/` then the network-info data is available at `https://mainnet-explorer-api.spacemesh.network/network-info`.
-1. Issue an http 'GET' request to get the data. e.g. `curl https://mainnet-explorer-api.spacemesh.network/network-info`. 
-1. Live long and prosper.
+- Provides cumulative statistics for Spacemesh explorer frontend
+- Caches frequently requested data in Redis for improved performance
+- Uses SQLite to extract data from a Spacemesh node
+- Complements API v2 by supplying additional metrics unavailable in the node's API
 
-### Paging and pagination
-- Use the `pagesize` and `page` params to get paginated results. The first page number is 1, so for example, to get the first 20 layers call: `https://mainnet-explorer-api.spacemesh.network/layers?pagesize=20&page=1` and to get the next 20 layers use: `https://mainnet-explorer-api.spacemesh.network/layers?pagesize=20&page=2`
-- API results which support pagination include pagination data in the response json. e.g.:
+## Getting Started
 
+### Prerequisites
+
+- [Go](https://go.dev/) (latest version recommended)
+- [Redis](https://redis.io/) for caching (optional, can use in-memory cache)
+- A running Spacemesh node
+
+### Installation
+
+Clone the repository:
+
+```sh
+git clone https://github.com/spacemeshos/explorer-backend.git
+cd explorer-backend
 ```
-{"totalCount":1020,"pageCount":51,"perPage":20,"next":2,"hasNext":true,"current":1,"previous":1,"hasPrevious":false}}
+
+Build the project:
+
+```sh
+go build -o explorer-stats-api ./cmd/api/
 ```
 
-Use this pagination data to figure out how many calls you need to make and which what params in order to get all the data.
+### Configuration
 
+Environment variables:
 
-### API Capabilities
-The API is not properly documented yet. The best way to identity the supported API methods is via the api server [source code](https://github.com/spacemeshos/explorer-backend/blob/master/internal/api/router/router.go).
+- `SPACEMESH_API_LISTEN`: Explorer API listen string (default: `:5000`)
+- `SPACEMESH_REFRESH_API_LISTEN`: Explorer refresh API listen string (default: `:5050`)
+- `SPACEMESH_TESTNET`: Enable testnet preset (`stest` instead of `sm` for wallet addresses)
+- `ALLOWED_ORIGINS`: Allowed origins for CORS (default: `*`)
+- `DEBUG`: Enable echo debug option along with logger middleware
+- `SPACEMESH_SQLITE`: Path to node SQLite file (default: `explorer.sql`)
+- `SPACEMESH_LAYERS_PER_EPOCH`: Number of layers per epoch (default: `4032`)
+- `SPACEMESH_GENESIS_TIME`: Genesis time in RFC3339 format (default: `2024-06-21T13:00:00.000Z`)
+- `SPACEMESH_LAYER_DURATION`: Duration of a single layer (default: `30s`)
+- `SPACEMESH_LABELS_PER_UNIT`: Number of labels per unit (default: `1024`)
+- `SPACEMESH_METRICS_PORT`: Metrics port (default: `:5070`)
+- `SPACEMESH_CACHE_TTL`: Cache TTL for resources like overview, epochs, cumulative stats, etc. (default: `0`)
+- `SPACEMESH_SHORT_CACHE_TTL`: Short Cache TTL for resources like layers, accounts, etc. (default: `5m`)
+- `SPACEMESH_REDIS`: Redis address for cache; if not set, memory cache will be used
 
-### API Usage Examples
+### Running the API
 
-- Get layer details: https://mainnet-explorer-api.spacemesh.network/layers/52410
-- Get mainnet current network info: https://mainnet-explorer-api.spacemesh.network/
+```sh
+./explorer-stats-api
+```
 
+## API Endpoints
 
-### Explorer Stats API
+### General Endpoints
 
-```shell
-GLOBAL OPTIONS:
-   --listen value                                       Explorer API listen string in format <host>:<port> (default: ":5000") [$SPACEMESH_API_LISTEN]
-   --listen-refresh value                               Explorer refresh API listen string in format <host>:<port> (default: ":5050") [$SPACEMESH_REFRESH_API_LISTEN]
-   --testnet                                            Use this flag to enable testnet preset ("stest" instead of "sm" for wallet addresses) (default: false) [$SPACEMESH_TESTNET]
-   --allowed-origins value [ --allowed-origins value ]  Use this flag to set allowed origins for CORS (default: "*") [$ALLOWED_ORIGINS]
-   --debug                                              Use this flag to enable echo debug option along with logger middleware (default: false) [$DEBUG]
-   --sqlite value                                       Path to node sqlite file (default: "explorer.sql") [$SPACEMESH_SQLITE]
-   --layers-per-epoch value                             Number of layers per epoch (default: 4032) [$SPACEMESH_LAYERS_PER_EPOCH]
-   --genesis-time value                                 Genesis time in RFC3339 format (default: "2024-06-21T13:00:00.000Z") [$SPACEMESH_GENESIS_TIME]
-   --layer-duration value                               Duration of a single layer (default: 30s) [$SPACEMESH_LAYER_DURATION]
-   --labels-per-unit value                              Number of labels per unit (default: 1024) [$SPACEMESH_LABELS_PER_UNIT]
-   --bits-per-label value                               Number of bits per label (default: 128) [$SPACEMESH_BITS_PER_LABEL]
-   --metricsPort value                                  (default: ":5070") [$SPACEMESH_METRICS_PORT]
-   --help, -h                                           show help
-   --version, -v                                        print the version
+| Method | Endpoint               | Description                                     |
+| ------ | ---------------------- | ----------------------------------------------- |
+| `GET`  | `/layer/:id`           | Retrieve information about a specific layer.    |
+| `GET`  | `/epoch/:id`           | Get details for a specific epoch.               |
+| `GET`  | `/epoch/:id/decentral` | Retrieve decentralization metrics for an epoch. |
+| `GET`  | `/account/:address`    | Fetch account details by address.               |
+| `GET`  | `/smeshers/:epoch`     | List smeshers participating in a given epoch.   |
+| `GET`  | `/smeshers`            | Retrieve all smeshers.                          |
+| `GET`  | `/smesher/:smesherId`  | Get details of a specific smesher.              |
+| `GET`  | `/overview`            | Fetch an overview of network statistics.        |
+| `GET`  | `/circulation`         | Retrieve information on token circulation.      |
 
+### Refresh Endpoints
+
+| Method | Endpoint                       | Description                                    |
+| ------ | ------------------------------ | ---------------------------------------------- |
+| `GET`  | `/refresh/epoch/:id`           | Refresh cached epoch data.                     |
+| `GET`  | `/refresh/epoch/:id/decentral` | Refresh decentralization metrics for an epoch. |
+| `GET`  | `/refresh/overview`            | Refresh network statistics overview.           |
+| `GET`  | `/refresh/smeshers/:epoch`     | Refresh smeshers list for an epoch.            |
+| `GET`  | `/refresh/smeshers`            | Refresh all smeshers data.                     |
+| `GET`  | `/refresh/circulation`         | Refresh token circulation data.                |
+
+## Development
+
+### Running in Development Mode
+
+```sh
+go run cmd/api/main.go
 ```
