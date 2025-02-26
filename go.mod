@@ -15,7 +15,7 @@ require (
 	github.com/spacemeshos/api/release/go v1.62.0
 	github.com/spacemeshos/economics v0.1.4
 	github.com/spacemeshos/go-scale v1.2.1
-	github.com/spacemeshos/go-spacemesh v1.7.14
+	github.com/spacemeshos/go-spacemesh v1.7.15
 	github.com/urfave/cli/v2 v2.27.5
 	go.uber.org/zap v1.27.0
 )
@@ -33,7 +33,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-llsqlite/crawshaw v0.5.5 // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
