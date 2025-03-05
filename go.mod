@@ -15,7 +15,7 @@ require (
 	github.com/spacemeshos/api/release/go v1.62.0
 	github.com/spacemeshos/economics v0.1.4
 	github.com/spacemeshos/go-scale v1.2.1
-	github.com/spacemeshos/go-spacemesh v1.7.16
+	github.com/spacemeshos/go-spacemesh v1.7.17
 	github.com/urfave/cli/v2 v2.27.5
 	go.uber.org/zap v1.27.0
 )
