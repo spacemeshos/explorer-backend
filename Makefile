@@ -9,7 +9,7 @@ export GO111MODULE = on
 
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 
-GOLANGCI_LINT_VERSION := v1.60.3
+GOLANGCI_LINT_VERSION := v1.64.6
 
 # Set BRANCH when running make manually
 ifeq ($(BRANCH),)

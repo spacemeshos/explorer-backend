@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
+
 	"github.com/spacemeshos/explorer-backend/api/handler"
 )
 

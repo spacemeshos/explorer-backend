@@ -1,6 +1,7 @@
 module github.com/spacemeshos/explorer-backend
 
-go 1.23.4
+go 1.24.1
+
 require (
 	github.com/eko/gocache/lib/v4 v4.2.0
 	github.com/eko/gocache/store/go_cache/v4 v4.2.2
