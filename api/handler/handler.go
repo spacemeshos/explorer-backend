@@ -5,9 +5,9 @@ import (
 
 	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/labstack/echo/v4"
-	"github.com/spacemeshos/explorer-backend/api/storage"
-
 	"github.com/spacemeshos/go-spacemesh/sql"
+
+	"github.com/spacemeshos/explorer-backend/api/storage"
 )
 
 type ApiContext struct {

@@ -4,13 +4,13 @@ import (
 	"math"
 
 	"github.com/spacemeshos/economics/constants"
-	"github.com/spacemeshos/explorer-backend/utils"
-
 	"github.com/spacemeshos/go-spacemesh/common/types"
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/sql"
 	"github.com/spacemeshos/go-spacemesh/sql/atxs"
 	"github.com/spacemeshos/go-spacemesh/sql/builder"
+
+	"github.com/spacemeshos/explorer-backend/utils"
 )
 
 type EpochStats struct {

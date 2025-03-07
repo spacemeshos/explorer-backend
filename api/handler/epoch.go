@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/spacemeshos/go-spacemesh/log"
+
 	"github.com/spacemeshos/explorer-backend/api/cache"
 	"github.com/spacemeshos/explorer-backend/api/storage"
-
-	"github.com/spacemeshos/go-spacemesh/log"
 )
 
 func Epoch(c echo.Context) error {

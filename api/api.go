@@ -11,11 +11,11 @@ import (
 	"github.com/eko/gocache/lib/v4/marshaler"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/spacemeshos/explorer-backend/api/handler"
-	"github.com/spacemeshos/explorer-backend/api/storage"
-
 	"github.com/spacemeshos/go-spacemesh/log"
 	"github.com/spacemeshos/go-spacemesh/sql"
+
+	"github.com/spacemeshos/explorer-backend/api/handler"
+	"github.com/spacemeshos/explorer-backend/api/storage"
 )
 
 type Api struct {

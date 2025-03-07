@@ -12,7 +12,6 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
-
 	"github.com/spacemeshos/go-spacemesh/log"
 )
 
