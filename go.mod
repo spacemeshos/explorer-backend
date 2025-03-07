@@ -1,7 +1,6 @@
 module github.com/spacemeshos/explorer-backend
 
 go 1.23.4
-
 require (
 	github.com/eko/gocache/lib/v4 v4.2.0
 	github.com/eko/gocache/store/go_cache/v4 v4.2.2
@@ -14,7 +13,7 @@ require (
 	github.com/spacemeshos/address v1.1.0
 	github.com/spacemeshos/api/release/go v1.62.0
 	github.com/spacemeshos/economics v0.1.4
-	github.com/spacemeshos/go-scale v1.2.1
+	github.com/spacemeshos/go-scale v1.3.0
 	github.com/spacemeshos/go-spacemesh v1.7.17
 	github.com/urfave/cli/v2 v2.27.6
 	go.uber.org/zap v1.27.0
