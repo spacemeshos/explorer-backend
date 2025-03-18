@@ -15,7 +15,7 @@ require (
 	github.com/spacemeshos/api/release/go v1.62.0
 	github.com/spacemeshos/economics v0.1.4
 	github.com/spacemeshos/go-scale v1.3.0
-	github.com/spacemeshos/go-spacemesh v1.8.0
+	github.com/spacemeshos/go-spacemesh v1.8.1
 	github.com/urfave/cli/v2 v2.27.6
 	go.uber.org/zap v1.27.0
 )
@@ -48,7 +48,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.62.0 // indirect
+	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spacemeshos/merkle-tree v0.2.6 // indirect
