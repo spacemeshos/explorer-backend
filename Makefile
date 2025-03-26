@@ -5,7 +5,6 @@ CURR_DIR = $(shell pwd)
 CURR_DIR_WIN = $(shell cd)
 BIN_DIR = $(CURR_DIR)/build
 BIN_DIR_WIN = $(CURR_DIR_WIN)/build
-export GO111MODULE = on
 
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 
@@ -18,7 +17,6 @@ endif
 
 # Setup the -ldflags option to pass vars defined here to app vars
 LDFLAGS = -ldflags "-X main.version=${VERSION} -X main.commit=${COMMIT} -X main.branch=${BRANCH}"
-PKGS = $(shell go list ./...)
 
 PLATFORMS := windows linux darwin
 os = $(word 1, $@)
@@ -60,7 +58,3 @@ dev_up: ## start local environment
 ci_up: ## start ci environment
 	@echo "RUN ci docker-compose.yml "
 	docker compose up --build -d
-
-.PHONY: gogen
-gogen: ## generate scalegen
-	go generate ./...
