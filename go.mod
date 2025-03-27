@@ -15,7 +15,7 @@ require (
 	github.com/spacemeshos/api/release/go v1.63.0
 	github.com/spacemeshos/economics v0.1.4
 	github.com/spacemeshos/go-scale v1.3.0
-	github.com/spacemeshos/go-spacemesh v1.8.1
+	github.com/spacemeshos/go-spacemesh v1.8.2
 	github.com/urfave/cli/v2 v2.27.6
 	go.uber.org/zap v1.27.0
 )
@@ -52,8 +52,8 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spacemeshos/merkle-tree v0.2.6 // indirect
-	github.com/spacemeshos/poet v0.10.11 // indirect
-	github.com/spacemeshos/post v0.13.0 // indirect
+	github.com/spacemeshos/poet v0.10.12 // indirect
+	github.com/spacemeshos/post v0.13.1 // indirect
 	github.com/spacemeshos/sha256-simd v0.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
