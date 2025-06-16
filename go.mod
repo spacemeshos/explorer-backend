@@ -16,7 +16,7 @@ require (
 	github.com/spacemeshos/economics v0.1.4
 	github.com/spacemeshos/go-scale v1.3.0
 	github.com/spacemeshos/go-spacemesh v1.8.3
-	github.com/urfave/cli/v2 v2.27.6
+	github.com/urfave/cli/v2 v2.27.7
 	go.uber.org/zap v1.27.0
 )
 
@@ -29,7 +29,7 @@ require (
 	github.com/c0mm4nd/go-ripemd v0.0.0-20200326052756-bd1759ad7d10 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-llsqlite/crawshaw v0.5.5 // indirect
 	github.com/golang/mock v1.6.0 // indirect
