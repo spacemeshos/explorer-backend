@@ -33,6 +33,7 @@ var (
 	listenStringFlag        string
 	refreshListenStringFlag string
 	testnetBoolFlag         bool
+	athenaBoolFlag          bool
 	allowedOrigins          = cli.NewStringSlice("*")
 	debug                   bool
 	sqlitePathStringFlag    string
@@ -66,6 +67,13 @@ var flags = []cli.Flag{
 		Required:    false,
 		Destination: &testnetBoolFlag,
 		EnvVars:     []string{"SPACEMESH_TESTNET"},
+	},
+	&cli.BoolFlag{
+		Name:        "athena",
+		Usage:       `Use this flag to enable athena preset ("atest" instead of "sm" for wallet addresses)`,
+		Required:    false,
+		Destination: &athenaBoolFlag,
+		EnvVars:     []string{"SPACEMESH_ATHENA"},
 	},
 	&cli.StringSliceFlag{
 		Name:        "allowed-origins",
@@ -166,6 +174,11 @@ func main() {
 			address.SetAddressConfig("stest")
 			types.SetNetworkHRP("stest")
 			log.Info(`network HRP set to "stest"`)
+		}
+		if athenaBoolFlag {
+			address.SetAddressConfig("atest")
+			types.SetNetworkHRP("atest")
+			log.Info(`network HRP set to "atest"`)
 		}
 		log.Info("layers per epoch: %d", layersPerEpoch)
 		log.Info("debug: %v", debug)
