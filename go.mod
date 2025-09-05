@@ -1,16 +1,16 @@
 module github.com/spacemeshos/explorer-backend
 
-go 1.24.1
+go 1.25
 
 require (
 	github.com/eko/gocache/lib/v4 v4.2.0
 	github.com/eko/gocache/store/go_cache/v4 v4.2.2
-	github.com/eko/gocache/store/redis/v4 v4.2.2
+	github.com/eko/gocache/store/redis/v4 v4.2.4
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.22.0
-	github.com/redis/go-redis/v9 v9.8.0
+	github.com/redis/go-redis/v9 v9.13.0
 	github.com/spacemeshos/address v1.1.1
 	github.com/spacemeshos/api/release/go v1.63.0
 	github.com/spacemeshos/economics v0.1.4
@@ -60,12 +60,12 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
-	go.uber.org/mock v0.5.1 // indirect
+	go.uber.org/mock v0.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
+	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
 	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
